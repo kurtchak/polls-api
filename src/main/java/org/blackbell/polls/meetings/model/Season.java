@@ -1,0 +1,60 @@
+package org.blackbell.polls.meetings.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.MapKey;
+import javax.persistence.OneToMany;
+import java.util.Map;
+
+/**
+ * Created by Ján Korčák on 18.2.2017.
+ * email: korcak@esten.sk
+ */
+@Entity
+public class Season {
+    @JsonIgnore
+    private long id;
+    private String name;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @MapKey(name = "name")
+    private Map<Integer, Meeting> meetings;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @MapKey(name = "name")
+    private Map<Integer, CouncilMember> members;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Map<Integer, Meeting> getMeetings() {
+        return meetings;
+    }
+
+    public void setMeetings(Map<Integer, Meeting> meeting) {
+        this.meetings = meeting;
+    }
+
+    public Map<Integer, CouncilMember> getMembers() {
+        return members;
+    }
+
+    public void setMembers(Map<Integer, CouncilMember> members) {
+        this.members = members;
+    }
+}
