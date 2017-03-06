@@ -2,13 +2,11 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
-
 /**
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
-@Entity
+//@Entity
 public class CouncilMember {
     @JsonIgnore
     private long id;

@@ -2,14 +2,12 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
 import java.util.List;
 
 /**
  * Created by Ján Korčák on 22.2.2017.
  * email: korcak@esten.sk
  */
-@Entity
 public class Poll {
     @JsonIgnore
     private long id;

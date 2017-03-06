@@ -2,7 +2,6 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
 import java.util.Date;
 import java.util.Map;
 
@@ -10,7 +9,7 @@ import java.util.Map;
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
-@Entity
+//@Entity
 public class Meeting {
     @JsonIgnore
     private long id;

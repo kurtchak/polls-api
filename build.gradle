@@ -26,11 +26,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter")
     compile("org.springframework:spring-web")
     compile("com.fasterxml.jackson.core:jackson-databind")
-<<<<<<< HEAD
-    compile("org.hibernate.common:hibernate-commons-annotations:4.0.5.Final")
-    compile("org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final")
-=======
->>>>>>> bc6cbed2d57863998e19a3a9b691a22caf1fcdf9
     testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 
