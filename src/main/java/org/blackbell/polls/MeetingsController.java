@@ -79,7 +79,7 @@ public class MeetingsController {
         return ApplicationContext.getInstance().getPolls(city, institution);
     }
 
-    @RequestMapping("/{city}/zastupitelstvo/{poll_number}")
+    @RequestMapping("/{city}/{institution}/{poll_number}")
     public Poll poll(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="poll_number") String pollNumber) {
