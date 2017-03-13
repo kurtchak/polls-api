@@ -72,4 +72,19 @@ public class MeetingsController {
         return ApplicationContext.getInstance().getMembers(city, season);
     }
 
+    @RequestMapping("/{city}/{institution}")
+    public Collection<Poll> polls(@PathVariable(value="city") String city,
+                                  @PathVariable(value="institution") String institution) {
+        Application.checkLoaded(city);
+        return ApplicationContext.getInstance().getPolls(city, institution);
+    }
+
+    @RequestMapping("/{city}/zastupitelstvo/{poll_number}")
+    public Poll poll(@PathVariable(value="city") String city,
+                                  @PathVariable(value="institution") String institution,
+                                  @PathVariable(value="poll_number") String pollNumber) {
+        Application.checkLoaded(city);
+        return ApplicationContext.getInstance().getPoll(city, institution, pollNumber);
+    }
+
 }

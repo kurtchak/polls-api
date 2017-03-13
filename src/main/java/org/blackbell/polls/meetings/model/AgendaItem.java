@@ -8,13 +8,14 @@ import java.util.Map;
  * Created by Ján Korčák on 19.2.2017.
  * email: korcak@esten.sk
  */
-//@Entity
 public class AgendaItem {
     @JsonIgnore
     private long id;
     private Integer order;
     private String name;
+
     private Map<Integer, Poll> polls;
+
     private Map<String, AgendaItemAttachment> attachments;
 
     public long getId() {

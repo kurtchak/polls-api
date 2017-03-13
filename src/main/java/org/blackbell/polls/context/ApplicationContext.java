@@ -10,6 +10,7 @@ import java.util.*;
  */
 public class ApplicationContext {
     private Map<String, Town> townsMap;
+    private Map<String, List<Poll>> pollsMap;
 
     private static ApplicationContext instance;
 
@@ -30,6 +31,24 @@ public class ApplicationContext {
 
     public void setTownsMap(Map<String, Town> townsMap) {
         this.townsMap = townsMap;
+    }
+
+    public Map<String, List<Poll>> getPollsMap() {
+        return pollsMap;
+    }
+
+    public void setPollsMap(Map<String, List<Poll>> pollsMap) {
+        this.pollsMap = pollsMap;
+    }
+
+    public void putPolls(String city, Collection<Poll> polls) {
+        if (pollsMap == null) {
+            pollsMap = new HashMap<>();
+        }
+//        if (!pollsMap.containsKey(city) || pollsMap.get(city) == null) {
+//            pollsMap.put(city, new ArrayList<>());
+//        }
+        this.pollsMap.get(city).addAll(polls);
     }
 
     public Meeting getMeeting(String city, String season, Integer order) {
@@ -110,6 +129,38 @@ public class ApplicationContext {
         Meeting meeting = getMeeting(city, season, order);
         if (meeting != null && meeting.getAttachments() != null && meeting.getAttachments().containsKey(item)) {
             return meeting.getAttachments().get(item);
+        }
+        return null;
+    }
+
+    public List<Poll> getPolls(String city, String season) {
+        return getPolls(city);
+    }
+
+    public List<Poll> getPolls(String city) {
+        if (pollsMap == null) {
+            pollsMap = new HashMap<>();
+        }
+        if (pollsMap.isEmpty() || !pollsMap.containsKey(city)) {
+            List<Poll> polls = new ArrayList<>();
+            for (Meeting meeting : townsMap.get(city).getSeasons().get("2014-2018").getMeetings().values()) {
+                for (AgendaItem item : meeting.getAgenda().getItems().values()) {
+                    polls.addAll(item.getPolls().values());
+                }
+            }
+            pollsMap.put(city, polls);
+        }
+        return pollsMap.get(city);
+    }
+
+    public Poll getPoll(String city, String institution, String pollNumber) {
+        List<Poll> polls = getPolls(city);
+        if (polls != null) {
+            for (Poll poll : polls) {
+                if (pollNumber.equals(poll.getOrder())) {
+                    return poll;
+                }
+            }
         }
         return null;
     }

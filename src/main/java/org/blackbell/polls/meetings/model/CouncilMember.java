@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
-//@Entity
 public class CouncilMember {
     @JsonIgnore
     private long id;

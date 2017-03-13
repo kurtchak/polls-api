@@ -17,7 +17,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SpringBootApplication
 public class Application {
@@ -29,17 +32,6 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
-//    @Bean
-//    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-//        return builder.build();
-//    }
-//
-//    @Bean
-//    public CommandLineRunner run() throws Exception {
-//        return args -> {
-//        };
-//    }
-//
     private static Meeting parseMeeting(Season season, int order, MeetingDTO meetingDTO) {
         try {
             Meeting meeting = new Meeting();
@@ -127,7 +119,7 @@ public class Application {
     private static Poll parsePoll(Season season, int order, PollDTO pollDTO) {
         Poll poll = new Poll();
         poll.setName(pollDTO.getName());
-        poll.setOrder(order);
+        poll.setOrder("" + System.nanoTime());
         if (pollDTO.getPollChoiceDTOs() != null) {
             for (PollChoiceDTO choice : pollDTO.getPollChoiceDTOs()) {
                 switch (choice.getName()) {
@@ -186,6 +178,7 @@ public class Application {
     public static void checkLoaded(String city) {
         ApplicationContext context = ApplicationContext.getInstance();
         if (!context.getTownsMap().containsKey(city)) {
+//            List<Meeting> meetings = new MeetingServiceImpl().find(city);
             Town town = Application.loadTownData(city);
             ApplicationContext.getInstance().getTownsMap().put(city, town);
         }

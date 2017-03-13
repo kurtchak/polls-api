@@ -1,7 +1,5 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.List;
 
 /**
@@ -9,10 +7,10 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 public class Poll {
-    @JsonIgnore
     private long id;
-    private int order;
+    private String order;
     private String name;
+
     private List<CouncilMember> votedFor;
     private List<CouncilMember> votedAgainst;
     private List<CouncilMember> notVoted;
@@ -27,11 +25,11 @@ public class Poll {
         this.id = id;
     }
 
-    public int getOrder() {
+    public String getOrder() {
         return order;
     }
 
-    public void setOrder(int order) {
+    public void setOrder(String order) {
         this.order = order;
     }
 
