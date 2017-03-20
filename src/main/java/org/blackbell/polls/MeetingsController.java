@@ -5,86 +5,120 @@ package org.blackbell.polls;
  * email: korcak@esten.sk
  */
 
-import org.blackbell.polls.context.ApplicationContext;
-import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.data.repositories.PollRepository;
+import org.blackbell.polls.data.repositories.TownRepository;
+import org.blackbell.polls.meetings.model.Poll;
+import org.blackbell.polls.meetings.model.Season;
+import org.blackbell.polls.meetings.model.Town;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 public class MeetingsController {
+    private static final Logger log = LoggerFactory.getLogger(MeetingsController.class);
 
-    @RequestMapping("/{city}/{season}/meetings")
-    public Collection<Meeting> meetings(@PathVariable(value="city") String city,
-                                        @PathVariable(value="season") String season) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getMeetings(city, season);
+    @Autowired
+    private TownRepository townRepository;
+
+    @Autowired
+    private PollRepository pollRepository;
+
+    public void checkLoaded(String city) {
+//        ApplicationContext context = ApplicationContext.getInstance();
+        Town town = townRepository.findByRef(city);
+        if (town == null) {
+            log.info("No town with name `"+city+"`. Loading from external WebService...");
+            town = Application.loadTownData(city);
+            if (town != null) {
+                List<Season> seasons = town.getSeasons();
+                log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
+                townRepository.save(town);
+                log.info(town.getName() + "`s data saved.");
+            } else {
+                log.info("No data found for town `" + city + "`.");
+            }
+        }
     }
 
-    @RequestMapping("/{city}/{season}/meeting/{order}")
-    public Meeting meeting(@PathVariable(value="city") String city,
-                           @PathVariable(value="season") String season,
-                           @PathVariable(value="order") Integer order) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getMeeting(city, season, order);
-    }
-
-    @RequestMapping("/{city}/{season}/meeting/{order}/agenda")
-    public Agenda agenda(@PathVariable(value="city") String city,
-                         @PathVariable(value="season") String season,
-                         @PathVariable(value="order") Integer order) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getAgenda(city, season, order);
-    }
-
-    @RequestMapping("/{city}/{season}/meeting/{order}/agenda/{item}")
-    public AgendaItem agendaItem(@PathVariable(value="city") String city,
-                                 @PathVariable(value="season") String season,
-                                 @PathVariable(value="order") Integer order,
-                                 @PathVariable(value="item") Integer item) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getAgendaItem(city, season, order, item);
-    }
-
-    @RequestMapping("/{city}/{season}/meeting/{order}/attachments")
-    public Collection<MeetingAttachment> atachments(@PathVariable(value="city") String city,
-                                              @PathVariable(value="season") String season,
-                                              @PathVariable(value="order") Integer order) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getAttachments(city, season, order);
-    }
-
-    @RequestMapping("/{city}/{season}/meeting/{order}/attachment/{item}")
-    public MeetingAttachment attachment(@PathVariable(value="city") String city,
-                                 @PathVariable(value="season") String season,
-                                 @PathVariable(value="order") Integer order,
-                                 @PathVariable(value="item") Integer item) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getMeetingAttachment(city, season, order, item);
-    }
-
-    @RequestMapping("/{city}/{season}/members")
-    public Collection<CouncilMember> members(@PathVariable(value="city") String city,
-                                             @PathVariable(value="season") String season) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getMembers(city, season);
-    }
+//    @RequestMapping("/{city}/{season}/meetings")
+//    public Collection<Meeting> meetings(@PathVariable(value="city") String city,
+//                                        @PathVariable(value="season") String season) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getMeetings(city, season);
+//    }
+//
+//    @RequestMapping("/{city}/{season}/meeting/{order}")
+//    public Meeting meeting(@PathVariable(value="city") String city,
+//                           @PathVariable(value="season") String season,
+//                           @PathVariable(value="order") Integer order) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getMeeting(city, season, order);
+//    }
+//
+////    @RequestMapping("/{city}/{season}/meeting/{order}/agenda")
+////    public Agenda agenda(@PathVariable(value="city") String city,
+////                         @PathVariable(value="season") String season,
+////                         @PathVariable(value="order") Integer order) {
+////        Application.checkLoaded(city);
+////        return ApplicationContext.getInstance().getAgenda(city, season, order);
+////    }
+////
+////    @RequestMapping("/{city}/{season}/meeting/{order}/agenda/{item}")
+////    public AgendaItem agendaItem(@PathVariable(value="city") String city,
+////                                 @PathVariable(value="season") String season,
+////                                 @PathVariable(value="order") Integer order,
+////                                 @PathVariable(value="item") Integer item) {
+////        Application.checkLoaded(city);
+////        return ApplicationContext.getInstance().getAgendaItem(city, season, order, item);
+////    }
+//
+//    @RequestMapping("/{city}/{season}/meeting/{order}/attachments")
+//    public Collection<MeetingAttachment> atachments(@PathVariable(value="city") String city,
+//                                              @PathVariable(value="season") String season,
+//                                              @PathVariable(value="order") Integer order) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getAttachments(city, season, order);
+//    }
+//
+//    @RequestMapping("/{city}/{season}/meeting/{order}/attachment/{item}")
+//    public MeetingAttachment attachment(@PathVariable(value="city") String city,
+//                                 @PathVariable(value="season") String season,
+//                                 @PathVariable(value="order") Integer order,
+//                                 @PathVariable(value="item") Integer item) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getMeetingAttachment(city, season, order, item);
+//    }
+//
+//    @RequestMapping("/{city}/{season}/members")
+//    public Collection<CouncilMember> members(@PathVariable(value="city") String city,
+//                                             @PathVariable(value="season") String season) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getMembers(city, season);
+//    }
 
     @RequestMapping("/{city}/{institution}")
     public Collection<Poll> polls(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getPolls(city, institution);
+        checkLoaded(city);
+        List<Poll> polls = pollRepository.getByTown(city);
+        log.info((polls != null ? polls.size() : 0) + " found polls");
+        return polls;
+//        return ApplicationContext.getInstance().getPolls(city, institution);
     }
 
-    @RequestMapping("/{city}/{institution}/{poll_number}")
-    public Poll poll(@PathVariable(value="city") String city,
-                                  @PathVariable(value="institution") String institution,
-                                  @PathVariable(value="poll_number") String pollNumber) {
-        Application.checkLoaded(city);
-        return ApplicationContext.getInstance().getPoll(city, institution, pollNumber);
-    }
+//    @RequestMapping("/{city}/{institution}/{poll_number}")
+//    public Poll poll(@PathVariable(value="city") String city,
+//                                  @PathVariable(value="institution") String institution,
+//                                  @PathVariable(value="poll_number") String pollNumber) {
+//        checkLoaded(city);
+//        return ApplicationContext.getInstance().getPoll(city, institution, pollNumber);
+//    }
 
 }

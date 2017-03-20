@@ -51,117 +51,101 @@ public class ApplicationContext {
         this.pollsMap.get(city).addAll(polls);
     }
 
-    public Meeting getMeeting(String city, String season, Integer order) {
-        if (townsMap == null) {
-            return null;
-        } else if (!townsMap.containsKey(city)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons() == null) {
-            return null;
-        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons().get(season).getMeetings() == null) {
-            return null;
-        } else if (!townsMap.get(city).getSeasons().get(season).getMeetings().containsKey(order)) {
-            return null;
-        } else {
-            return townsMap.get(city).getSeasons().get(season).getMeetings().get(order);
-        }
-    }
+//    public Meeting getMeeting(String city, String season, Integer order) {
+//        if (townsMap == null) {
+//            return null;
+//        } else if (!townsMap.containsKey(city)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons() == null) {
+//            return null;
+//        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons().get(season).getMeetings() == null) {
+//            return null;
+//        } else if (!townsMap.get(city).getSeasons().get(season).getMeetings().containsKey(order)) {
+//            return null;
+//        } else {
+//            return townsMap.get(city).getSeasons().get(season).getMeetings().get(order);
+//        }
+//    }
 
-    public Collection<Meeting> getMeetings(String city, String season) {
-        if (townsMap == null) {
-            return null;
-        } else if (!townsMap.containsKey(city)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons() == null) {
-            return null;
-        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons().get(season).getMeetings() == null) {
-            return null;
-        } else {
-            return townsMap.get(city).getSeasons().get(season).getMeetings().values();
-        }
-    }
+//    public Collection<Meeting> getMeetings(String city, String season) {
+//        if (townsMap == null) {
+//            return null;
+//        } else if (!townsMap.containsKey(city)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons() == null) {
+//            return null;
+//        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons().get(season).getMeetings() == null) {
+//            return null;
+//        } else {
+//            return townsMap.get(city).getSeasons().get(season).getMeetings().values();
+//        }
+//    }
 
-    public Collection<CouncilMember> getMembers(String city, String season) {
-        if (townsMap == null) {
-            return null;
-        } else if (!townsMap.containsKey(city)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons() == null) {
-            return null;
-        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
-            return null;
-        } else if (townsMap.get(city).getSeasons().get(season).getMembers() == null) {
-            return null;
-        } else {
-            return townsMap.get(city).getSeasons().get(season).getMembers().values();
-        }
-    }
+//    public Collection<CouncilMember> getMembers(String city, String season) {
+//        if (townsMap == null) {
+//            return null;
+//        } else if (!townsMap.containsKey(city)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons() == null) {
+//            return null;
+//        } else if (!townsMap.get(city).getSeasons().containsKey(season)) {
+//            return null;
+//        } else if (townsMap.get(city).getSeasons().get(season).getMembers() == null) {
+//            return null;
+//        } else {
+//            return townsMap.get(city).getSeasons().get(season).getMembers().values();
+//        }
+//    }
 
-    public Agenda getAgenda(String city, String season, Integer order) {
-        Meeting meeting = getMeeting(city, season, order);
-        if (meeting != null) {
-            return meeting.getAgenda();
-        }
-        return null;
-    }
+//    public Collection<MeetingAttachment> getAttachments(String city, String season, Integer order) {
+//        Meeting meeting = getMeeting(city, season, order);
+//        if (meeting != null && meeting.getAttachments() != null) {
+//            return meeting.getAttachments().values();
+//        }
+//        return null;
+//    }
+//
+//    public MeetingAttachment getMeetingAttachment(String city, String season, Integer order, Integer item) {
+//        Meeting meeting = getMeeting(city, season, order);
+//        if (meeting != null && meeting.getAttachments() != null && meeting.getAttachments().containsKey(item)) {
+//            return meeting.getAttachments().get(item);
+//        }
+//        return null;
+//    }
 
-    public AgendaItem getAgendaItem(String city, String season, Integer order, Integer item) {
-        Agenda agenda = getAgenda(city, season, order);
-        if (agenda != null && agenda.getItems() != null && agenda.getItems().containsKey(item)) {
-            return agenda.getItems().get(item);
-        }
-        return null;
-    }
+//    public List<Poll> getPolls(String city, String season) {
+//        return getPolls(city);
+//    }
+//
+//    public List<Poll> getPolls(String city) {
+//        if (pollsMap == null) {
+//            pollsMap = new HashMap<>();
+//        }
+//        if (pollsMap.isEmpty() || !pollsMap.containsKey(city)) {
+//            List<Poll> polls = new ArrayList<>();
+//            for (Meeting meeting : townsMap.get(city).getSeasons().get("2014-2018").getMeetings().values()) {
+//                for (AgendaItem item : meeting.getAgendaItems()) {
+//                    polls.addAll(item.getPolls().values());
+//                }
+//            }
+//            pollsMap.put(city, polls);
+//        }
+//        return pollsMap.get(city);
+//    }
 
-    public Collection<MeetingAttachment> getAttachments(String city, String season, Integer order) {
-        Meeting meeting = getMeeting(city, season, order);
-        if (meeting != null && meeting.getAttachments() != null) {
-            return meeting.getAttachments().values();
-        }
-        return null;
-    }
-
-    public MeetingAttachment getMeetingAttachment(String city, String season, Integer order, Integer item) {
-        Meeting meeting = getMeeting(city, season, order);
-        if (meeting != null && meeting.getAttachments() != null && meeting.getAttachments().containsKey(item)) {
-            return meeting.getAttachments().get(item);
-        }
-        return null;
-    }
-
-    public List<Poll> getPolls(String city, String season) {
-        return getPolls(city);
-    }
-
-    public List<Poll> getPolls(String city) {
-        if (pollsMap == null) {
-            pollsMap = new HashMap<>();
-        }
-        if (pollsMap.isEmpty() || !pollsMap.containsKey(city)) {
-            List<Poll> polls = new ArrayList<>();
-            for (Meeting meeting : townsMap.get(city).getSeasons().get("2014-2018").getMeetings().values()) {
-                for (AgendaItem item : meeting.getAgenda().getItems().values()) {
-                    polls.addAll(item.getPolls().values());
-                }
-            }
-            pollsMap.put(city, polls);
-        }
-        return pollsMap.get(city);
-    }
-
-    public Poll getPoll(String city, String institution, String pollNumber) {
-        List<Poll> polls = getPolls(city);
-        if (polls != null) {
-            for (Poll poll : polls) {
-                if (pollNumber.equals(poll.getOrder())) {
-                    return poll;
-                }
-            }
-        }
-        return null;
-    }
+//    public Poll getPoll(String city, String institution, String pollNumber) {
+//        List<Poll> polls = getPolls(city);
+//        if (polls != null) {
+//            for (Poll poll : polls) {
+//                if (pollNumber.equals(poll.getRef())) {
+//                    return poll;
+//                }
+//            }
+//        }
+//        return null;
+//    }
 }

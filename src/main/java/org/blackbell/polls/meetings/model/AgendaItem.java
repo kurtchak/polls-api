@@ -1,22 +1,36 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.util.Map;
+import javax.persistence.*;
+import java.util.List;
 
 /**
  * Created by Ján Korčák on 19.2.2017.
  * email: korcak@esten.sk
  */
+@Entity
 public class AgendaItem {
     @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    private Integer order;
+    @Column(unique = true)
+    private String ref;
     private String name;
 
-    private Map<Integer, Poll> polls;
+    @ManyToOne
+    @JoinColumn(name = "meeting_id")
+    private Meeting meeting;
 
-    private Map<String, AgendaItemAttachment> attachments;
+    @JsonIgnore
+    @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
+    private List<Poll> polls;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
+    private List<AgendaItemAttachment> attachments;
 
     public long getId() {
         return id;
@@ -26,12 +40,12 @@ public class AgendaItem {
         this.id = id;
     }
 
-    public Integer getOrder() {
-        return order;
+    public String getRef() {
+        return ref;
     }
 
-    public void setOrder(Integer order) {
-        this.order = order;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -42,19 +56,27 @@ public class AgendaItem {
         this.name = name;
     }
 
-    public Map<Integer, Poll> getPolls() {
+    public Meeting getMeeting() {
+        return meeting;
+    }
+
+    public void setMeeting(Meeting meeting) {
+        this.meeting = meeting;
+    }
+
+    public List<Poll> getPolls() {
         return polls;
     }
 
-    public void setPolls(Map<Integer, Poll> polls) {
+    public void setPolls(List<Poll> polls) {
         this.polls = polls;
     }
 
-    public Map<String, AgendaItemAttachment> getAttachments() {
+    public List<AgendaItemAttachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(Map<String, AgendaItemAttachment> attachments) {
+    public void setAttachments(List<AgendaItemAttachment> attachments) {
         this.attachments = attachments;
     }
 }

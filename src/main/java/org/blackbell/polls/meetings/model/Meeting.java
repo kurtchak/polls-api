@@ -2,27 +2,45 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.io.Serializable;
+import javax.persistence.*;
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
+@Entity
+@NamedNativeQueries({
+        @NamedNativeQuery(name = "findAll", query = "select o from Meeting o"),
+        @NamedNativeQuery(name = "findByCity", query = "select o from Meeting o WHERE o.city = :city"),
+        @NamedNativeQuery(name = "findByCityAndSeason", query = "select o from Meeting o WHERE o.city = :city and o.season = :season")
+})
 public class Meeting {
     @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    private int order;
+    @Column(unique = true)
+    private String ref;
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "season_id")
+    private Season season;
+
+    @Temporal(TemporalType.DATE)
     private Date date;
 
-    private Agenda agenda;
+    @JsonIgnore
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
+    private List<AgendaItem> agendaItems;
 
-    private Map<Integer, MeetingAttachment> attachments;
+    @JsonIgnore
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
+    private List<MeetingAttachment> attachments;
 
-    public Serializable getId() {
+    public long getId() {
         return id;
     }
 
@@ -30,12 +48,12 @@ public class Meeting {
         this.id = id;
     }
 
-    public int getOrder() {
-        return order;
+    public String getRef() {
+        return ref;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -46,6 +64,14 @@ public class Meeting {
         this.name = name;
     }
 
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason(Season season) {
+        this.season = season;
+    }
+
     public Date getDate() {
         return date;
     }
@@ -54,19 +80,19 @@ public class Meeting {
         this.date = date;
     }
 
-    public Agenda getAgenda() {
-        return agenda;
+    public List<AgendaItem> getAgendaItems() {
+        return agendaItems;
     }
 
-    public void setAgenda(Agenda agenda) {
-        this.agenda = agenda;
+    public void setAgendaItems(List<AgendaItem> agendaItems) {
+        this.agendaItems = agendaItems;
     }
 
-    public Map<Integer, MeetingAttachment> getAttachments() {
+    public List<MeetingAttachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(Map<Integer, MeetingAttachment> attachments) {
+    public void setAttachments(List<MeetingAttachment> attachments) {
         this.attachments = attachments;
     }
 }

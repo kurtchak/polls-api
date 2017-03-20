@@ -2,21 +2,35 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import javax.persistence.*;
+
 /**
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
+@Entity
 public class MeetingAttachment {
     @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    private int order;
+    @Column(unique = true)
+    private String ref;
     private String name;
     private String source;
 
-    public MeetingAttachment(String name, int order, String source) {
-        this.order = order;
+    @ManyToOne
+    @JoinColumn(name = "meeting_id")
+    private Meeting meeting;
+
+    public MeetingAttachment() {
+    }
+
+    public MeetingAttachment(String name, Meeting meeting, String ref, String source) {
+        this.ref = ref;
         this.name = name;
         this.source = source;
+        this.meeting = meeting;
     }
 
     public long getId() {
@@ -27,12 +41,12 @@ public class MeetingAttachment {
         this.id = id;
     }
 
-    public int getOrder() {
-        return order;
+    public String getRef() {
+        return ref;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -49,5 +63,13 @@ public class MeetingAttachment {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public Meeting getMeeting() {
+        return meeting;
+    }
+
+    public void setMeeting(Meeting meeting) {
+        this.meeting = meeting;
     }
 }

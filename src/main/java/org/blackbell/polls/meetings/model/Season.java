@@ -2,20 +2,35 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.Map;
+import javax.persistence.*;
+import java.util.List;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
+@Entity
 public class Season {
     @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+    @Column(unique = true)
+    private String ref;
     private String name;
 
-    private Map<Integer, Meeting> meetings;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "town_id")
+    private Town town;
 
-    private Map<Integer, CouncilMember> members;
+    @JsonIgnore
+    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
+    private List<Meeting> meetings;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
+    private List<CouncilMember> members;
 
     public long getId() {
         return id;
@@ -23,6 +38,14 @@ public class Season {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -33,19 +56,27 @@ public class Season {
         this.name = name;
     }
 
-    public Map<Integer, Meeting> getMeetings() {
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
+    }
+
+    public List<Meeting> getMeetings() {
         return meetings;
     }
 
-    public void setMeetings(Map<Integer, Meeting> meeting) {
-        this.meetings = meeting;
+    public void setMeetings(List<Meeting> meetings) {
+        this.meetings = meetings;
     }
 
-    public Map<Integer, CouncilMember> getMembers() {
+    public List<CouncilMember> getMembers() {
         return members;
     }
 
-    public void setMembers(Map<Integer, CouncilMember> members) {
+    public void setMembers(List<CouncilMember> members) {
         this.members = members;
     }
 }

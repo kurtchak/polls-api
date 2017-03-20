@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE")
     }
 }
 
@@ -22,10 +22,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.boot:spring-boot-starter")
-    compile("org.springframework:spring-web")
-    compile("com.fasterxml.jackson.core:jackson-databind")
-    testCompile('org.springframework.boot:spring-boot-starter-test')
+    compile("org.springframework.boot:spring-boot-starter-web:1.5.2.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa:1.5.2.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter:1.5.2.RELEASE")
+    compile("org.springframework:spring-web:4.3.7.RELEASE")
+    compile("org.postgresql:postgresql:9.4.1212")
+    compile("com.mchange:c3p0:0.9.5.2")
+    compile("com.fasterxml.jackson.core:jackson-databind:2.8.7")
+    testCompile('org.springframework.boot:spring-boot-starter-test:1.5.2.RELEASE')
 }
 

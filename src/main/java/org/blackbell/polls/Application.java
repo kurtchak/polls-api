@@ -6,7 +6,6 @@ package org.blackbell.polls;
  */
 
 import org.blackbell.polls.api.MeetingsResponse;
-import org.blackbell.polls.context.ApplicationContext;
 import org.blackbell.polls.meetings.dto.*;
 import org.blackbell.polls.meetings.model.*;
 import org.slf4j.Logger;
@@ -18,32 +17,32 @@ import org.springframework.web.client.RestTemplate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @SpringBootApplication
 public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
+
     public static final String GET_TOWN_COUNCIL_DATA_URL = "https://mesto-{city}.digitalnemesto.sk/DmApi/GetDZZasadnutie/mz/mesto-{city}";
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
 
-    private static Meeting parseMeeting(Season season, int order, MeetingDTO meetingDTO) {
+    private static Meeting parseMeeting(Season season, String ref, MeetingDTO meetingDTO) {
         try {
             Meeting meeting = new Meeting();
-            meeting.setOrder(order);
+            meeting.setRef(ref);
             meeting.setName(meetingDTO.getName());
             meeting.setDate(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(meetingDTO.getDate().substring(0,19)));
+            meeting.setSeason(season);
             if (meetingDTO.getChildren() != null) {
                 for (MeetingComponentDTO dto : meetingDTO.getChildren()) {
                     if (AgendaDTO.class.equals(dto.getClass())) {
-                        meeting.setAgenda(parseAgenda(season, (AgendaDTO) dto));
+                        meeting.setAgendaItems(parseAgenda(season, meeting, (AgendaDTO) dto));
                     } else if (AttachmentsDTO.class.equals(dto.getClass())) {
-                        meeting.setAttachments(parseMeetingAttachmens(season, (AttachmentsDTO) dto));
+                        meeting.setAttachments(parseMeetingAttachmens(season, meeting, (AttachmentsDTO) dto));
                     } else {
                         log.warn("parseMeeting: Unknown meeting component class: class[" + (dto != null ? dto.getClass() : "unknown") + "]");
                     }
@@ -56,131 +55,136 @@ public class Application {
         }
     }
 
-    private static Map<Integer, MeetingAttachment> parseMeetingAttachmens(Season season, AttachmentsDTO attachmentsDTO) {
-        Map<Integer, MeetingAttachment> attachments = new HashMap<>();
-        int order = 1;
+    private static List<MeetingAttachment> parseMeetingAttachmens(Season season, Meeting meeting, AttachmentsDTO attachmentsDTO) {
+        List<MeetingAttachment> attachments = new ArrayList<>();
         for (AttachmentDTO attDTO : attachmentsDTO.getAttachmentDTOs()) {
-            attachments.put(order, new MeetingAttachment(attDTO.getName(), order, attDTO.getSource()));
-            order++;
+            String ref = generateUniqueKeyReference();
+            attachments.add(new MeetingAttachment(attDTO.getName(), meeting, ref, attDTO.getSource()));
         }
         return attachments;
     }
 
-    private static Agenda parseAgenda(Season season, AgendaDTO agendaDTO) {
-        Agenda agenda = new Agenda();
-        Map<Integer, AgendaItem> items = new HashMap<>();
-        int order = 1;
+    private static List<AgendaItem> parseAgenda(Season season, Meeting meeting, AgendaDTO agendaDTO) {
+        List<AgendaItem> items = new ArrayList<>();
         for (AgendaItemDTO itemDTO : agendaDTO.getAgendaItemDTOs()) {
-            items.put(order, parseAgendaItem(season, order, itemDTO));
-            order++;
+            String ref = generateUniqueKeyReference();
+            items.add(parseAgendaItem(season, meeting, ref, itemDTO));
         }
-        agenda.setItems(items);
-        return agenda;
+        return items;
     }
 
-    private static AgendaItem parseAgendaItem(Season season, int order, AgendaItemDTO itemDTO) {
+    private static AgendaItem parseAgendaItem(Season season, Meeting meeting, String ref, AgendaItemDTO itemDTO) {
         AgendaItem item = new AgendaItem();
         item.setName(itemDTO.getName());
-        item.setOrder(order);
+        item.setRef(ref);
+        item.setMeeting(meeting);
         for (AgendaItemComponentDTO componentDTO : itemDTO.getChildren()) {
             if (PollsDTO.class.equals(componentDTO.getClass())) {
-                item.setPolls(parsePolls(season, (PollsDTO) componentDTO));
+                item.setPolls(parsePolls(season, item, (PollsDTO) componentDTO));
             } else if (ProspectsDTO.class.equals(componentDTO.getClass())) {
-                item.setAttachments(parseAgendaItemAttachments(season, (ProspectsDTO) componentDTO));
+                item.setAttachments(parseAgendaItemAttachments(season, item, (ProspectsDTO) componentDTO));
             } else {
-                log.warn("parseAgendaItem: Unknown agenda item component class: class[" + (itemDTO != null ? itemDTO.getClass() : "unknown") + "]");
+                log.warn("parseAgendaItem: Unknown agendaItems item component class: class[" + (itemDTO != null ? itemDTO.getClass() : "unknown") + "]");
             }
         }
         return item;
     }
 
-    private static Map<String, AgendaItemAttachment> parseAgendaItemAttachments(Season season, ProspectsDTO prospectsDTO) {
-        Map<String, AgendaItemAttachment> agendaItemAttachments = new HashMap<>();
+    private static List<AgendaItemAttachment> parseAgendaItemAttachments(Season season, AgendaItem item, ProspectsDTO prospectsDTO) {
+        List<AgendaItemAttachment> agendaItemAttachments = new ArrayList<>();
         if (prospectsDTO.getProspectDTOs() != null) {
             for (ProspectDTO prospectDTO : prospectsDTO.getProspectDTOs()) {
-                agendaItemAttachments.put(prospectDTO.getName(), new AgendaItemAttachment(prospectDTO.getName(), prospectDTO.getSource()));
+                agendaItemAttachments.add(new AgendaItemAttachment(prospectDTO.getName(), item, prospectDTO.getSource()));
             }
         }
         return agendaItemAttachments;
     }
 
-    private static Map<Integer, Poll> parsePolls(Season season, PollsDTO pollsDTO) {
-        Map<Integer, Poll> polls = new HashMap<>();
+    private static List<Poll> parsePolls(Season season, AgendaItem item, PollsDTO pollsDTO) {
+        List<Poll> polls = new ArrayList<>();
         if (pollsDTO.getPollDTOs() != null) {
-            int order = 1;
             for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
-                polls.put(order, parsePoll(season, order, pollDTO));
-                order++;
+                String ref = generateUniqueKeyReference();
+                polls.add(parsePoll(season, item, ref, pollDTO));
             }
         }
         return polls;
     }
 
-    private static Poll parsePoll(Season season, int order, PollDTO pollDTO) {
+    private static Poll parsePoll(Season season, AgendaItem item, String ref, PollDTO pollDTO) {
         Poll poll = new Poll();
         poll.setName(pollDTO.getName());
-        poll.setOrder("" + System.nanoTime());
+        poll.setRef(ref);
+        poll.setAgendaItem(item);
         if (pollDTO.getPollChoiceDTOs() != null) {
+            List<Vote> votes = new ArrayList<>();
             for (PollChoiceDTO choice : pollDTO.getPollChoiceDTOs()) {
-                switch (choice.getName()) {
-                    case "Za": poll.setVotedFor(parseMembers(season, choice.getMembers())); break;
-                    case "Proti": poll.setVotedAgainst(parseMembers(season, choice.getMembers())); break;
-                    case "Nehlasoval": poll.setNotVoted(parseMembers(season, choice.getMembers())); break;
-                    case "Zdržal sa": poll.setNotVoted(parseMembers(season, choice.getMembers())); break;
-                    case "Chýbal na hlasovaní": poll.setAbsent(parseMembers(season, choice.getMembers())); break;
-                }
+                votes.addAll(parseMembers(season, poll, choice, choice.getMembers()));
+//                switch (choice.getName()) {
+//                    case "Za": poll.setVotedFor(parseMembers(season, poll, choice, choice.getMembers())); break;
+//                    case "Proti": poll.setVotedAgainst(parseMembers(season, poll, choice, choice.getMembers())); break;
+//                    case "Nehlasoval": poll.setNotVoted(parseMembers(season, poll, choice, choice.getMembers())); break;
+//                    case "Zdržal sa": poll.setNotVoted(parseMembers(season, poll, choice, choice.getMembers())); break;
+//                    case "Chýbal na hlasovaní": poll.setAbsent(parseMembers(season, poll, choice, choice.getMembers())); break;
+//                }
             }
+            poll.setVotes(votes);
         }
         return poll;
     }
 
-    private static List<CouncilMember> parseMembers(Season season, List<CouncilMemberDTO> membersDTO) {
-        List<CouncilMember> members = new ArrayList<>();
-        int order = 1;
+    private static String generateUniqueKeyReference() {
+        return "" + System.nanoTime();
+    }
+
+    private static List<Vote> parseMembers(Season season, Poll poll, PollChoiceDTO choice, List<CouncilMemberDTO> membersDTO) {
+        List<Vote> votes = new ArrayList<>();
         for (CouncilMemberDTO memberDTO : membersDTO) {
             CouncilMember cm = new CouncilMember();
             cm.setName(memberDTO.getName());
-            cm.setOrder(order);
+            String ref = generateUniqueKeyReference();
+            cm.setRef(ref);
             if (season.getMembers() == null) {
-                season.setMembers(new HashMap<>());
+                season.setMembers(new ArrayList<>());
             }
-            if (!season.getMembers().containsKey(order)) {
-                season.getMembers().put(order, cm);
+            if (!season.getMembers().contains(cm)) {
+                season.getMembers().add(cm);
             }
-            order++;
-            members.add(cm);
+            Vote vote = new Vote();
+            vote.setPoll(poll);
+            vote.setCouncilMember(cm);
+            switch (choice.getName()) {
+                case "votedFor": vote.setVoted(VoteEnum.VOTED_FOR); break;
+                case "votedAgainst": vote.setVoted(VoteEnum.VOTED_AGAINST); break;
+                case "abstain": vote.setVoted(VoteEnum.NOT_VOTED); break;
+                case "notVoted": vote.setVoted(VoteEnum.ABSTAIN); break;
+                case "absentMembers": vote.setVoted(VoteEnum.ABSENT); break;
+            }
         }
-        return members;
+        return votes;
     }
 
-    private static Town loadTownData(String city) {
+    public static Town loadTownData(String city) {
         String url = GET_TOWN_COUNCIL_DATA_URL.replace("{city}", city);
         MeetingsResponse meetingsResponse = new RestTemplate().getForObject(url, MeetingsResponse.class);
         Town town = new Town();
+        town.setRef(city);
         town.setName(city);
-        Map<String, Season> seasonMap = new HashMap<>();
+        List<Season> seasonMap = new ArrayList<>();
         for (SeasonDTO seasonDTO : meetingsResponse.getSeasonDTOs()) {
             Season season = new Season();
             season.setName(seasonDTO.getName());
-            Map<Integer, Meeting> meetingsMap = new HashMap<>();
-            int order = 1;
+            season.setTown(town);
+            List<Meeting> meetingsMap = new ArrayList<>();
             for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
-                meetingsMap.put(order, parseMeeting(season, order, meetingDTO));
-                order++;
+                String ref = generateUniqueKeyReference();
+                meetingsMap.add(parseMeeting(season, ref, meetingDTO));
             }
             season.setMeetings(meetingsMap);
-            seasonMap.put(seasonDTO.getName(), season);
+            seasonMap.add(season);
         }
         town.setSeasons(seasonMap);
         return town;
     }
 
-    public static void checkLoaded(String city) {
-        ApplicationContext context = ApplicationContext.getInstance();
-        if (!context.getTownsMap().containsKey(city)) {
-//            List<Meeting> meetings = new MeetingServiceImpl().find(city);
-            Town town = Application.loadTownData(city);
-            ApplicationContext.getInstance().getTownsMap().put(city, town);
-        }
-    }
 }

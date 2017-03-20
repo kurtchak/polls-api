@@ -2,16 +2,31 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import javax.persistence.*;
+import java.util.List;
+
 /**
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
+@Entity
 public class CouncilMember {
     @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    private int order;
+    @Column(unique = true)
+    private String ref;
     private String name;
-//    private List<Season> seasonsActive;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "council_member_id")
+    private Season season;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "councilMember")
+    private List<Vote> votes;
 
     public long getId() {
         return id;
@@ -21,12 +36,12 @@ public class CouncilMember {
         this.id = id;
     }
 
-    public int getOrder() {
-        return order;
+    public String getRef() {
+        return ref;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -37,13 +52,21 @@ public class CouncilMember {
         this.name = name;
     }
 
-//    public List<Season> getSeasonsActive() {
-//        return seasonsActive;
-//    }
-//
-//    public void setSeasonsActive(List<Season> seasonsActive) {
-//        this.seasonsActive = seasonsActive;
-//    }
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason(Season season) {
+        this.season = season;
+    }
+
+    public List<Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(List<Vote> votes) {
+        this.votes = votes;
+    }
 
     @Override
     public boolean equals(Object o) {

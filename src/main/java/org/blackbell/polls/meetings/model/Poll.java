@@ -1,21 +1,34 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
 import java.util.List;
 
 /**
  * Created by Ján Korčák on 22.2.2017.
  * email: korcak@esten.sk
  */
+@Entity
+@NamedNativeQueries({
+    @NamedNativeQuery(name = "Poll.findPolls", query = "select p from Poll p where p.agendaItem.meeting.town.name = :town")
+})
 public class Poll {
+    @JsonIgnore
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    private String order;
+    @Column(unique = true)
+    private String ref;
     private String name;
 
-    private List<CouncilMember> votedFor;
-    private List<CouncilMember> votedAgainst;
-    private List<CouncilMember> notVoted;
-    private List<CouncilMember> abstain;
-    private List<CouncilMember> absent;
+    @ManyToOne
+    @JoinColumn(name = "agenda_item_id")
+    private AgendaItem agendaItem;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    private List<Vote> votes;
 
     public long getId() {
         return id;
@@ -25,12 +38,12 @@ public class Poll {
         this.id = id;
     }
 
-    public String getOrder() {
-        return order;
+    public String getRef() {
+        return ref;
     }
 
-    public void setOrder(String order) {
-        this.order = order;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
     public String getName() {
@@ -41,43 +54,19 @@ public class Poll {
         this.name = name;
     }
 
-    public List<CouncilMember> getVotedFor() {
-        return votedFor;
+    public AgendaItem getAgendaItem() {
+        return agendaItem;
     }
 
-    public void setVotedFor(List<CouncilMember> votedFor) {
-        this.votedFor = votedFor;
+    public void setAgendaItem(AgendaItem agendaItem) {
+        this.agendaItem = agendaItem;
     }
 
-    public List<CouncilMember> getVotedAgainst() {
-        return votedAgainst;
+    public List<Vote> getVotes() {
+        return votes;
     }
 
-    public void setVotedAgainst(List<CouncilMember> votedAgainst) {
-        this.votedAgainst = votedAgainst;
-    }
-
-    public List<CouncilMember> getNotVoted() {
-        return notVoted;
-    }
-
-    public void setNotVoted(List<CouncilMember> notVoted) {
-        this.notVoted = notVoted;
-    }
-
-    public List<CouncilMember> getAbstain() {
-        return abstain;
-    }
-
-    public void setAbstain(List<CouncilMember> abstain) {
-        this.abstain = abstain;
-    }
-
-    public List<CouncilMember> getAbsent() {
-        return absent;
-    }
-
-    public void setAbsent(List<CouncilMember> absent) {
-        this.absent = absent;
+    public void setVotes(List<Vote> votes) {
+        this.votes = votes;
     }
 }
