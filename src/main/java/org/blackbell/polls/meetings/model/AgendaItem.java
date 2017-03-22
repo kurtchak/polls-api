@@ -2,6 +2,8 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
 import java.util.List;
@@ -18,8 +20,10 @@ public class AgendaItem {
     private long id;
     @Column(unique = true)
     private String ref;
+    @JsonView(value = {Views.Polls.class, Views.Poll.class})
     private String name;
 
+    @JsonView(value = Views.Poll.class)
     @ManyToOne
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
@@ -28,7 +32,7 @@ public class AgendaItem {
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private List<Poll> polls;
 
-    @JsonIgnore
+    @JsonView(value = Views.Poll.class)
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private List<AgendaItemAttachment> attachments;
 

@@ -16,4 +16,7 @@ import java.util.List;
 public interface PollRepository extends JpaRepository<Poll, Long> {
     @Query(value = "select p from Poll p where p.agendaItem.meeting.season.town.name = :town")
     List<Poll> getByTown(@Param(value = "town") String town);
+
+    @Query(value = "select p from Poll p where p.ref = :ref")
+    Poll getByRef(@Param(value = "ref") String pollRef);
 }

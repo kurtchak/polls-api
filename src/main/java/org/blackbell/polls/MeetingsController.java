@@ -5,11 +5,12 @@ package org.blackbell.polls;
  * email: korcak@esten.sk
  */
 
+import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.data.repositories.CouncilMemberRepository;
 import org.blackbell.polls.data.repositories.PollRepository;
 import org.blackbell.polls.data.repositories.TownRepository;
-import org.blackbell.polls.meetings.model.Poll;
-import org.blackbell.polls.meetings.model.Season;
-import org.blackbell.polls.meetings.model.Town;
+import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +31,15 @@ public class MeetingsController {
     @Autowired
     private PollRepository pollRepository;
 
-    public void checkLoaded(String city) {
+    @Autowired
+    private CouncilMemberRepository councilMemberRepository;
+
+    public void checkLoaded(String city, String institution) throws Exception {
 //        ApplicationContext context = ApplicationContext.getInstance();
         Town town = townRepository.findByRef(city);
         if (town == null) {
             log.info("No town with name `"+city+"`. Loading from external WebService...");
-            town = Application.loadTownData(city);
+            town = Application.loadTownData(city, institution);
             if (town != null) {
                 List<Season> seasons = town.getSeasons();
                 log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
@@ -103,13 +107,55 @@ public class MeetingsController {
 //        return ApplicationContext.getInstance().getMembers(city, season);
 //    }
 
+    @JsonView(value = Views.Polls.class)
     @RequestMapping("/{city}/{institution}")
     public Collection<Poll> polls(@PathVariable(value="city") String city,
-                                  @PathVariable(value="institution") String institution) {
-        checkLoaded(city);
+                                  @PathVariable(value="institution") String institution) throws Exception {
+        checkLoaded(city, institution);
         List<Poll> polls = pollRepository.getByTown(city);
         log.info((polls != null ? polls.size() : 0) + " found polls");
         return polls;
+//        return ApplicationContext.getInstance().getPolls(city, institution);
+    }
+
+    @JsonView(value = Views.Poll.class)
+    @RequestMapping("/{city}/{institution}/{poll_ref}")
+    public Poll poll(@PathVariable(value="city") String city,
+                     @PathVariable(value="institution") String institution,
+                     @PathVariable(value="poll_ref") String pollRef) throws Exception {
+        checkLoaded(city, institution);
+        Poll poll = pollRepository.getByRef(pollRef);
+        if (poll != null) {
+            for (Vote vote : poll.getVotes()) {
+                switch (vote.getVoted()) {
+                    case VOTED_FOR:
+                        poll.setVotedFor(poll.getVotedFor() + 1);
+                        break;
+                    case VOTED_AGAINST:
+                        poll.setVotedAgainst(poll.getVotedAgainst() + 1);
+                        break;
+                    case NOT_VOTED:
+                        poll.setNotVoted(poll.getNotVoted() + 1);
+                        break;
+                    case ABSTAIN:
+                        poll.setAbstain(poll.getAbstain() + 1);
+                        break;
+                    case ABSENT:
+                        poll.setAbsent(poll.getAbsent() + 1);
+                        break;
+                    default:
+                        log.info("Unknown vote choice found: " + vote.getVoted());
+                }
+            }
+            long membersCount = councilMemberRepository.count();
+            if (poll.getVotedFor() > membersCount / 2) {
+                poll.setResult(VoteResult.PASSED);
+            } else {
+                poll.setResult(VoteResult.REJECTED);
+            }
+        }
+        log.info("poll: " + poll);
+        return poll;
 //        return ApplicationContext.getInstance().getPolls(city, institution);
     }
 

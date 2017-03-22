@@ -1,6 +1,8 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -21,14 +23,18 @@ public class Meeting {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+    @JsonView(value = Views.Poll.class)
     @Column(unique = true)
     private String ref;
+    @JsonView(value = Views.Poll.class)
     private String name;
 
+    @JsonView(value = Views.Poll.class)
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
 
+    @JsonView(value = Views.Poll.class)
     @Temporal(TemporalType.DATE)
     private Date date;
 

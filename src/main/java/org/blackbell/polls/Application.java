@@ -24,7 +24,7 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    public static final String GET_TOWN_COUNCIL_DATA_URL = "https://mesto-{city}.digitalnemesto.sk/DmApi/GetDZZasadnutie/mz/mesto-{city}";
+    public static final String GET_TOWN_COUNCIL_DATA_URL = "https://mesto-{city}.digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}";
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -159,21 +159,28 @@ public class Application {
                 case "abstain": vote.setVoted(VoteEnum.NOT_VOTED); break;
                 case "notVoted": vote.setVoted(VoteEnum.ABSTAIN); break;
                 case "absentMembers": vote.setVoted(VoteEnum.ABSENT); break;
+                default:
+                    vote.setVoted(VoteEnum.NOT_VOTED);
             }
+            votes.add(vote);
         }
         return votes;
     }
 
-    public static Town loadTownData(String city) {
-        String url = GET_TOWN_COUNCIL_DATA_URL.replace("{city}", city);
+    public static Town loadTownData(String city, String institution) throws Exception {
+        String url = GET_TOWN_COUNCIL_DATA_URL.replace("{city}", city).replace("{institution}", institution);
         MeetingsResponse meetingsResponse = new RestTemplate().getForObject(url, MeetingsResponse.class);
+        if (meetingsResponse == null) {
+            throw new Exception("No town loaded");
+        }
         Town town = new Town();
         town.setRef(city);
         town.setName(city);
-        List<Season> seasonMap = new ArrayList<>();
+        List<Season> seasons = new ArrayList<>();
         for (SeasonDTO seasonDTO : meetingsResponse.getSeasonDTOs()) {
             Season season = new Season();
             season.setName(seasonDTO.getName());
+            season.setRef(seasonDTO.getName());
             season.setTown(town);
             List<Meeting> meetingsMap = new ArrayList<>();
             for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
@@ -181,9 +188,9 @@ public class Application {
                 meetingsMap.add(parseMeeting(season, ref, meetingDTO));
             }
             season.setMeetings(meetingsMap);
-            seasonMap.add(season);
+            seasons.add(season);
         }
-        town.setSeasons(seasonMap);
+        town.setSeasons(seasons);
         return town;
     }
 
