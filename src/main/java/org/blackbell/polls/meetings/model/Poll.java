@@ -12,22 +12,19 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Entity
-@NamedNativeQueries({
-    @NamedNativeQuery(name = "Poll.findPolls", query = "select p from Poll p where p.agendaItem.meeting.town.name = :town")
-})
 public class Poll {
     @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = Views.Polls.class)
+    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class})
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class})
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     @ManyToOne
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;

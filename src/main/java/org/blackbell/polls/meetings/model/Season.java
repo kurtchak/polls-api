@@ -20,7 +20,7 @@ public class Season {
     @JsonView(value = Views.Poll.class)
     @Column(unique = true)
     private String ref;
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
     @JsonIgnore

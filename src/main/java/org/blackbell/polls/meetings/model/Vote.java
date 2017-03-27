@@ -1,6 +1,5 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
@@ -23,7 +22,7 @@ public class Vote {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonIgnore
+    @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
     @JoinColumn(name = "poll_id")
     private Poll poll;
@@ -33,7 +32,7 @@ public class Vote {
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted")
     private VoteEnum voted;

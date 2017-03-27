@@ -16,4 +16,10 @@ public class Views {
 
     public static class Meeting {
     }
+
+    public static class CouncilMembers {
+    }
+
+    public static class CouncilMember {
+    }
 }

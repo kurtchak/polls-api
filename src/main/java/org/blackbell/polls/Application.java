@@ -17,11 +17,14 @@ import org.springframework.web.client.RestTemplate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootApplication
 public class Application {
 
+    private static Map<String, CouncilMember> members = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static final String GET_TOWN_COUNCIL_DATA_URL = "https://mesto-{city}.digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}";
@@ -140,31 +143,81 @@ public class Application {
     private static List<Vote> parseMembers(Season season, Poll poll, PollChoiceDTO choice, List<CouncilMemberDTO> membersDTO) {
         List<Vote> votes = new ArrayList<>();
         for (CouncilMemberDTO memberDTO : membersDTO) {
-            CouncilMember cm = new CouncilMember();
-            cm.setName(memberDTO.getName());
-            String ref = generateUniqueKeyReference();
-            cm.setRef(ref);
-            if (season.getMembers() == null) {
-                season.setMembers(new ArrayList<>());
-            }
-            if (!season.getMembers().contains(cm)) {
-                season.getMembers().add(cm);
-            }
+            CouncilMember cm = findOrIntroduceCouncilMember(season, memberDTO);
             Vote vote = new Vote();
             vote.setPoll(poll);
             vote.setCouncilMember(cm);
             switch (choice.getName()) {
-                case "votedFor": vote.setVoted(VoteEnum.VOTED_FOR); break;
-                case "votedAgainst": vote.setVoted(VoteEnum.VOTED_AGAINST); break;
-                case "abstain": vote.setVoted(VoteEnum.NOT_VOTED); break;
-                case "notVoted": vote.setVoted(VoteEnum.ABSTAIN); break;
-                case "absentMembers": vote.setVoted(VoteEnum.ABSENT); break;
+                case "Za": vote.setVoted(VoteEnum.VOTED_FOR); break;
+                case "Proti": vote.setVoted(VoteEnum.VOTED_AGAINST); break;
+                case "Zdržal sa": vote.setVoted(VoteEnum.NOT_VOTED); break;
+                case "Nehlasoval": vote.setVoted(VoteEnum.ABSTAIN); break;
+                case "Chýbal na hlasovaní": vote.setVoted(VoteEnum.ABSENT); break;
                 default:
                     vote.setVoted(VoteEnum.NOT_VOTED);
             }
             votes.add(vote);
         }
         return votes;
+    }
+
+    private static CouncilMember findOrIntroduceCouncilMember(Season season, CouncilMemberDTO memberDTO) {
+        CouncilMember cm = null;
+        if (members.containsKey(memberDTO.getName())) {
+            cm = members.get(memberDTO.getName());
+        } else {
+            cm = introduceCouncilMember(season, memberDTO);
+            members.put(cm.getName(), cm);
+        }
+        return cm;
+    }
+
+    private static CouncilMember introduceCouncilMember(Season season, CouncilMemberDTO memberDTO) {
+        CouncilMember cm;
+        cm = new CouncilMember();
+        cm.setName(memberDTO.getName());
+        cm.setRef(generateUniqueKeyReference());
+        switch (cm.getName()) {
+            case "Cvengroš Peter, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938822.jpg"); break;
+            case "Dupkala Rudolf, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938837.jpg"); break;
+            case "Komanický Mikuláš, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939026.jpg"); break;
+            case "Langová Janette, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939040.jpg"); break;
+            case "Malaga Ľudovít, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939044.jpg"); break;
+            case "Mrouahová Daniela, MUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939053.jpg"); break;
+            case "Pucher René, JUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939056.jpg"); break;
+            case "Ahlers Ján, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938808.jpg"); break;
+            case "Antolová Marcela, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938985.jpg"); break;
+            case "Drobňáková Valéria, ": cm.setPicture("/portals_pictures/i_003938/i_3938825.jpg"); break;
+            case "Drutarovský Richard, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938834.jpg"); break;
+            case "Ďurišin Martin, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938961.jpg"); break;
+            case "Fedorčíková Renáta, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938962.jpg"); break;
+            case "Hermanovský Štefan, ": cm.setPicture("/portals_pictures/i_003938/i_3938976.jpg"); break;
+            case "Janko Vasiľ, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938991.jpg"); break;
+            case "Kollárová Marta, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939019.jpg"); break;
+            case "Mochnacký Rastislav, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939048.jpg"); break;
+            case "Szidor Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939059.jpg"); break;
+            case "Kutajová Jaroslava, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939032.jpg"); break;
+            case "Andraščíková Štefánia, doc. PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938813.jpg"); break;
+            case "Benko Miroslav, PaedDr.": cm.setPicture("/portals_pictures/i_003938/i_3938819.jpg"); break;
+            case "Hudáč Juraj, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938986.jpg"); break;
+            case "Lipka Martin, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939043.jpg"); break;
+            case "Matejka Martin, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939047.jpg"); break;
+            case "Tkáčová Zuzana, ": cm.setPicture("/portals_pictures/i_003939/i_3939064.jpg"); break;
+            case "Bednárová Zuzana, RNDr.": cm.setPicture("/portals_pictures/i_003938/i_3938814.jpg"); break;
+            case "Ďurčanská Katarína, JUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938868.jpg"); break;
+            case "Ferenc Stanislav, Mgr.": cm.setPicture("/portals_pictures/i_003938/i_3938969.jpg"); break;
+            case "Kahanec Stanislav, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938994.jpg"); break;
+            case "Kužma Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939037.jpg"); break;
+            case "Krajňák Peter, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939027.jpg"); break;
+        }
+        cm.setSeason(season);
+        if (season.getMembers() == null) {
+            season.setMembers(new ArrayList<>());
+        }
+        if (!season.getMembers().contains(cm)) {
+            season.getMembers().add(cm);
+        }
+        return cm;
     }
 
     public static Town loadTownData(String city, String institution) throws Exception {

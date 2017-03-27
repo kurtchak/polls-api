@@ -100,12 +100,24 @@ public class MeetingsController {
 //        return ApplicationContext.getInstance().getMeetingAttachment(city, season, order, item);
 //    }
 //
-//    @RequestMapping("/{city}/{season}/members")
-//    public Collection<CouncilMember> members(@PathVariable(value="city") String city,
-//                                             @PathVariable(value="season") String season) {
-//        checkLoaded(city);
-//        return ApplicationContext.getInstance().getMembers(city, season);
-//    }
+    @JsonView(value = Views.CouncilMember.class)
+    @RequestMapping("/{city}/{institution}/member/{member_ref}")
+    public CouncilMember member(@PathVariable(value="city") String city,
+                     @PathVariable(value="institution") String institution,
+                     @PathVariable(value="member_ref") String memberRef) throws Exception {
+        checkLoaded(city, institution);
+        return councilMemberRepository.findByRef(memberRef);
+    }
+
+    @JsonView(value = Views.CouncilMembers.class)
+    @RequestMapping("/{city}/{institution}/{season}/members")
+    public Collection<CouncilMember> members(@PathVariable(value="city") String city,
+                                             @PathVariable(value="institution") String institution,
+                                             @PathVariable(value="season") String season) throws Exception {
+        checkLoaded(city, institution);
+        List<CouncilMember> members = councilMemberRepository.getBySeason(season);
+        return members;
+    }
 
     @JsonView(value = Views.Polls.class)
     @RequestMapping("/{city}/{institution}")

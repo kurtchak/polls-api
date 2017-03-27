@@ -1,6 +1,8 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
 import java.util.List;
@@ -16,15 +18,19 @@ public class CouncilMember {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     @Column(unique = true)
+    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class})
     private String ref;
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String name;
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    private String picture;
 
-    @JsonIgnore
+    @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
-    @JoinColumn(name = "council_member_id")
+    @JoinColumn(name = "season_id")
     private Season season;
 
-    @JsonIgnore
+    @JsonView(value = Views.CouncilMember.class)
     @OneToMany(mappedBy = "councilMember")
     private List<Vote> votes;
 
@@ -50,6 +56,14 @@ public class CouncilMember {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPicture() {
+        return picture;
+    }
+
+    public void setPicture(String picture) {
+        this.picture = picture;
     }
 
     public Season getSeason() {

@@ -13,11 +13,6 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Entity
-@NamedNativeQueries({
-        @NamedNativeQuery(name = "findAll", query = "select o from Meeting o"),
-        @NamedNativeQuery(name = "findByCity", query = "select o from Meeting o WHERE o.city = :city"),
-        @NamedNativeQuery(name = "findByCityAndSeason", query = "select o from Meeting o WHERE o.city = :city and o.season = :season")
-})
 public class Meeting {
     @JsonIgnore
     @Id

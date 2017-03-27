@@ -1,7 +1,6 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
@@ -18,9 +17,10 @@ public class AgendaItem {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     @Column(unique = true)
     private String ref;
-    @JsonView(value = {Views.Polls.class, Views.Poll.class})
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
     @JsonView(value = Views.Poll.class)
