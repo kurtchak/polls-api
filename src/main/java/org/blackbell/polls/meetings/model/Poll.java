@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.vote.*;
 
 import javax.persistence.*;
 import java.util.List;
@@ -31,26 +32,23 @@ public class Poll {
 
     @JsonView(value = Views.Poll.class)
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
-    private List<Vote> votes;
+    private List<VoteFor> votesFor;
 
     @JsonView(value = Views.Poll.class)
-    @Transient
-    private int votedFor;
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    private List<VoteAgainst> votesAgainst;
+
     @JsonView(value = Views.Poll.class)
-    @Transient
-    private int votedAgainst;
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    private List<NoVote> noVotes;
+
     @JsonView(value = Views.Poll.class)
-    @Transient
-    private int notVoted;
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    private List<Abstain> abstains;
+
     @JsonView(value = Views.Poll.class)
-    @Transient
-    private int abstain;
-    @JsonView(value = Views.Poll.class)
-    @Transient
-    private int absent;
-    @JsonView(value = Views.Poll.class)
-    @Transient
-    private VoteResult result;
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    private List<Absent> absents;
 
     public long getId() {
         return id;
@@ -84,61 +82,80 @@ public class Poll {
         this.agendaItem = agendaItem;
     }
 
-    public List<Vote> getVotes() {
-        return votes;
+    public List<VoteFor> getVotesFor() {
+        return votesFor;
     }
 
-    public void setVotes(List<Vote> votes) {
-        this.votes = votes;
+    public void setVotesFor(List<VoteFor> votesFor) {
+        this.votesFor = votesFor;
     }
 
+    public List<VoteAgainst> getVotesAgainst() {
+        return votesAgainst;
+    }
+
+    public void setVotesAgainst(List<VoteAgainst> votesAgainst) {
+        this.votesAgainst = votesAgainst;
+    }
+
+    public List<NoVote> getNoVotes() {
+        return noVotes;
+    }
+
+    public void setNoVotes(List<NoVote> noVotes) {
+        this.noVotes = noVotes;
+    }
+
+    public List<Abstain> getAbstains() {
+        return abstains;
+    }
+
+    public void setAbstains(List<Abstain> abstains) {
+        this.abstains = abstains;
+    }
+
+    public List<Absent> getAbsents() {
+        return absents;
+    }
+
+    public void setAbsents(List<Absent> absents) {
+        this.absents = absents;
+    }
+
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public int getVotedFor() {
-        return votedFor;
+        return votesFor != null ? votesFor.size() : 0;
     }
 
-    public void setVotedFor(int votedFor) {
-        this.votedFor = votedFor;
-    }
-
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public int getVotedAgainst() {
-        return votedAgainst;
+        return votesAgainst != null ? votesAgainst.size() : 0;
     }
 
-    public void setVotedAgainst(int votedAgainst) {
-        this.votedAgainst = votedAgainst;
-    }
-
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public int getNotVoted() {
-        return notVoted;
+        return noVotes != null ? noVotes.size() : 0;
     }
 
-    public void setNotVoted(int notVoted) {
-        this.notVoted = notVoted;
-    }
-
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public int getAbstain() {
-        return abstain;
+        return abstains != null ? abstains.size() : 0;
     }
 
-    public void setAbstain(int abstain) {
-        this.abstain = abstain;
-    }
-
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public int getAbsent() {
-        return absent;
+        return absents != null ? absents.size() : 0;
     }
 
-    public void setAbsent(int absent) {
-        this.absent = absent;
-
-    }
-
+    @JsonView(value = Views.Poll.class)
+    @Transient
     public VoteResult getResult() {
-        return result;
-    }
-
-    public void setResult(VoteResult result) {
-        this.result = result;
+        return getVotedFor() > getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
     }
 
 }

@@ -2,12 +2,10 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <addNotNullAssertions enabled="false" />
-    <resourceExtensions />
     <wildcardResourcePatterns />
-    <annotationProcessing>
-      <profile default="true" name="Default" enabled="false">
-        <processorPath useClasspath="true" />
-      </profile>
-    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="polls_main" target="1.8" />
+      <module name="polls_test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

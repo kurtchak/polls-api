@@ -1,7 +1,10 @@
-package org.blackbell.polls.meetings.model;
+package org.blackbell.polls.meetings.model.vote;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.CouncilMember;
+import org.blackbell.polls.meetings.model.VoteChoiceEnum;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import javax.persistence.*;
 
@@ -12,15 +15,11 @@ import javax.persistence.*;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "voted", discriminatorType = DiscriminatorType.STRING)
-public class Vote {
+@DiscriminatorOptions(force = true)
+public abstract class Vote {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-
-    @JsonView(value = Views.CouncilMember.class)
-    @ManyToOne
-    @JoinColumn(name = "poll_id")
-    private Poll poll;
 
     @JsonView(value = Views.Poll.class)
     @ManyToOne(cascade = CascadeType.ALL)
@@ -29,7 +28,7 @@ public class Vote {
 
     @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     @Enumerated(EnumType.STRING)
-    @Column(name = "voted")
+    @Column(name = "voted", insertable = false, updatable = false)
     private VoteChoiceEnum voted;
 
     public long getId() {
@@ -38,14 +37,6 @@ public class Vote {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public Poll getPoll() {
-        return poll;
-    }
-
-    public void setPoll(Poll poll) {
-        this.poll = poll;
     }
 
     public CouncilMember getCouncilMember() {

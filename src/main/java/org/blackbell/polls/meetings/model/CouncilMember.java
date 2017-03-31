@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
 import java.util.List;
@@ -26,7 +27,7 @@ public class CouncilMember {
     private String picture;
 
     @JsonView(value = Views.CouncilMember.class)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id")
     private Season season;
 
