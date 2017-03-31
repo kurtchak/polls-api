@@ -10,13 +10,8 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-//@FilterDefs({
-//        @FilterDef(name = "votedFor", defaultCondition = "voted = 'VOTED_FOR'"),
-//        @FilterDef(name = "votedAgainst", defaultCondition = "voted = 'VOTED_AGAINST'"),
-//        @FilterDef(name = "notVoted", defaultCondition = "voted = 'NOT_VOTED'"),
-//        @FilterDef(name = "abstain", defaultCondition = "voted = 'ABSTAIN'"),
-//        @FilterDef(name = "absent", defaultCondition = "voted = 'ABSENT'")
-//})
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "voted", discriminatorType = DiscriminatorType.STRING)
 public class Vote {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -35,7 +30,7 @@ public class Vote {
     @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted")
-    private VoteEnum voted;
+    private VoteChoiceEnum voted;
 
     public long getId() {
         return id;
@@ -61,11 +56,11 @@ public class Vote {
         this.councilMember = councilMember;
     }
 
-    public VoteEnum getVoted() {
+    public VoteChoiceEnum getVoted() {
         return voted;
     }
 
-    public void setVoted(VoteEnum voted) {
+    public void setVoted(VoteChoiceEnum voted) {
         this.voted = voted;
     }
 }
