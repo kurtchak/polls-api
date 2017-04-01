@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.dto;
+package org.blackbell.polls.meetings.dm.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,22 +6,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Created by Ján Korčák on 18.2.2017.
+ * Created by Ján Korčák on 19.2.2017.
  * email: korcak@esten.sk
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MeetingDTO {
+public class AgendaItemDTO {
+
     @JsonProperty(value = "name")
     private String name;
 
-    @JsonProperty(value = "termin")
-    private String date;
-
     @JsonProperty(value = "children")
-    private List<MeetingComponentDTO> children;
-
-    public MeetingDTO() {
-    }
+    private List<AgendaItemComponentDTO> children;
 
     public String getName() {
         return name;
@@ -31,27 +26,18 @@ public class MeetingDTO {
         this.name = name;
     }
 
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public List<MeetingComponentDTO> getChildren() {
+    public List<AgendaItemComponentDTO> getChildren() {
         return children;
     }
 
-    public void setChildren(List<MeetingComponentDTO> children) {
+    public void setChildren(List<AgendaItemComponentDTO> children) {
         this.children = children;
     }
 
     @Override
     public String toString() {
-        return "Meeting{" +
+        return "AgendaItem{" +
                 "name='" + name + '\'' +
-                ", date='" + date + '\'' +
                 ", children=" + children +
                 '}';
     }

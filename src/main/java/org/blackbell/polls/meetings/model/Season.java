@@ -12,15 +12,15 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Entity
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "ref"})})
 public class Season {
     @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     @JsonView(value = Views.Poll.class)
-    @Column(unique = true)
     private String ref;
-    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
+//    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
     @JsonIgnore

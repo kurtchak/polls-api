@@ -18,10 +18,10 @@ public class Meeting {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Column(unique = true)
     private String ref;
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     private String name;
 
     @JsonView(value = Views.Poll.class)
@@ -29,7 +29,7 @@ public class Meeting {
     @JoinColumn(name = "season_id")
     private Season season;
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Temporal(TemporalType.DATE)
     private Date date;
 

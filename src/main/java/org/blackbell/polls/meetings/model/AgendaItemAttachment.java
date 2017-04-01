@@ -31,7 +31,8 @@ public class AgendaItemAttachment {
     public AgendaItemAttachment() {
     }
 
-    public AgendaItemAttachment(String name, AgendaItem item, String source) {
+    public AgendaItemAttachment(String name, AgendaItem item, String ref, String source) {
+        this.ref = ref;
         this.name = name;
         this.source = source;
         this.agendaItem = item;

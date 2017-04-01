@@ -34,22 +34,22 @@ public class MeetingsController {
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
 
-//    public void checkLoaded(String city, String institution) throws Exception {
-////        ApplicationContext context = ApplicationContext.getInstance();
-//        Town town = townRepository.findByRef(city);
-//        if (town == null) {
-//            log.info("No town with name `"+city+"`. Loading from external WebService...");
-//            town = Application.loadTownData(city, institution);
-//            if (town != null) {
-//                List<Season> seasons = town.getSeasons();
-//                log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
-//                townRepository.save(town);
-//                log.info(town.getName() + "`s data saved.");
-//            } else {
-//                log.info("No data found for town `" + city + "`.");
-//            }
-//        }
-//    }
+    public void checkLoaded(String city, String institution) throws Exception {
+//        ApplicationContext context = ApplicationContext.getInstance();
+        Town town = townRepository.findByRef(city);
+        if (town == null) {
+            log.info("No town with name `"+city+"`. Loading from external WebService...");
+            town = Application.loadMeetingsData(city, institution);
+            if (town != null) {
+                List<Season> seasons = town.getSeasons();
+                log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
+                townRepository.save(town);
+                log.info(town.getName() + "`s data saved.");
+            } else {
+                log.info("No data found for town `" + city + "`.");
+            }
+        }
+    }
 
 //    @RequestMapping("/{city}/{season}/meetings")
 //    public Collection<Meeting> meetings(@PathVariable(value="city") String city,
@@ -105,7 +105,7 @@ public class MeetingsController {
     public CouncilMember member(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="member_ref") String memberRef) throws Exception {
-//        checkLoaded(city, institution);
+        checkLoaded(city, institution);
         return councilMemberRepository.findByRef(memberRef);
     }
 
@@ -114,7 +114,7 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-//        checkLoaded(city, institution);
+        checkLoaded(city, institution);
         List<CouncilMember> members = councilMemberRepository.getBySeason(season);
         return members;
     }
@@ -123,7 +123,7 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}")
     public Collection<Poll> polls(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution) throws Exception {
-//        checkLoaded(city, institution);
+        checkLoaded(city, institution);
         List<Poll> polls = pollRepository.getByTown(city);
         log.info((polls != null ? polls.size() : 0) + " found polls");
         return polls;
@@ -135,7 +135,7 @@ public class MeetingsController {
     public Poll poll(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="poll_ref") String pollRef) throws Exception {
-//        checkLoaded(city, institution);
+        checkLoaded(city, institution);
         Poll poll = pollRepository.getByRef(pollRef);
 //        if (poll != null) {
 //            long membersCount = councilMemberRepository.count();

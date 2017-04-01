@@ -122,37 +122,37 @@ public class Poll {
         this.absents = absents;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public int getVotedFor() {
         return votesFor != null ? votesFor.size() : 0;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public int getVotedAgainst() {
         return votesAgainst != null ? votesAgainst.size() : 0;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public int getNotVoted() {
         return noVotes != null ? noVotes.size() : 0;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public int getAbstain() {
         return abstains != null ? abstains.size() : 0;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public int getAbsent() {
         return absents != null ? absents.size() : 0;
     }
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.Poll.class, Views.Polls.class})
     @Transient
     public VoteResult getResult() {
         return getVotedFor() > getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;

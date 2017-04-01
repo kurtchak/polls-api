@@ -2,7 +2,9 @@ package org.blackbell.polls.meetings.model.vote;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.Poll;
+import org.blackbell.polls.meetings.model.VoteChoiceEnum;
 
 import javax.persistence.*;
 
@@ -19,6 +21,16 @@ public class Absent extends Vote {
     @ManyToOne
     @JoinColumn(name = "poll_id", updatable = false, insertable = false)
     private Poll poll;
+
+    public Absent() {
+        setVoted(VoteChoiceEnum.ABSENT);
+    }
+
+    public Absent(Poll poll, CouncilMember cm) {
+        this();
+        setPoll(poll);
+        setCouncilMember(cm);
+    }
 
     public Poll getPoll() {
         return poll;

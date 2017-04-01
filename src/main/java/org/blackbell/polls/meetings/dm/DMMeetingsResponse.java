@@ -1,4 +1,4 @@
-package org.blackbell.polls.api;
+package org.blackbell.polls.meetings.dm;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
@@ -7,12 +7,12 @@ package org.blackbell.polls.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.blackbell.polls.meetings.dto.SeasonDTO;
+import org.blackbell.polls.meetings.dm.dto.SeasonDTO;
 
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MeetingsResponse {
+public class DMMeetingsResponse {
 
     @JsonProperty(value = "name")
     private String name;
@@ -38,7 +38,7 @@ public class MeetingsResponse {
 
     @Override
     public String toString() {
-        return "MeetingsResponse{" +
+        return "DMMeetingsResponse{" +
                 "name='" + name + '\'' +
                 ", seasonDTOs=" + seasonDTOs +
                 '}';
