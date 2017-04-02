@@ -25,6 +25,7 @@ public class DMImport {
     public static final String DM_ABSTAIN = "Zdržal sa";
     public static final String DM_ABSENT = "Chýbal na hlasovaní";
     private static Map<String, CouncilMember> members = new HashMap<>();
+    private static Map<String, Party> parties = new HashMap<>();
 
     private static final Logger log = LoggerFactory.getLogger(DMImport.class);
 
@@ -186,37 +187,37 @@ public class DMImport {
         cm.setName(memberDTO.getName());
         cm.setRef(generateUniqueKeyReference());
         switch (cm.getName()) {
-            case "Cvengroš Peter, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938822.jpg"); break;
-            case "Dupkala Rudolf, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938837.jpg"); break;
-            case "Komanický Mikuláš, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939026.jpg"); break;
-            case "Langová Janette, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939040.jpg"); break;
-            case "Malaga Ľudovít, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939044.jpg"); break;
-            case "Mrouahová Daniela, MUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939053.jpg"); break;
-            case "Pucher René, JUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939056.jpg"); break;
-            case "Ahlers Ján, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938808.jpg"); break;
-            case "Antolová Marcela, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938985.jpg"); break;
-            case "Drobňáková Valéria, ": cm.setPicture("/portals_pictures/i_003938/i_3938825.jpg"); break;
-            case "Drutarovský Richard, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938834.jpg"); break;
-            case "Ďurišin Martin, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938961.jpg"); break;
-            case "Fedorčíková Renáta, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938962.jpg"); break;
-            case "Hermanovský Štefan, ": cm.setPicture("/portals_pictures/i_003938/i_3938976.jpg"); break;
-            case "Janko Vasiľ, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938991.jpg"); break;
-            case "Kollárová Marta, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939019.jpg"); break;
-            case "Mochnacký Rastislav, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939048.jpg"); break;
-            case "Szidor Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939059.jpg"); break;
-            case "Kutajová Jaroslava, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939032.jpg"); break;
-            case "Andraščíková Štefánia, doc. PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938813.jpg"); break;
-            case "Benko Miroslav, PaedDr.": cm.setPicture("/portals_pictures/i_003938/i_3938819.jpg"); break;
-            case "Hudáč Juraj, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938986.jpg"); break;
-            case "Lipka Martin, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939043.jpg"); break;
-            case "Matejka Martin, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939047.jpg"); break;
-            case "Tkáčová Zuzana, ": cm.setPicture("/portals_pictures/i_003939/i_3939064.jpg"); break;
-            case "Bednárová Zuzana, RNDr.": cm.setPicture("/portals_pictures/i_003938/i_3938814.jpg"); break;
-            case "Ďurčanská Katarína, JUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938868.jpg"); break;
-            case "Ferenc Stanislav, Mgr.": cm.setPicture("/portals_pictures/i_003938/i_3938969.jpg"); break;
-            case "Kahanec Stanislav, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938994.jpg"); break;
-            case "Kužma Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939037.jpg"); break;
-            case "Krajňák Peter, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939027.jpg"); break;
+            case "Ahlers Ján, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938808.jpg"); cm.setEmail("jan.ahlers@centrum.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SIEŤ"), cm, season)); break;
+            case "Andraščíková Štefánia, doc. PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938813.jpg"); cm.setEmail("stefania.andrascikova@unipo.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Cvengroš Peter, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938822.jpg"); cm.setEmail("peter.cvengros@post.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SIEŤ"), cm, season)); break;
+            case "Dupkala Rudolf, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938837.jpg"); cm.setEmail("rudolf.dupkala@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Komanický Mikuláš, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939026.jpg"); cm.setEmail("mikulas.komanicky@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SMER-SD"), cm, season)); break;
+            case "Antolová Marcela, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938985.jpg"); cm.setEmail("marcela.holingova@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Drobňáková Valéria, ": cm.setPicture("/portals_pictures/i_003938/i_3938825.jpg"); cm.setEmail("valeriadrobnakova@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Drutarovský Richard, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938834.jpg"); cm.setEmail("richard.drutarovsky@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NOVA"), cm, season)); break;
+            case "Benko Miroslav, PaedDr.": cm.setPicture("/portals_pictures/i_003938/i_3938819.jpg"); cm.setEmail("miroslavbenko@post.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SMER-SD"), cm, season)); break;
+            case "Bednárová Zuzana, RNDr.": cm.setPicture("/portals_pictures/i_003938/i_3938814.jpg"); cm.setEmail("zuzana.bednarova@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Ferenc Stanislav, Mgr.": cm.setPicture("/portals_pictures/i_003938/i_3938969.jpg"); cm.setEmail("ferenc.st@centrum.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Langová Janette, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939040.jpg"); cm.setEmail("jlangova63@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Malaga Ľudovít, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939044.jpg"); cm.setEmail("ludo.malaga@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SMER-SD"), cm, season)); break;
+            case "Mrouahová Daniela, MUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939053.jpg"); cm.setEmail("mrouahova@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Pucher René, JUDr.": cm.setPicture("/portals_pictures/i_003939/i_3939056.jpg"); cm.setEmail("pucher.rene@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Ďurišin Martin, PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938961.jpg"); cm.setEmail("durisin.martin@gmail.com, martin.durisin@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SIEŤ"), cm, season)); break;
+            case "Fedorčíková Renáta, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938962.jpg"); cm.setEmail("renafedorcikova@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Hermanovský Štefan, ": cm.setPicture("/portals_pictures/i_003938/i_3938976.jpg"); cm.setEmail("stefan.hermanovsky@presov.sk, hermanovsky.stefan@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Janko Vasiľ, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938991.jpg"); cm.setEmail("vasil.janko@presov.sk, dr.janko.vasil@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Kollárová Marta, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939019.jpg"); cm.setEmail("m.koll@pobox.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Mochnacký Rastislav, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939048.jpg"); cm.setEmail("rastislav.mochnacky@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Szidor Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939059.jpg"); cm.setEmail("stefan.szidor@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Kutajová Jaroslava, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939032.jpg"); cm.setEmail("jarka.kutajova@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Hudáč Juraj, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938986.jpg"); cm.setEmail("juraj.hudac@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SMER-SD"), cm, season)); break;
+            case "Lipka Martin, PhDr.": cm.setPicture("/portals_pictures/i_003939/i_3939043.jpg"); cm.setEmail("lipkaglobal@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SMER-SD"), cm, season)); break;
+            case "Matejka Martin, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939047.jpg"); cm.setEmail("mato.matejka@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Tkáčová Zuzana, ": cm.setPicture("/portals_pictures/i_003939/i_3939064.jpg"); cm.setEmail("tkacovaz20@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Ďurčanská Katarína, JUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938868.jpg"); cm.setEmail("katarinadurcanska@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
+            case "Kahanec Stanislav, Ing.": cm.setPicture("/portals_pictures/i_003938/i_3938994.jpg"); cm.setEmail("stanislav.kahanec@gmail.com"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Kužma Štefan, Ing.": cm.setPicture("/portals_pictures/i_003939/i_3939037.jpg"); cm.setEmail("stefan.kuzma@presov.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
+            case "Krajňák Peter, Mgr.": cm.setPicture("/portals_pictures/i_003939/i_3939027.jpg"); cm.setEmail("peter.krajnak@presov.sk, peterkraj@centrum.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("KDH", "SDKÚ-DS", "MOST-HÍD"), cm, season)); break;
         }
         cm.setSeason(season);
         if (season.getMembers() == null) {
@@ -228,24 +229,56 @@ public class DMImport {
         return cm;
     }
 
-    public static Town parseTown(String city, String institution, DMMeetingsResponse meetingsResponse) {
-        Town town = new Town();
-        town.setRef(city);
-        town.setName(city);
-        List<Season> seasons = new ArrayList<>();
-        for (SeasonDTO seasonDTO : meetingsResponse.getSeasonDTOs()) {
-            Season season = new Season();
-            season.setName(seasonDTO.getName());
-            season.setRef(seasonDTO.getName());
-            season.setTown(town);
-            List<Meeting> meetingsMap = new ArrayList<>();
-            for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
-                meetingsMap.add(parseMeeting(season, meetingDTO));
-            }
-            season.setMeetings(meetingsMap);
-            seasons.add(season);
+    private static List<PartyNominee> getPartyNominees(List<Party> parties, CouncilMember member, Season season) {
+        List<PartyNominee> partyNominees = new ArrayList<>();
+        for (Party party : parties) {
+            partyNominees.add(new PartyNominee(party, member, season));
         }
-        town.setSeasons(seasons);
-        return town;
+        return partyNominees;
+    }
+
+    private static List<Party> findOrIntroduceParties(String... names) {
+        List<Party> parties = new ArrayList<>();
+        for (String name : names) {
+            parties.add(findOrIntroduceParty(name));
+        }
+        return parties;
+    }
+
+    private static Party findOrIntroduceParty(String name) {
+        if (!parties.containsKey(name)) {
+            parties.put(name, introduceParty(name));
+        }
+        return parties.get(name);
+    }
+
+    private static Party introduceParty(String name) {
+        return new Party(name);
+    }
+
+    public static void parseTown(Town town, Institution institution, DMMeetingsResponse meetingsResponse) {
+        parseSeasons(town, institution, meetingsResponse.getSeasonDTOs());
+    }
+
+    public static void parseSeasons(Town town, Institution institution, List<SeasonDTO> seasonDTOs) {
+        List<Season> seasons = new ArrayList<>();
+        for (SeasonDTO seasonDTO : seasonDTOs) {
+            seasons.add(parseSeason(institution, town, seasonDTO));
+        }
+        town.addSeasons(seasons);
+    }
+
+    private static Season parseSeason(Institution institution, Town town, SeasonDTO seasonDTO) {
+        Season season = new Season();
+        season.setName(seasonDTO.getName());
+        season.setRef(seasonDTO.getName());
+        season.setInstitution(institution);
+        season.setTown(town);
+        List<Meeting> meetingsMap = new ArrayList<>();
+        for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
+            meetingsMap.add(parseMeeting(season, meetingDTO));
+        }
+        season.setMeetings(meetingsMap);
+        return season;
     }
 }

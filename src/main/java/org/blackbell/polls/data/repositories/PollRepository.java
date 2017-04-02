@@ -1,5 +1,6 @@
 package org.blackbell.polls.data.repositories;
 
+import org.blackbell.polls.meetings.model.Institution;
 import org.blackbell.polls.meetings.model.Poll;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,8 +15,8 @@ import java.util.List;
  */
 @Repository
 public interface PollRepository extends JpaRepository<Poll, Long> {
-    @Query(value = "select p from Poll p where p.agendaItem.meeting.season.town.name = :town")
-    List<Poll> getByTown(@Param(value = "town") String town);
+    @Query(value = "select p from Poll p where p.agendaItem.meeting.season.institution = :institution and p.agendaItem.meeting.season.town.name = :town")
+    List<Poll> getByTownAndInstitution(@Param(value = "town") String town, @Param(value = "institution") Institution institution);
 
     @Query(value = "select p from Poll p where p.ref = :ref")
     Poll getByRef(@Param(value = "ref") String pollRef);

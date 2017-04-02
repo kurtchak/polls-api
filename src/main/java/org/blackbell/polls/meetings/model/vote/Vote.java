@@ -3,7 +3,7 @@ package org.blackbell.polls.meetings.model.vote;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.CouncilMember;
-import org.blackbell.polls.meetings.model.VoteChoiceEnum;
+import org.blackbell.polls.meetings.model.VoteChoice;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import javax.persistence.*;
@@ -29,7 +29,7 @@ public abstract class Vote {
     @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted", insertable = false, updatable = false)
-    private VoteChoiceEnum voted;
+    private VoteChoice voted;
 
     public long getId() {
         return id;
@@ -47,11 +47,11 @@ public abstract class Vote {
         this.councilMember = councilMember;
     }
 
-    public VoteChoiceEnum getVoted() {
+    public VoteChoice getVoted() {
         return voted;
     }
 
-    public void setVoted(VoteChoiceEnum voted) {
+    public void setVoted(VoteChoice voted) {
         this.voted = voted;
     }
 }

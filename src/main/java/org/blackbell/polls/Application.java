@@ -8,6 +8,7 @@ package org.blackbell.polls;
 import org.blackbell.polls.meetings.dm.DMImport;
 import org.blackbell.polls.meetings.dm.DMMeetingsResponse;
 import org.blackbell.polls.meetings.dm.api.DMServiceClient;
+import org.blackbell.polls.meetings.model.Institution;
 import org.blackbell.polls.meetings.model.Town;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,12 +24,14 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
-    public static Town loadMeetingsData(String city, String institution) throws Exception {
+    public static Town loadMeetingsData(Town town, Institution institution) throws Exception {
 
         // Request Meetings for the given city and institution
-        DMMeetingsResponse meetingsResponse = DMServiceClient.checkoutMeetingsData(city, institution);
+        DMMeetingsResponse meetingsResponse = DMServiceClient.checkoutMeetingsData(town.getName(), institution);
 
-        return DMImport.parseTown(city, institution, meetingsResponse);
+        DMImport.parseSeasons(town, institution, meetingsResponse.getSeasonDTOs());
+
+        return town;
     }
 
 }

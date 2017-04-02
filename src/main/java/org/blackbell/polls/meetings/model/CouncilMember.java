@@ -25,11 +25,17 @@ public class CouncilMember {
     private String name;
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String picture;
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    private String email;
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id")
     private Season season;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
+    private List<PartyNominee> partyNominees;
 
     @JsonView(value = Views.CouncilMember.class)
     @OneToMany(mappedBy = "councilMember")
@@ -65,6 +71,22 @@ public class CouncilMember {
 
     public void setPicture(String picture) {
         this.picture = picture;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public List<PartyNominee> getPartyNominees() {
+        return partyNominees;
+    }
+
+    public void setPartyNominees(List<PartyNominee> partyNominees) {
+        this.partyNominees = partyNominees;
     }
 
     public Season getSeason() {

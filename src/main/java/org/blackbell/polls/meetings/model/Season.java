@@ -29,6 +29,10 @@ public class Season {
     private Town town;
 
     @JsonIgnore
+    @Enumerated(EnumType.STRING)
+    private Institution institution;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
     private List<Meeting> meetings;
 
@@ -66,6 +70,14 @@ public class Season {
 
     public void setTown(Town town) {
         this.town = town;
+    }
+
+    public Institution getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
     }
 
     public List<Meeting> getMeetings() {

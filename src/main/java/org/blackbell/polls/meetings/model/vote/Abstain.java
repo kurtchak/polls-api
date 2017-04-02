@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.Poll;
-import org.blackbell.polls.meetings.model.VoteChoiceEnum;
+import org.blackbell.polls.meetings.model.VoteChoice;
 
 import javax.persistence.*;
 
@@ -23,7 +23,7 @@ public class Abstain extends Vote {
     private Poll poll;
 
     public Abstain() {
-        setVoted(VoteChoiceEnum.ABSTAIN);
+        setVoted(VoteChoice.ABSTAIN);
     }
 
     public Abstain(Poll poll, CouncilMember cm) {

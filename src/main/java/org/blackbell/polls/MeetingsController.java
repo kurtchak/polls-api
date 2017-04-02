@@ -8,6 +8,7 @@ package org.blackbell.polls;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.data.repositories.CouncilMemberRepository;
 import org.blackbell.polls.data.repositories.PollRepository;
+import org.blackbell.polls.data.repositories.SeasonRepository;
 import org.blackbell.polls.data.repositories.TownRepository;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
@@ -29,25 +30,29 @@ public class MeetingsController {
     private TownRepository townRepository;
 
     @Autowired
+    private SeasonRepository seasonRepository;
+
+    @Autowired
     private PollRepository pollRepository;
 
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
 
-    public void checkLoaded(String city, String institution) throws Exception {
+    //TODO: update to match institution
+    public void checkLoaded(String city, Institution institution) throws Exception {
 //        ApplicationContext context = ApplicationContext.getInstance();
         Town town = townRepository.findByRef(city);
         if (town == null) {
             log.info("No town with name `"+city+"`. Loading from external WebService...");
-            town = Application.loadMeetingsData(city, institution);
-            if (town != null) {
-                List<Season> seasons = town.getSeasons();
-                log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
-                townRepository.save(town);
-                log.info(town.getName() + "`s data saved.");
-            } else {
-                log.info("No data found for town `" + city + "`.");
-            }
+            town = new Town(city, city);
+        }
+        List<Season> seasons;
+        if (town.getSeasons() == null || town.getSeasons(institution) == null) {
+            Application.loadMeetingsData(town, institution);
+            seasons = town.getSeasons(institution);
+            log.info("Loaded town `" + town.getName() + "` with data for " + (seasons != null ? seasons.size() : 0) + " seasons");
+            townRepository.save(town);
+            log.info(town.getName() + "`s data saved.");
         }
     }
 
@@ -105,7 +110,7 @@ public class MeetingsController {
     public CouncilMember member(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="member_ref") String memberRef) throws Exception {
-        checkLoaded(city, institution);
+        checkLoaded(city, Institution.valueOfDM(institution));
         return councilMemberRepository.findByRef(memberRef);
     }
 
@@ -114,8 +119,8 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-        checkLoaded(city, institution);
-        List<CouncilMember> members = councilMemberRepository.getBySeason(season);
+        checkLoaded(city, Institution.valueOfDM(institution));
+        List<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
         return members;
     }
 
@@ -123,8 +128,8 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}")
     public Collection<Poll> polls(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution) throws Exception {
-        checkLoaded(city, institution);
-        List<Poll> polls = pollRepository.getByTown(city);
+        checkLoaded(city, Institution.valueOfDM(institution));
+        List<Poll> polls = pollRepository.getByTownAndInstitution(city, Institution.valueOfDM(institution));
         log.info((polls != null ? polls.size() : 0) + " found polls");
         return polls;
 //        return ApplicationContext.getInstance().getPolls(city, institution);
@@ -135,7 +140,7 @@ public class MeetingsController {
     public Poll poll(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="poll_ref") String pollRef) throws Exception {
-        checkLoaded(city, institution);
+        checkLoaded(city, Institution.valueOfDM(institution));
         Poll poll = pollRepository.getByRef(pollRef);
 //        if (poll != null) {
 //            long membersCount = councilMemberRepository.count();
