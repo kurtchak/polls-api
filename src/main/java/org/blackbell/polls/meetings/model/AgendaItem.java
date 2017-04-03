@@ -14,13 +14,14 @@ import java.util.List;
 @Entity
 public class AgendaItem {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     @Column(unique = true)
     private String ref;
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class})

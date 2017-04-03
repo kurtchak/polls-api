@@ -15,9 +15,9 @@ import java.util.List;
 @Entity
 public class Poll {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+
     @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
     @Column(unique = true)
     private String ref;

@@ -7,7 +7,7 @@ package org.blackbell.polls.meetings.model;
 public enum Institution {
     ZASTUPITELSTVO,
     MESTSKA_RADA,
-    KOMISIA;
+    KOMISIA, season;
 
     public static final String DM_MZ = "mz";
     public static final String DM_MR = "mr";

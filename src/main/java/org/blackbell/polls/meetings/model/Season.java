@@ -15,12 +15,11 @@ import java.util.List;
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "ref"})})
 public class Season {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     @JsonView(value = Views.Poll.class)
     private String ref;
-//    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
+
     private String name;
 
     @JsonIgnore

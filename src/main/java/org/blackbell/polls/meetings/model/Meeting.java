@@ -15,29 +15,29 @@ import java.util.List;
 @Entity
 public class Meeting {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+
+    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class})
     @Column(unique = true)
     private String ref;
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+
+    @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class})
     private String name;
 
-    @JsonView(value = Views.Poll.class)
-    @ManyToOne
-    @JoinColumn(name = "season_id")
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class})
+    @ManyToOne @JoinColumn(name = "season_id")
     private Season season;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class})
     @Temporal(TemporalType.DATE)
     private Date date;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private List<AgendaItem> agendaItems;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private List<MeetingAttachment> attachments;
 

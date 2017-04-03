@@ -13,11 +13,12 @@ import java.util.List;
 @Entity
 public class Town {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+
     @Column(unique = true)
     private String ref;
+
     private String name;
 
     public Town() {}

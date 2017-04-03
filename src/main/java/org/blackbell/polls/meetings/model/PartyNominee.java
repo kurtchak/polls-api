@@ -13,8 +13,7 @@ import javax.persistence.*;
 @Entity
 public class PartyNominee {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})

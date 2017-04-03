@@ -15,16 +15,19 @@ import java.util.List;
 @Entity
 public class CouncilMember {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+
     @Column(unique = true)
     @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class})
     private String ref;
+
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String name;
+
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String picture;
+
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String email;
 

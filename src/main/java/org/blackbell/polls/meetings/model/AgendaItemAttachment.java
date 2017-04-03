@@ -13,19 +13,20 @@ import javax.persistence.*;
 @Entity
 public class AgendaItemAttachment {
     @JsonIgnore
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+
     @JsonView(value = Views.Poll.class)
     @Column(unique = true)
     private String ref;
+
     @JsonView(value = Views.Poll.class)
     private String name;
+
     @JsonView(value = Views.Poll.class)
     private String source;
 
-    @ManyToOne
-    @JoinColumn(name = "agenda_item_id")
+    @ManyToOne @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
 
     public AgendaItemAttachment() {

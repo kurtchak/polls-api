@@ -16,15 +16,19 @@ public class Party {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private int id;
-//    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+
     @Column(unique = true)
     private String ref;
+
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     private String name;
+
     @JsonIgnore
     private String description;
+
     @JsonIgnore
     private String logo;
+
     @JsonIgnore
     @OneToMany(mappedBy = "party", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<PartyNominee> partyNominees;
