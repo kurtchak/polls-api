@@ -89,7 +89,7 @@ public class MeetingsController {
 //        return ApplicationContext.getInstance().getMeetingAttachment(city, season, order, item);
 //    }
 //
-@JsonView(value = Views.Meetings.class)
+    @JsonView(value = Views.Meetings.class)
     @RequestMapping("/{city}/{institution}/meetings/{season}")
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,

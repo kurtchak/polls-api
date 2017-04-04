@@ -19,7 +19,7 @@ public class VoteAgainst extends Vote {
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
-    @JoinColumn(name = "poll_id", updatable = false, insertable = false)
+    @JoinColumn(name = "poll_id")
     private Poll poll;
 
     public VoteAgainst() {
