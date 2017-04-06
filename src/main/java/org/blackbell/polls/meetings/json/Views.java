@@ -22,4 +22,17 @@ public class Views {
 
     public static class CouncilMember {
     }
+
+    public static class Seasons {
+    }
+
+    public static class Season {
+    }
+
+    public static class Towns {
+    }
+
+    public static class Town {
+    }
+
 }

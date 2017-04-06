@@ -55,40 +55,20 @@ public class MeetingsController {
         }
     }
 
-////    @RequestMapping("/{city}/{season}/meeting/{order}/agenda")
-////    public Agenda agenda(@PathVariable(value="city") String city,
-////                         @PathVariable(value="season") String season,
-////                         @PathVariable(value="order") Integer order) {
-////        Application.checkLoaded(city);
-////        return ApplicationContext.getInstance().getAgenda(city, season, order);
-////    }
-////
-////    @RequestMapping("/{city}/{season}/meeting/{order}/agenda/{item}")
-////    public AgendaItem agendaItem(@PathVariable(value="city") String city,
-////                                 @PathVariable(value="season") String season,
-////                                 @PathVariable(value="order") Integer order,
-////                                 @PathVariable(value="item") Integer item) {
-////        Application.checkLoaded(city);
-////        return ApplicationContext.getInstance().getAgendaItem(city, season, order, item);
-////    }
-//
-//    @RequestMapping("/{city}/{season}/meeting/{order}/attachments")
-//    public Collection<MeetingAttachment> atachments(@PathVariable(value="city") String city,
-//                                              @PathVariable(value="season") String season,
-//                                              @PathVariable(value="order") Integer order) {
-//        checkLoaded(city);
-//        return ApplicationContext.getInstance().getAttachments(city, season, order);
-//    }
-//
-//    @RequestMapping("/{city}/{season}/meeting/{order}/attachment/{item}")
-//    public MeetingAttachment attachment(@PathVariable(value="city") String city,
-//                                 @PathVariable(value="season") String season,
-//                                 @PathVariable(value="order") Integer order,
-//                                 @PathVariable(value="item") Integer item) {
-//        checkLoaded(city);
-//        return ApplicationContext.getInstance().getMeetingAttachment(city, season, order, item);
-//    }
-//
+    @JsonView(value = Views.Towns.class)
+    @RequestMapping("/cities")
+    public List<Town> towns() throws Exception {
+        return townRepository.findAll();
+    }
+
+    @JsonView(value = Views.Seasons.class)
+    @RequestMapping("/{city}/{institution}/seasons")
+    public List<Season> seasons(@PathVariable(value="city") String city,
+                                @PathVariable(value="institution") String institution) throws Exception {
+        checkLoaded(city, Institution.valueOfDM(institution));
+        return seasonRepository.findByTownAndInstitution(city, Institution.valueOfDM(institution));
+    }
+
     @JsonView(value = Views.Meetings.class)
     @RequestMapping("/{city}/{institution}/meetings/{season}")
     public List<Meeting> meetings(@PathVariable(value="city") String city,
