@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Ján Korčák on 1.4.2017.
@@ -171,19 +168,44 @@ public class DMImport {
     }
 
     private static CouncilMember findOrIntroduceCouncilMember(Season season, CouncilMemberDTO memberDTO) {
-        CouncilMember cm = null;
-        if (members.containsKey(memberDTO.getName())) {
-            cm = members.get(memberDTO.getName());
-        } else {
+        CouncilMember cm = findCouncilMember(memberDTO.getName());
+        if (cm == null) {
             cm = introduceCouncilMember(season, memberDTO);
             members.put(cm.getName(), cm);
         }
         return cm;
     }
 
+    private static CouncilMember findCouncilMember(String searchName) {
+        if (members.containsKey(searchName)) {
+            return members.get(searchName);
+        } else {
+            for (String storedName : members.keySet()) {
+                if (isSamePerson(searchName, storedName)) {
+                    log.info("Already found the member with name '" + searchName + "' => merging with '" + storedName + "'");
+                    return members.get(storedName);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isSamePerson(String s1, String s2) {
+        Set<String> a1 = new HashSet<>(Arrays.asList(s1.replaceAll(",", "").split(" ")));
+        int a1size = a1.size();
+        Set<String> a2 = new HashSet<>(Arrays.asList(s2.replaceAll(",", "").split(" ")));
+        int a2size = a2.size();
+        if (a1size > a2size) {
+            a1.retainAll(a2);
+            return a1.size() == a1size || a1.size() == a2size;
+        } else {
+            a2.retainAll(a1);
+            return a2.size() == a1size || a2.size() == a2size;
+        }
+    }
+
     private static CouncilMember introduceCouncilMember(Season season, CouncilMemberDTO memberDTO) {
-        CouncilMember cm;
-        cm = new CouncilMember();
+        CouncilMember cm = new CouncilMember();
         cm.setName(memberDTO.getName());
         cm.setRef(generateUniqueKeyReference());
         switch (cm.getName()) {
