@@ -23,12 +23,8 @@ public class PartyNomineeSerializer extends StdSerializer<PartyNominee> {
     }
 
     @Override
-    public void serialize(
-            PartyNominee value, JsonGenerator jgen, SerializerProvider provider)
+    public void serialize(PartyNominee value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonProcessingException {
-
-        jgen.writeStartObject();
-        jgen.writeStringField("party", value.getParty().getName());
-        jgen.writeEndObject();
+        jgen.writeString(value.getParty().getName());
     }
 }
