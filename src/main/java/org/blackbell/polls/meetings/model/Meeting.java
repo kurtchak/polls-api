@@ -3,7 +3,9 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -28,6 +30,7 @@ public class Meeting {
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class})
     @ManyToOne @JoinColumn(name = "season_id")
+    @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
     @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class})

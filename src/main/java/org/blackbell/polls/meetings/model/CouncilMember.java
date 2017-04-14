@@ -2,7 +2,9 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
@@ -34,6 +36,7 @@ public class CouncilMember {
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id")
+    @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})

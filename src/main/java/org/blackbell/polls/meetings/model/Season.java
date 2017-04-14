@@ -17,7 +17,7 @@ public class Season {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = {Views.Seasons.class, Views.Poll.class})
+    @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class})
     private String ref;
 
     @JsonView(value = {Views.Seasons.class})
