@@ -24,13 +24,13 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class})
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     private String name;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     private String picture;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     private String email;
 
     @JsonView(value = Views.CouncilMember.class)
@@ -39,7 +39,7 @@ public class CouncilMember {
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     private List<PartyNominee> partyNominees;
 

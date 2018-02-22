@@ -111,7 +111,10 @@ public class MeetingsController {
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
         checkLoaded(city, Institution.valueOfDM(institution));
-        return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
+        System.out.println(">> polls");
+        Collection<Poll> polls = pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
+        System.out.println(">> count: " + (polls != null ? polls.size() : 0));
+        return polls;
     }
 
     @JsonView(value = Views.Poll.class)
