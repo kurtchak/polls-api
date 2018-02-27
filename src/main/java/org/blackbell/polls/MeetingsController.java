@@ -33,6 +33,9 @@ public class MeetingsController {
     private MeetingRepository meetingRepository;
 
     @Autowired
+    private AgendaRepository agendaRepository;
+
+    @Autowired
     private PollRepository pollRepository;
 
     @Autowired
@@ -111,9 +114,7 @@ public class MeetingsController {
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
         checkLoaded(city, Institution.valueOfDM(institution));
-        System.out.println(">> polls");
         Collection<Poll> polls = pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
-        System.out.println(">> count: " + (polls != null ? polls.size() : 0));
         return polls;
     }
 
@@ -125,4 +126,23 @@ public class MeetingsController {
         checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByRef(ref);
     }
+
+    @JsonView(value = Views.Agenda.class)
+    @RequestMapping("/{city}/{institution}/{meeting_ref}/agenda")
+    public Collection<AgendaItem> agenda(@PathVariable(value = "city") String city,
+                                          @PathVariable(value = "institution") String institution,
+                                          @PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
+        checkLoaded(city, Institution.valueOfDM(institution));
+        return agendaRepository.getByMeeting(meetingRef);
+    }
+
+    @JsonView(value = Views.AgendaItem.class)
+    @RequestMapping("/{city}/{institution}/agenda/{ref}")
+    public AgendaItem agendaItem(@PathVariable(value="city") String city,
+                     @PathVariable(value="institution") String institution,
+                     @PathVariable(value="ref") String ref) throws Exception {
+        checkLoaded(city, Institution.valueOfDM(institution));
+        return agendaRepository.getByRef(ref);
+    }
+
 }

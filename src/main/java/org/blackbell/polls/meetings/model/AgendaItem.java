@@ -17,23 +17,24 @@ public class AgendaItem {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.Agenda.class, Views.AgendaItem.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @ManyToOne
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 
+    @JsonView(value = {Views.AgendaItem.class})
     @JsonIgnore
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private List<Poll> polls;
 
-    @JsonView(value = Views.Poll.class)
+    @JsonView(value = {Views.AgendaItem.class, Views.Poll.class})
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private List<AgendaItemAttachment> attachments;
 

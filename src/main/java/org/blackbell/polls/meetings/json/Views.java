@@ -35,4 +35,9 @@ public class Views {
     public static class Town {
     }
 
+    public class Agenda {
+    }
+
+    public class AgendaItem {
+    }
 }
