@@ -18,11 +18,11 @@ public class Poll {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
 
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
@@ -122,37 +122,37 @@ public class Poll {
         this.absents = absents;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient
     public int getVotedFor() {
         return votesFor != null ? votesFor.size() : 0;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient
     public int getVotedAgainst() {
         return votesAgainst != null ? votesAgainst.size() : 0;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient
     public int getNotVoted() {
         return noVotes != null ? noVotes.size() : 0;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient
     public int getAbstain() {
         return abstains != null ? abstains.size() : 0;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient
     public int getAbsent() {
         return absents != null ? absents.size() : 0;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Transient
     public VoteResult getResult() {
         return getVotedFor() > getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
