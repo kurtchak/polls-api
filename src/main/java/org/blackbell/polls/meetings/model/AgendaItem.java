@@ -24,7 +24,7 @@ public class AgendaItem {
     @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
     @ManyToOne
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;

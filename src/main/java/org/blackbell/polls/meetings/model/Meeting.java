@@ -28,12 +28,12 @@ public class Meeting {
     @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class})
     private String name;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class})
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class})
     @ManyToOne @JoinColumn(name = "season_id")
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class})
+    @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
     private Date date;
