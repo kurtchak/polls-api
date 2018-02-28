@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.CouncilMemberSerializer;
+import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.vote.Vote;
 
@@ -15,6 +17,7 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Entity
+//@JsonSerialize(using = CouncilMemberSerializer.class)
 public class CouncilMember {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -27,7 +30,7 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     private String name;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     private String picture;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
