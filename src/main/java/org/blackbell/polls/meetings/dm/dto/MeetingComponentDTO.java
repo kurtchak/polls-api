@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = AgendaDTO.class, name = "Program"),
         @JsonSubTypes.Type(value = AttachmentsDTO.class, name = "Prílohy rokovania"),
 })
-public abstract class MeetingComponentDTO {
+public class MeetingComponentDTO {
 
     @JsonProperty(value = "name")
     private String name;

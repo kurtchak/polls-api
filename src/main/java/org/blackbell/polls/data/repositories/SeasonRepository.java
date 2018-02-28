@@ -15,10 +15,10 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Repository
-public interface SeasonRepository extends JpaRepository<Town, Long> {
+public interface SeasonRepository extends JpaRepository<Season, Long> {
     @Query(value = "select s from Season s where s.ref = :ref")
     Season findByRef(@Param(value = "ref") String ref);
 
-    @Query(value = "select s from Season s where s.town.name = :town and s.institution = :institution")
-    List<Season> findByTownAndInstitution(@Param(value = "town") String town, @Param(value = "institution") Institution institution);
+    @Query(value = "select s from Season s where s.town.name = :town")
+    List<Season> findByTown(@Param(value = "town") String town);
 }

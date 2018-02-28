@@ -45,6 +45,7 @@ public class Meeting {
     @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private List<MeetingAttachment> attachments;
+    private String extId;
 
     public long getId() {
         return id;
@@ -100,5 +101,13 @@ public class Meeting {
 
     public void setAttachments(List<MeetingAttachment> attachments) {
         this.attachments = attachments;
+    }
+
+    public void setExtId(String extId) {
+        this.extId = extId;
+    }
+
+    public String getExtId() {
+        return extId;
     }
 }

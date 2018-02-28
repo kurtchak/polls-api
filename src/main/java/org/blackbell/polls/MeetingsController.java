@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.meetings.source.DMImport;
+import org.blackbell.polls.meetings.source.SyncAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,23 +43,27 @@ public class MeetingsController {
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
 
-    //TODO: update to match institution
-    public void checkLoaded(String city, Institution institution) throws Exception {
-        Town town = townRepository.findByRef(city);
-        if (town == null) {
-            log.info("No town with name `"+city+"`. Loading from external WebService...");
-            town = new Town(city, city);
-        }
-        List<Season> seasons;
-        if (town.getSeasons() == null || town.getSeasons(institution) == null) {
-            Application.loadMeetingsData(town, institution);
-            seasons = town.getSeasons(institution);
-            log.info("Loaded " + (seasons != null ? seasons.size() : 0) + " seasons for `" + town.getName() + "`");
-            townRepository.save(town);
-            log.info(town.getName() + "`s data saved.");
-        }
-    }
+    @Autowired
+    private SyncAgent syncAgent;
 
+    /*
+        //TODO: update to match institution
+        public void checkLoaded(String city, Institution institution) throws Exception {
+            Town town = townRepository.findByRef(city);
+            if (town == null) {
+                log.info("No town with name `"+city+"`. Loading from external WebService...");
+                town = new Town(city, city);
+            }
+            List<Season> seasons;
+            if (town.getSeasons() == null || town.getSeasons(institution) == null) {
+                Application.loadMeetingsData(town, institution, seasons);
+                seasons = town.getSeasons(institution);
+                log.info("Loaded " + (seasons != null ? seasons.size() : 0) + " seasons for `" + town.getName() + "`");
+                townRepository.save(town);
+                log.info(town.getName() + "`s data saved.");
+            }
+        }
+    */
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
     public List<Town> towns() throws Exception {
@@ -68,8 +74,8 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}/seasons")
     public List<Season> seasons(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
-        return seasonRepository.findByTownAndInstitution(city, Institution.valueOfDM(institution));
+        syncAgent.syncSeasons();
+        return seasonRepository.findByTown(city);
     }
 
     @JsonView(value = Views.Meetings.class)
@@ -77,8 +83,8 @@ public class MeetingsController {
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
-        return meetingRepository.getByTownAndInstitution(city, Institution.valueOfDM(institution));
+        syncAgent.syncMeetings(city, institution, season);
+        return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
     }
 
     @JsonView(value = Views.Meeting.class)
@@ -86,7 +92,6 @@ public class MeetingsController {
     public Meeting meeting(@PathVariable(value="city") String city,
                            @PathVariable(value="institution") String institution,
                            @PathVariable(value="ref") String ref) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
         return meetingRepository.getByRef(ref);
     }
 
@@ -95,7 +100,7 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
+//TODO:        checkLoaded(city, Institution.valueOfDM(institution));
         return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
     }
 
@@ -104,7 +109,6 @@ public class MeetingsController {
     public CouncilMember member(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution,
                                 @PathVariable(value="ref") String ref) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
         return councilMemberRepository.findByRef(ref);
     }
 
@@ -113,9 +117,14 @@ public class MeetingsController {
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
+<<<<<<< Updated upstream
         checkLoaded(city, Institution.valueOfDM(institution));
         Collection<Poll> polls = pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
         return polls;
+=======
+//        checkLoaded(city, Institution.valueOfDM(institution));
+        return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
+>>>>>>> Stashed changes
     }
 
     @JsonView(value = Views.Poll.class)
@@ -123,7 +132,7 @@ public class MeetingsController {
     public Poll poll(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="ref") String ref) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
+//        checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByRef(ref);
     }
 

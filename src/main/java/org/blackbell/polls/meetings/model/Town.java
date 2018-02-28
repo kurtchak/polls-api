@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -25,11 +26,15 @@ public class Town {
     @JsonView(value = {Views.Towns.class})
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    private Source source;
+
     public Town() {}
 
-    public Town(String ref, String name) {
+    public Town(String ref, String name, Source source) {
         this.ref = ref;
         this.name = name;
+        this.source = source;
     }
 
     @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
@@ -57,6 +62,14 @@ public class Town {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 
     public List<Season> getSeasons() {

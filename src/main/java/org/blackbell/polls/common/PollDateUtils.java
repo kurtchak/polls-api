@@ -17,4 +17,8 @@ public class PollDateUtils {
     public static Date parseMeetingDate(MeetingDTO meetingDTO) throws ParseException {
         return Constants.FULLDATE_WITH_T_FORMAT.parse(cutDateStringToTFormat(meetingDTO.getDate()));
     }
+
+    public static Date parseDMDate(String dmDate) throws ParseException {
+        return Constants.FULLDATE_WITH_T_FORMAT.parse(cutDateStringToTFormat(dmDate));
+    }
 }

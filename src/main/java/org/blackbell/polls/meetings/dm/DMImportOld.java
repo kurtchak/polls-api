@@ -1,6 +1,8 @@
 package org.blackbell.polls.meetings.dm;
 
 import org.blackbell.polls.common.PollDateUtils;
+import org.blackbell.polls.meetings.dm.api.DMAPIUtils;
+import org.blackbell.polls.meetings.dm.api.DMServiceClient;
 import org.blackbell.polls.meetings.dm.dto.*;
 import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.model.vote.*;
@@ -14,42 +16,18 @@ import java.util.*;
  * Created by Ján Korčák on 1.4.2017.
  * email: korcak@esten.sk
  */
-public class DMImport {
+public class DMImportOld {
 
     public static final String DM_VOTE_FOR = "Za";
     public static final String DM_VOTE_AGAINST = "Proti";
     public static final String DM_NO_VOTE = "Nehlasoval";
     public static final String DM_ABSTAIN = "Zdržal sa";
     public static final String DM_ABSENT = "Chýbal na hlasovaní";
+
     private static Map<String, CouncilMember> members = new HashMap<>();
     private static Map<String, Party> parties = new HashMap<>();
 
-    private static final Logger log = LoggerFactory.getLogger(DMImport.class);
-
-    public static Meeting parseMeeting(Season season, MeetingDTO meetingDTO) {
-        try {
-            Meeting meeting = new Meeting();
-            meeting.setRef(generateUniqueKeyReference());
-            meeting.setName(meetingDTO.getName());
-            meeting.setDate(PollDateUtils.parseMeetingDate(meetingDTO));
-            meeting.setSeason(season);
-            if (meetingDTO.getChildren() != null) {
-                for (MeetingComponentDTO dto : meetingDTO.getChildren()) {
-                    if (AgendaDTO.class.equals(dto.getClass())) {
-                        meeting.setAgendaItems(parseAgenda(season, meeting, (AgendaDTO) dto));
-                    } else if (AttachmentsDTO.class.equals(dto.getClass())) {
-                        meeting.setAttachments(parseMeetingAttachmens(meeting, (AttachmentsDTO) dto));
-                    } else {
-                        log.warn("parseMeeting: Unknown meeting component class: class[" + (dto != null ? dto.getClass() : "unknown") + "]");
-                    }
-                }
-            }
-            return meeting;
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return null; //TODO
-        }
-    }
+    private static final Logger log = LoggerFactory.getLogger(DMImportOld.class);
 
     private static List<MeetingAttachment> parseMeetingAttachmens(Meeting meeting, AttachmentsDTO attachmentsDTO) {
         List<MeetingAttachment> attachments = new ArrayList<>();
@@ -297,10 +275,34 @@ public class DMImport {
         season.setInstitution(institution);
         season.setTown(town);
         List<Meeting> meetingsMap = new ArrayList<>();
-        for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
-            meetingsMap.add(parseMeeting(season, meetingDTO));
-        }
+        parseMeetings(seasonDTO, season, meetingsMap);
         season.setMeetings(meetingsMap);
         return season;
     }
+
+    private static void parseMeetings(SeasonDTO seasonDTO, Season season, List<Meeting> meetingsMap) {
+        List<Meeting> meetings = new ArrayList<>();
+        for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
+            try {
+//                meetings.add(parseMeeting(season, meetingDTO));
+//                meetingsMap.add(parseMeeting(season, meetingDTO));
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("MeetingComponent for meeting id: " + meetingDTO.getId() + " and name: " + meetingDTO.getName() + " was not loaded. Details: " + e.getMessage());
+            }
+        }
+    }
+
+    public static Meeting parseMeetingResponse(Meeting meeting, Season season, DMMeetingResponse meetingResponse) throws Exception {
+        // Agenda
+        AgendaDTO agendaDTO = (AgendaDTO) ("Program".equals(meetingResponse.getChildren().get(0)) ? meetingResponse.getChildren().get(0) : meetingResponse.getChildren().get(1));
+        meeting.setAgendaItems(DMImportOld.parseAgenda(season, meeting, agendaDTO));
+        // Attachments
+        AttachmentsDTO attachmentsDTO = (AttachmentsDTO) ("Prílohy rokovania".equals(meetingResponse.getChildren().get(1)) ? meetingResponse.getChildren().get(1) : meetingResponse.getChildren().get(0));
+        List<MeetingAttachment> attachments = DMImportOld.parseMeetingAttachmens(meeting, attachmentsDTO);
+        meeting.setAttachments(attachments);
+        return meeting;
+    }
+
+
 }
