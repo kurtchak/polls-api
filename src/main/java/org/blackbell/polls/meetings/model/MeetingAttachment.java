@@ -21,7 +21,7 @@ public class MeetingAttachment {
     private String ref;
     @JsonView(value = Views.Meeting.class)
     private String name;
-    @JsonView(value = Views.Meeting.class)
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class})
     private String source;
 
     @ManyToOne
