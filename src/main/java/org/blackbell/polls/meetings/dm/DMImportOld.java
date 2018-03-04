@@ -30,6 +30,7 @@ public class DMImportOld {
     private static final Logger log = LoggerFactory.getLogger(DMImportOld.class);
 
     private static List<MeetingAttachment> parseMeetingAttachmens(Meeting meeting, AttachmentsDTO attachmentsDTO) {
+        System.out.println("-> parseMeetingAttachmens: " + attachmentsDTO.getName());
         List<MeetingAttachment> attachments = new ArrayList<>();
         for (AttachmentDTO attDTO : attachmentsDTO.getAttachmentDTOs()) {
             attachments.add(new MeetingAttachment(attDTO.getName(), meeting, generateUniqueKeyReference(), attDTO.getSource()));
@@ -38,6 +39,7 @@ public class DMImportOld {
     }
 
     private static List<AgendaItem> parseAgenda(Season season, Meeting meeting, AgendaDTO agendaDTO) {
+        System.out.println("-> parseAgenda: " + agendaDTO.getName());
         List<AgendaItem> items = new ArrayList<>();
         for (AgendaItemDTO itemDTO : agendaDTO.getAgendaItemDTOs()) {
             items.add(parseAgendaItem(season, meeting, itemDTO));
@@ -46,6 +48,7 @@ public class DMImportOld {
     }
 
     private static AgendaItem parseAgendaItem(Season season, Meeting meeting, AgendaItemDTO itemDTO) {
+        System.out.println("--> parseAgendaItem: " + itemDTO.getName());
         AgendaItem item = new AgendaItem();
         item.setName(itemDTO.getName());
         item.setRef(generateUniqueKeyReference());
@@ -63,6 +66,7 @@ public class DMImportOld {
     }
 
     private static List<AgendaItemAttachment> parseAgendaItemAttachments(AgendaItem item, ProspectsDTO prospectsDTO) {
+        System.out.println("---> parseAgendaItemAttachments: " + prospectsDTO.getName());
         List<AgendaItemAttachment> agendaItemAttachments = new ArrayList<>();
         if (prospectsDTO.getProspectDTOs() != null) {
             for (ProspectDTO prospectDTO : prospectsDTO.getProspectDTOs()) {
@@ -73,6 +77,7 @@ public class DMImportOld {
     }
 
     private static List<Poll> parsePolls(Season season, AgendaItem item, PollsDTO pollsDTO) {
+        System.out.println("---> parsePolls: " + pollsDTO.getName());
         List<Poll> polls = new ArrayList<>();
         if (pollsDTO.getPollDTOs() != null) {
             for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
@@ -83,6 +88,7 @@ public class DMImportOld {
     }
 
     private static Poll parsePoll(Season season, AgendaItem item, PollDTO pollDTO) {
+        System.out.println("----> parsePoll: " + pollDTO.getName());
         Poll poll = new Poll();
         poll.setName(pollDTO.getName());
         poll.setRef(generateUniqueKeyReference());
@@ -295,12 +301,18 @@ public class DMImportOld {
 
     public static Meeting parseMeetingResponse(Meeting meeting, Season season, DMMeetingResponse meetingResponse) throws Exception {
         // Agenda
-        AgendaDTO agendaDTO = (AgendaDTO) ("Program".equals(meetingResponse.getChildren().get(0)) ? meetingResponse.getChildren().get(0) : meetingResponse.getChildren().get(1));
+        AgendaDTO agendaDTO =
+                meetingResponse.getChildren().get(0).getClass().equals(AgendaDTO.class)
+                        ? (AgendaDTO) meetingResponse.getChildren().get(0)
+                        : (AgendaDTO) meetingResponse.getChildren().get(1);
         meeting.setAgendaItems(DMImportOld.parseAgenda(season, meeting, agendaDTO));
+
         // Attachments
-        AttachmentsDTO attachmentsDTO = (AttachmentsDTO) ("Prílohy rokovania".equals(meetingResponse.getChildren().get(1)) ? meetingResponse.getChildren().get(1) : meetingResponse.getChildren().get(0));
-        List<MeetingAttachment> attachments = DMImportOld.parseMeetingAttachmens(meeting, attachmentsDTO);
-        meeting.setAttachments(attachments);
+        AttachmentsDTO attachmentsDTO =
+                meetingResponse.getChildren().get(1).getClass().equals(AttachmentsDTO.class)
+                        ? (AttachmentsDTO) meetingResponse.getChildren().get(1)
+                        : (AttachmentsDTO) meetingResponse.getChildren().get(0);
+        meeting.setAttachments(DMImportOld.parseMeetingAttachmens(meeting, attachmentsDTO));
         return meeting;
     }
 

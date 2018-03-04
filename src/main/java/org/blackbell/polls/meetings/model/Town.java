@@ -7,6 +7,7 @@ import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,6 +29,9 @@ public class Town {
 
     @Enumerated(EnumType.STRING)
     private Source source;
+
+    @JsonView(value = {Views.Towns.class})
+    private Date lastSyncDate;
 
     public Town() {}
 
@@ -70,6 +74,14 @@ public class Town {
 
     public void setSource(Source source) {
         this.source = source;
+    }
+
+    public Date getLastSyncDate() {
+        return lastSyncDate;
+    }
+
+    public void setLastSyncDate(Date lastSyncDate) {
+        this.lastSyncDate = lastSyncDate;
     }
 
     public List<Season> getSeasons() {

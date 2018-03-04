@@ -25,10 +25,10 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 /*
-    public static Town loadMeetingsData(Town town, Institution institution, Season season) throws Exception {
+    public static Town loadMeetingsData(Town town, Institution institution, Season seasonName) throws Exception {
 
         // Request Meetings for the given city and institution
-        DMMeetingsResponse meetingsResponse = DMServiceClient.checkoutMeetingsData(town, institution, season);
+        DMMeetingsResponse meetingsResponse = DMServiceClient.checkoutMeetingsData(town, institution, seasonName);
 
         DMImportOld.parseSeasons(town, institution, meetingsResponse.getSeasonDTOs());
 

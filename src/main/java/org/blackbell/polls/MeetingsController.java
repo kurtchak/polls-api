@@ -74,7 +74,7 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}/seasons")
     public List<Season> seasons(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution) throws Exception {
-        syncAgent.syncSeasons();
+//        syncAgent.syncSeasons();
         return seasonRepository.findByTown(city);
     }
 
@@ -117,14 +117,8 @@ public class MeetingsController {
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
-<<<<<<< Updated upstream
-        checkLoaded(city, Institution.valueOfDM(institution));
-        Collection<Poll> polls = pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
-        return polls;
-=======
-//        checkLoaded(city, Institution.valueOfDM(institution));
+        //checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
->>>>>>> Stashed changes
     }
 
     @JsonView(value = Views.Poll.class)
@@ -141,7 +135,7 @@ public class MeetingsController {
     public Collection<AgendaItem> agenda(@PathVariable(value = "city") String city,
                                           @PathVariable(value = "institution") String institution,
                                           @PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
+        //checkLoaded(city, Institution.valueOfDM(institution));
         return agendaRepository.getByMeeting(meetingRef);
     }
 
@@ -150,7 +144,7 @@ public class MeetingsController {
     public AgendaItem agendaItem(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="ref") String ref) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
+        //checkLoaded(city, Institution.valueOfDM(institution));
         return agendaRepository.getByRef(ref);
     }
 

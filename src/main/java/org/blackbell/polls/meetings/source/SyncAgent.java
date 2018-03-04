@@ -16,6 +16,7 @@ import org.blackbell.polls.meetings.model.Town;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -43,31 +44,38 @@ public class SyncAgent {
         return DataContext.getTown(townName);
     }
 
-    public void syncSeasons() {
+    public void syncSeasons(Town town) {
         //TODO:
-//        List<Season> seasons = dataImport.loadSeasons();
+        DataImport dataImport = getDataImport(town);
+        List<Season> seasons = dataImport.loadSeasons();
 
     }
 
-    public void syncMeetings(String townName, String institution, String season) {
+    public void syncMeetings(String townName, String institution, String seasonName) {
         try {
             Town town = getTown(townName);
-            System.out.println("TOWN: " + town);
+            Season season = seasonRepository.findByRef(seasonName);
+//            System.out.println("TOWN: " + town);
             DataImport dataImport = getDataImport(town);
-            Date latestSyncDate = meetingRepository.getLatestMeetingDate(town, Institution.valueOfDM(institution), season);
-            DMMeetingsResponse response = DMServiceClient.checkoutMeetingsData(town, Institution.valueOfDM(institution), season);
+            Date latestSyncDate = meetingRepository.getLatestMeetingDate(town, Institution.valueOfDM(institution), seasonName);
+            System.out.println(":: LatestSyncDate: " + latestSyncDate);
+            DMMeetingsResponse response = DMServiceClient.checkoutMeetingsData(town, Institution.valueOfDM(institution), seasonName);
+            List<Meeting> meetings = new ArrayList<>();
             for (MeetingDTO meetingDTO : response.getSeasonDTOs().get(0).getMeetingDTOs()) {
-                if (!PollDateUtils.parseDMDate(meetingDTO.getDate()).before(latestSyncDate)) {
+                if (latestSyncDate == null || PollDateUtils.parseDMDate(meetingDTO.getDate()).after(latestSyncDate)) {
                     Meeting meeting = new Meeting();
                     meeting.setName(meetingDTO.getName());
                     meeting.setDate(PollDateUtils.parseDMDate(meetingDTO.getDate()));
                     meeting.setRef(DMImportOld.generateUniqueKeyReference()); // TODO:
-                    meeting.setSeason(seasonRepository.findByRef(season));
+                    meeting.setSeason(season);
                     meeting = dataImport.loadMeeting(meeting, meetingDTO.getId());
                     System.out.println("NEW MEETING: " + meeting);
-                    meetingRepository.save(meeting);
+                    meetings.add(meeting);
+                } else {
+                    System.out.println(": meeting already loaded: " + meetingDTO.getDate());
                 }
             }
+            meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
         } catch (Exception e) {
             e.printStackTrace();
         }
