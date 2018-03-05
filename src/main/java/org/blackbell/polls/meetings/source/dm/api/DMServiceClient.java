@@ -1,11 +1,9 @@
-package org.blackbell.polls.meetings.dm.api;
+package org.blackbell.polls.meetings.source.dm.api;
 
-import org.blackbell.polls.meetings.dm.DMMeetingResponse;
-import org.blackbell.polls.meetings.dm.DMMeetingsResponse;
-import org.blackbell.polls.meetings.dm.DMTownResponse;
-import org.blackbell.polls.meetings.dm.dto.MeetingComponentDTO;
+import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
+import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
+import org.blackbell.polls.meetings.source.dm.api.response.DMTownResponse;
 import org.blackbell.polls.meetings.model.Institution;
-import org.blackbell.polls.meetings.model.Season;
 import org.blackbell.polls.meetings.model.Town;
 import org.springframework.web.client.RestTemplate;
 

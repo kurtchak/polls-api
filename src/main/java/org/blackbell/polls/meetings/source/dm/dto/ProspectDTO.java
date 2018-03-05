@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.dm.dto;
+package org.blackbell.polls.meetings.source.dm.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,9 +8,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * email: korcak@esten.sk
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CouncilMemberDTO {
+public class ProspectDTO {
+
     @JsonProperty(value = "name")
     private String name;
+
+    @JsonProperty(value = "href")
+    private String source;
 
     public String getName() {
         return name;
@@ -18,5 +22,15 @@ public class CouncilMemberDTO {
 
     public void setName(String name) {
         this.name = name;
+
     }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
 }

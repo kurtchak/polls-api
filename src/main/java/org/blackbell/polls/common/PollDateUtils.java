@@ -1,6 +1,6 @@
 package org.blackbell.polls.common;
 
-import org.blackbell.polls.meetings.dm.dto.MeetingDTO;
+import org.blackbell.polls.meetings.source.dm.dto.MeetingDTO;
 
 import java.text.ParseException;
 import java.util.Date;

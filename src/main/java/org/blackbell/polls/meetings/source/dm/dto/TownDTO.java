@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.dm.dto;
+package org.blackbell.polls.meetings.source.dm.dto;
 
 /**
  * Created by kurtcha on 25.2.2018.

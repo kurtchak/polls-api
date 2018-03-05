@@ -1,39 +1,32 @@
-package org.blackbell.polls.meetings.dm;
+package org.blackbell.polls.meetings.source.dm;
 
-import org.blackbell.polls.common.PollDateUtils;
-import org.blackbell.polls.meetings.dm.api.DMAPIUtils;
-import org.blackbell.polls.meetings.dm.api.DMServiceClient;
-import org.blackbell.polls.meetings.dm.dto.*;
+import org.blackbell.polls.meetings.source.SyncAgent;
+import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
+import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
+import org.blackbell.polls.meetings.source.dm.dto.*;
 import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.model.vote.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.*;
 
 /**
  * Created by Ján Korčák on 1.4.2017.
  * email: korcak@esten.sk
  */
-public class DMImportOld {
-
-    public static final String DM_VOTE_FOR = "Za";
-    public static final String DM_VOTE_AGAINST = "Proti";
-    public static final String DM_NO_VOTE = "Nehlasoval";
-    public static final String DM_ABSTAIN = "Zdržal sa";
-    public static final String DM_ABSENT = "Chýbal na hlasovaní";
+public class DMParser {
 
     private static Map<String, CouncilMember> members = new HashMap<>();
     private static Map<String, Party> parties = new HashMap<>();
 
-    private static final Logger log = LoggerFactory.getLogger(DMImportOld.class);
+    private static final Logger log = LoggerFactory.getLogger(DMParser.class);
 
     private static List<MeetingAttachment> parseMeetingAttachmens(Meeting meeting, AttachmentsDTO attachmentsDTO) {
         System.out.println("-> parseMeetingAttachmens: " + attachmentsDTO.getName());
         List<MeetingAttachment> attachments = new ArrayList<>();
         for (AttachmentDTO attDTO : attachmentsDTO.getAttachmentDTOs()) {
-            attachments.add(new MeetingAttachment(attDTO.getName(), meeting, generateUniqueKeyReference(), attDTO.getSource()));
+            attachments.add(new MeetingAttachment(attDTO.getName(), meeting, SyncAgent.generateUniqueKeyReference(), attDTO.getSource()));
         }
         return attachments;
     }
@@ -51,7 +44,7 @@ public class DMImportOld {
         System.out.println("--> parseAgendaItem: " + itemDTO.getName());
         AgendaItem item = new AgendaItem();
         item.setName(itemDTO.getName());
-        item.setRef(generateUniqueKeyReference());
+        item.setRef(SyncAgent.generateUniqueKeyReference());
         item.setMeeting(meeting);
         for (AgendaItemComponentDTO componentDTO : itemDTO.getChildren()) {
             if (PollsDTO.class.equals(componentDTO.getClass())) {
@@ -70,7 +63,7 @@ public class DMImportOld {
         List<AgendaItemAttachment> agendaItemAttachments = new ArrayList<>();
         if (prospectsDTO.getProspectDTOs() != null) {
             for (ProspectDTO prospectDTO : prospectsDTO.getProspectDTOs()) {
-                agendaItemAttachments.add(new AgendaItemAttachment(prospectDTO.getName(), item, generateUniqueKeyReference(), prospectDTO.getSource()));
+                agendaItemAttachments.add(new AgendaItemAttachment(prospectDTO.getName(), item, SyncAgent.generateUniqueKeyReference(), prospectDTO.getSource()));
             }
         }
         return agendaItemAttachments;
@@ -91,24 +84,24 @@ public class DMImportOld {
         System.out.println("----> parsePoll: " + pollDTO.getName());
         Poll poll = new Poll();
         poll.setName(pollDTO.getName());
-        poll.setRef(generateUniqueKeyReference());
+        poll.setRef(SyncAgent.generateUniqueKeyReference());
         poll.setAgendaItem(item);
         if (pollDTO.getPollChoiceDTOs() != null) {
             for (PollChoiceDTO choice : pollDTO.getPollChoiceDTOs()) {
-                switch (choice.getName()) {
-                    case DM_VOTE_FOR: poll.setVotesFor(parseVotesFor(season, poll, choice.getMembers())); break;
-                    case DM_VOTE_AGAINST: poll.setVotesAgainst(parseVotesAgainst(season, poll, choice.getMembers())); break;
-                    case DM_NO_VOTE: poll.setNoVotes(parseNoVotes(season, poll, choice.getMembers())); break;
-                    case DM_ABSTAIN: poll.setAbstains(parseAbstains(season, poll, choice.getMembers())); break;
-                    case DM_ABSENT: poll.setAbsents(parseAbsents(season, poll, choice.getMembers())); break;
+                if (VoteChoiceEnum.DM_VOTE_FOR.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
+                    poll.setVotesFor(parseVotesFor(season, poll, choice.getMembers()));
+                } else if (VoteChoiceEnum.DM_VOTE_AGAINST.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
+                    poll.setVotesAgainst(parseVotesAgainst(season, poll, choice.getMembers()));
+                } else if (VoteChoiceEnum.DM_NO_VOTE.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
+                    poll.setNoVotes(parseNoVotes(season, poll, choice.getMembers()));
+                } else if (VoteChoiceEnum.DM_ABSTAIN.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
+                    poll.setAbstains(parseAbstains(season, poll, choice.getMembers()));
+                } else if (VoteChoiceEnum.DM_ABSENT.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
+                    poll.setAbsents(parseAbsents(season, poll, choice.getMembers()));
                 }
             }
         }
         return poll;
-    }
-
-    public static String generateUniqueKeyReference() {
-        return "" + System.nanoTime();
     }
 
     private static List<VoteFor> parseVotesFor(Season season, Poll poll, List<CouncilMemberDTO> membersDTO) {
@@ -191,7 +184,7 @@ public class DMImportOld {
     private static CouncilMember introduceCouncilMember(Season season, CouncilMemberDTO memberDTO) {
         CouncilMember cm = new CouncilMember();
         cm.setName(memberDTO.getName());
-        cm.setRef(generateUniqueKeyReference());
+        cm.setRef(SyncAgent.generateUniqueKeyReference());
         switch (cm.getName()) {
             case "Ahlers Ján, MUDr.": cm.setPicture("/portals_pictures/i_003938/i_3938808.jpg"); cm.setEmail("jan.ahlers@centrum.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("SIEŤ"), cm, season)); break;
             case "Andraščíková Štefánia, doc. PhDr.": cm.setPicture("/portals_pictures/i_003938/i_3938813.jpg"); cm.setEmail("stefania.andrascikova@unipo.sk"); cm.setPartyNominees(getPartyNominees(findOrIntroduceParties("NEZ"), cm, season)); break;
@@ -305,14 +298,14 @@ public class DMImportOld {
                 meetingResponse.getChildren().get(0).getClass().equals(AgendaDTO.class)
                         ? (AgendaDTO) meetingResponse.getChildren().get(0)
                         : (AgendaDTO) meetingResponse.getChildren().get(1);
-        meeting.setAgendaItems(DMImportOld.parseAgenda(season, meeting, agendaDTO));
+        meeting.setAgendaItems(DMParser.parseAgenda(season, meeting, agendaDTO));
 
         // Attachments
         AttachmentsDTO attachmentsDTO =
                 meetingResponse.getChildren().get(1).getClass().equals(AttachmentsDTO.class)
                         ? (AttachmentsDTO) meetingResponse.getChildren().get(1)
                         : (AttachmentsDTO) meetingResponse.getChildren().get(0);
-        meeting.setAttachments(DMImportOld.parseMeetingAttachmens(meeting, attachmentsDTO));
+        meeting.setAttachments(DMParser.parseMeetingAttachmens(meeting, attachmentsDTO));
         return meeting;
     }
 

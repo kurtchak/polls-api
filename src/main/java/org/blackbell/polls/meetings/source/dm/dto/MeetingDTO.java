@@ -1,9 +1,7 @@
-package org.blackbell.polls.meetings.dm.dto;
+package org.blackbell.polls.meetings.source.dm.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 /**
  * Created by Ján Korčák on 18.2.2017.

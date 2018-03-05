@@ -1,8 +1,8 @@
-package org.blackbell.polls.meetings.source;
+package org.blackbell.polls.meetings.source.dm;
 
 import org.blackbell.polls.data.repositories.*;
-import org.blackbell.polls.meetings.dm.DMImportOld;
-import org.blackbell.polls.meetings.dm.api.DMServiceClient;
+import org.blackbell.polls.meetings.source.DataImport;
+import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
 import org.blackbell.polls.meetings.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -46,7 +46,7 @@ public class DMImport implements DataImport {
     @Override
     public Meeting loadMeeting(Meeting meeting, String externalMeetingId) {
         try {
-            return DMImportOld.parseMeetingResponse(meeting, meeting.getSeason(), DMServiceClient.checkoutMeetingData(externalMeetingId));
+            return DMParser.parseMeetingResponse(meeting, meeting.getSeason(), DMServiceClient.checkoutMeetingData(externalMeetingId));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -67,4 +67,5 @@ public class DMImport implements DataImport {
     public void syncSeasons() {
 
     }
+
 }

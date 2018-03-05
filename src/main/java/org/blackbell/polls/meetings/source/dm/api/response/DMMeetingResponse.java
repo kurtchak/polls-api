@@ -1,12 +1,8 @@
-package org.blackbell.polls.meetings.dm;
+package org.blackbell.polls.meetings.source.dm.api.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.blackbell.polls.meetings.dm.dto.AgendaDTO;
-import org.blackbell.polls.meetings.dm.dto.AttachmentsDTO;
-import org.blackbell.polls.meetings.dm.dto.MeetingComponentDTO;
+import org.blackbell.polls.meetings.source.dm.dto.MeetingComponentDTO;
 
 import java.util.List;
 

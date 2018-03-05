@@ -5,10 +5,10 @@ import org.blackbell.polls.common.PollDateUtils;
 import org.blackbell.polls.data.repositories.MeetingRepository;
 import org.blackbell.polls.data.repositories.SeasonRepository;
 import org.blackbell.polls.data.repositories.TownRepository;
-import org.blackbell.polls.meetings.dm.DMImportOld;
-import org.blackbell.polls.meetings.dm.DMMeetingsResponse;
-import org.blackbell.polls.meetings.dm.api.DMServiceClient;
-import org.blackbell.polls.meetings.dm.dto.MeetingDTO;
+import org.blackbell.polls.meetings.source.dm.DMImport;
+import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
+import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
+import org.blackbell.polls.meetings.source.dm.dto.MeetingDTO;
 import org.blackbell.polls.meetings.model.Institution;
 import org.blackbell.polls.meetings.model.Meeting;
 import org.blackbell.polls.meetings.model.Season;
@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,6 +36,10 @@ public class SyncAgent {
 
     public SyncAgent() {}
 
+    public static String generateUniqueKeyReference() {
+        return "" + System.nanoTime();
+    }
+
     private Town getTown(String townName) {
         if (DataContext.getTowns() == null) {
             DataContext.addTowns(townRepository.findAll());
@@ -55,26 +58,26 @@ public class SyncAgent {
         try {
             Town town = getTown(townName);
             Season season = seasonRepository.findByRef(seasonName);
-//            System.out.println("TOWN: " + town);
             DataImport dataImport = getDataImport(town);
-            Date latestSyncDate = meetingRepository.getLatestMeetingDate(town, Institution.valueOfDM(institution), seasonName);
-            System.out.println(":: LatestSyncDate: " + latestSyncDate);
+            System.out.println(":: LatestSyncDate: " + town.getLastSyncDate());
             DMMeetingsResponse response = DMServiceClient.checkoutMeetingsData(town, Institution.valueOfDM(institution), seasonName);
             List<Meeting> meetings = new ArrayList<>();
             for (MeetingDTO meetingDTO : response.getSeasonDTOs().get(0).getMeetingDTOs()) {
-                if (latestSyncDate == null || PollDateUtils.parseDMDate(meetingDTO.getDate()).after(latestSyncDate)) {
+                if (town.getLastSyncDate() == null || PollDateUtils.parseDMDate(meetingDTO.getDate()).after(town.getLastSyncDate())) {
                     Meeting meeting = new Meeting();
                     meeting.setName(meetingDTO.getName());
                     meeting.setDate(PollDateUtils.parseDMDate(meetingDTO.getDate()));
-                    meeting.setRef(DMImportOld.generateUniqueKeyReference()); // TODO:
+                    meeting.setRef(generateUniqueKeyReference()); // TODO:
                     meeting.setSeason(season);
                     meeting = dataImport.loadMeeting(meeting, meetingDTO.getId());
                     System.out.println("NEW MEETING: " + meeting);
                     meetings.add(meeting);
+                    town.setLastSyncDate(meeting.getDate());
                 } else {
                     System.out.println(": meeting already loaded: " + meetingDTO.getDate());
                 }
             }
+            townRepository.save(town);
             meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,12 +86,10 @@ public class SyncAgent {
     }
 
     private static DataImport getDataImport(Town town) {
-        System.out.println("TOWN.SOURCE: " + town.getSource());
         switch(town.getSource()) {
             case DM:
-                return new DMImport();
             default:
-                return null;
+                return new DMImport();
         }
     }
 }

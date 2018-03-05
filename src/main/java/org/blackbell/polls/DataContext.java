@@ -23,7 +23,7 @@ public class DataContext {
 
     public static Town getTown(String name) {
         if (townsMap == null) {
-            townsMap = new HashMap<>();
+            return null;
         }
         return townsMap.get(name);
     }

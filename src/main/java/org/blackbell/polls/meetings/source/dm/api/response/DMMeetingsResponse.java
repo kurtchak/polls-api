@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.dm;
+package org.blackbell.polls.meetings.source.dm.api.response;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
@@ -7,7 +7,7 @@ package org.blackbell.polls.meetings.dm;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.blackbell.polls.meetings.dm.dto.SeasonDTO;
+import org.blackbell.polls.meetings.source.dm.dto.SeasonDTO;
 
 import java.util.List;
 
