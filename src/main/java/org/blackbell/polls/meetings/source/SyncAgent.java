@@ -72,13 +72,14 @@ public class SyncAgent {
                     meeting = dataImport.loadMeeting(meeting, meetingDTO.getId());
                     System.out.println("NEW MEETING: " + meeting);
                     meetings.add(meeting);
-                    town.setLastSyncDate(meeting.getDate());
+                    return;
+//                    town.setLastSyncDate(meeting.getDate());
                 } else {
                     System.out.println(": meeting already loaded: " + meetingDTO.getDate());
                 }
             }
-            townRepository.save(town);
-            meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
+//            townRepository.save(town);
+//            meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
         } catch (Exception e) {
             e.printStackTrace();
         }

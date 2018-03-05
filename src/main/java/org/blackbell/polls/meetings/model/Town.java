@@ -41,6 +41,7 @@ public class Town {
         this.source = source;
     }
 
+    @JsonView(value = {Views.Towns.class})
     @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
     private List<Season> seasons;
 

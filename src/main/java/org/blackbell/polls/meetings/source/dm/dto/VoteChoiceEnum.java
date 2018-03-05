@@ -15,4 +15,16 @@ public enum VoteChoiceEnum {
     VoteChoiceEnum(String name) {
         this.name = name;
     }
+
+    public static VoteChoiceEnum fromString(String name) {
+        switch (name) {
+            case "Za": return DM_VOTE_FOR;
+            case "Proti": return DM_VOTE_AGAINST;
+            case "Nehlasoval": return DM_NO_VOTE;
+            case "Zdržal sa": return DM_ABSTAIN;
+            case "Chýbal na hlasovaní": return DM_ABSENT;
+            default: return null;
+        }
+    }
+
 }

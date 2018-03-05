@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.source.dm;
 import org.blackbell.polls.meetings.source.SyncAgent;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
+import org.blackbell.polls.meetings.source.dm.api.response.DMPollResponse;
 import org.blackbell.polls.meetings.source.dm.dto.*;
 import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.model.vote.*;
@@ -86,21 +87,7 @@ public class DMParser {
         poll.setName(pollDTO.getName());
         poll.setRef(SyncAgent.generateUniqueKeyReference());
         poll.setAgendaItem(item);
-        if (pollDTO.getPollChoiceDTOs() != null) {
-            for (PollChoiceDTO choice : pollDTO.getPollChoiceDTOs()) {
-                if (VoteChoiceEnum.DM_VOTE_FOR.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
-                    poll.setVotesFor(parseVotesFor(season, poll, choice.getMembers()));
-                } else if (VoteChoiceEnum.DM_VOTE_AGAINST.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
-                    poll.setVotesAgainst(parseVotesAgainst(season, poll, choice.getMembers()));
-                } else if (VoteChoiceEnum.DM_NO_VOTE.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
-                    poll.setNoVotes(parseNoVotes(season, poll, choice.getMembers()));
-                } else if (VoteChoiceEnum.DM_ABSTAIN.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
-                    poll.setAbstains(parseAbstains(season, poll, choice.getMembers()));
-                } else if (VoteChoiceEnum.DM_ABSENT.equals(VoteChoiceEnum.valueOf(choice.getName()))) {
-                    poll.setAbsents(parseAbsents(season, poll, choice.getMembers()));
-                }
-            }
-        }
+        // TODO: set counts
         return poll;
     }
 
@@ -310,4 +297,30 @@ public class DMParser {
     }
 
 
+    public static Poll parsePollResponse(Poll poll, DMPollResponse pollResponse) {
+        if (pollResponse.getChildren() != null) {
+            for (VoterDTO voterDTO : pollResponse.getChildren()) {
+                VoteChoiceEnum voteChoice = VoteChoiceEnum.fromString(voterDTO.getName());
+                System.out.println("voteChoice: " + voteChoice);
+/*                switch (voteChoice) {
+                    case DM_VOTE_FOR:
+                        System.out.println("DM_VOTE_FOR");
+                        poll.setVotesFor(parseVotesFor(season, poll, choice.getMembers())); break;
+                    case DM_VOTE_AGAINST:
+                        System.out.println("DM_VOTE_AGAINST");
+                        poll.setVotesAgainst(parseVotesAgainst(season, poll, choice.getMembers())); break;
+                    case DM_NO_VOTE:
+                        System.out.println("DM_NO_VOTE");
+                        poll.setNoVotes(parseNoVotes(season, poll, choice.getMembers())); break;
+                    case DM_ABSTAIN:
+                        System.out.println("DM_NO_VOTE");
+                        poll.setAbstains(parseAbstains(season, poll, choice.getMembers())); break;
+                    case DM_ABSENT:
+                        System.out.println("DM_ABSENT");
+                        poll.setAbsents(parseAbsents(season, poll, choice.getMembers())); break;
+                }
+*/          }
+        }
+        return poll;
+    }
 }

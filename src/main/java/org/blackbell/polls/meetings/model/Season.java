@@ -17,10 +17,10 @@ public class Season {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class, Views.Towns.class})
     private String ref;
 
-    @JsonView(value = {Views.Seasons.class})
+    @JsonView(value = {Views.Seasons.class, Views.Towns.class})
     private String name;
 
     @JsonIgnore
@@ -28,7 +28,7 @@ public class Season {
     @JoinColumn(name = "town_id")
     private Town town;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Seasons.class, Views.Towns.class})
     @Enumerated(EnumType.STRING)
     private Institution institution;
 

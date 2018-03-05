@@ -54,7 +54,12 @@ public class DMImport implements DataImport {
     }
 
     @Override
-    public Poll loadPoll(String externalPollId) {
+    public Poll loadPoll(Poll poll, String extAgendaItemId) {
+        try {
+            return DMParser.parsePollResponse(poll, DMServiceClient.checkoutPollData(extAgendaItemId, poll.getName()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

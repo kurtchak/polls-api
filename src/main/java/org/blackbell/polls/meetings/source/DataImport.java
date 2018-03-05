@@ -17,7 +17,7 @@ public interface DataImport {
 
     Meeting loadMeeting(Meeting meeting, String externalMeetingId);
 
-    Poll loadPoll(String externalPollId);
+    Poll loadPoll(Poll poll, String externalPollId);
 
     CouncilMember loadMembers(Institution institution, Season season);
 

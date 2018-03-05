@@ -2,6 +2,7 @@ package org.blackbell.polls;
 
 import org.blackbell.polls.meetings.model.Town;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +29,8 @@ public class DataContext {
         return townsMap.get(name);
     }
 
-    public static List<Town> getTowns() {
-        return townsMap != null ? (List) townsMap.values() : null;
+    public static Collection<Town> getTowns() {
+        return townsMap != null ? townsMap.values() : null;
     }
 
     public static void addTowns(List<Town> towns) {
