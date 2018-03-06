@@ -25,15 +25,16 @@ public class Town {
     @JsonView(value = {Views.Towns.class})
     private String name;
 
+    @JsonView(value = {Views.Towns.class})
+    @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
+    private List<Season> seasons;
+
     public Town() {}
 
     public Town(String ref, String name) {
         this.ref = ref;
         this.name = name;
     }
-
-    @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
-    private List<Season> seasons;
 
     public long getId() {
         return id;
