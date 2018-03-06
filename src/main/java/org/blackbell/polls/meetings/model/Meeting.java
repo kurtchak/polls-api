@@ -8,6 +8,7 @@ import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -109,5 +110,36 @@ public class Meeting {
 
     public String getExtId() {
         return extId;
+    }
+
+    public void addAgendaItem(AgendaItem agendaItem) {
+        if (agendaItems == null) {
+            agendaItems = new ArrayList<>();
+        }
+        agendaItem.setMeeting(this);
+        agendaItems.add(agendaItem);
+    }
+
+    public void addAttachment(MeetingAttachment attachment) {
+        if (attachments == null) {
+            attachments = new ArrayList<>();
+        }
+        attachment.setMeeting(this);
+        attachments.add(attachment);
+    }
+
+    @Override
+    public String toString() {
+        return "Meeting{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", season=" + season +
+                ", date=" + date +
+                ", agendaItems=" + agendaItems +
+                ", attachments=" + attachments +
+                ", extId='" + extId + '\'' +
+                ", agendaItems count = '" + (getAgendaItems() != null ? getAgendaItems().size() : 0) + '\'' +
+                '}';
     }
 }

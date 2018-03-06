@@ -2,7 +2,7 @@ package org.blackbell.polls.meetings.source.dm.api;
 
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
-import org.blackbell.polls.meetings.source.dm.api.response.DMPollResponse;
+import org.blackbell.polls.meetings.source.dm.api.response.DMPollDetailResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMTownResponse;
 import org.blackbell.polls.meetings.model.Institution;
 import org.blackbell.polls.meetings.model.Town;
@@ -43,10 +43,10 @@ public class DMServiceClient {
         return meetingReponse;
     }
 
-    public static DMPollResponse checkoutPollData(String extAgendaItemId, String pollName) throws Exception {
+    public static DMPollDetailResponse checkoutPollData(String extAgendaItemId, String pollName) throws Exception {
         String url = DMAPIUtils.getDMPollDetailRequestUrl(extAgendaItemId, pollName);
         System.out.println(">> checkoutPollData >> " + url);
-        DMPollResponse pollReponse = new RestTemplate().getForObject(url, DMPollResponse.class);
+        DMPollDetailResponse pollReponse = new RestTemplate().getForObject(url, DMPollDetailResponse.class);
         if (pollReponse == null) {
             throw new Exception("No poll loaded");
         }

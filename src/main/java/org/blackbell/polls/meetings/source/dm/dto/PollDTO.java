@@ -15,6 +15,12 @@ public class PollDTO {
     @JsonProperty(value = "name")
     private String name;
 
+    @JsonProperty(value = "idBodProgramu")
+    private String agendaItemId;
+
+    @JsonProperty(value = "route")
+    private String pollRoute;
+
     @JsonProperty(value = "children")
     private List<PollChoiceDTO> pollChoiceDTOs;
 
@@ -24,6 +30,22 @@ public class PollDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getAgendaItemId() {
+        return agendaItemId;
+    }
+
+    public void setAgendaItemId(String agendaItemId) {
+        this.agendaItemId = agendaItemId;
+    }
+
+    public String getPollRoute() {
+        return pollRoute;
+    }
+
+    public void setPollRoute(String pollRoute) {
+        this.pollRoute = pollRoute;
     }
 
     public List<PollChoiceDTO> getPollChoiceDTOs() {

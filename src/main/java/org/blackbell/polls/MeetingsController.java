@@ -45,24 +45,6 @@ public class MeetingsController {
     @Autowired
     private SyncAgent syncAgent;
 
-    /*
-        //TODO: update to match institution
-        public void checkLoaded(String city, Institution institution) throws Exception {
-            Town town = townRepository.findByRef(city);
-            if (town == null) {
-                log.info("No town with name `"+city+"`. Loading from external WebService...");
-                town = new Town(city, city);
-            }
-            List<Season> seasons;
-            if (town.getSeasons() == null || town.getSeasons(institution) == null) {
-                Application.loadMeetingsData(town, institution, seasons);
-                seasons = town.getSeasons(institution);
-                log.info("Loaded " + (seasons != null ? seasons.size() : 0) + " seasons for `" + town.getName() + "`");
-                townRepository.save(town);
-                log.info(town.getName() + "`s data saved.");
-            }
-        }
-    */
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
     public List<Town> towns() throws Exception {
@@ -145,6 +127,20 @@ public class MeetingsController {
                      @PathVariable(value="ref") String ref) throws Exception {
         //checkLoaded(city, Institution.valueOfDM(institution));
         return agendaRepository.getByRef(ref);
+    }
+
+    private void checkDataLoaded() throws Exception {
+        if (DataContext.getTowns() == null) {
+            List<Town> towns = townRepository.findAll();
+            DataContext.addTowns(towns);
+            for (Town town : towns) {
+                for (Season season : town.getSeasons()) {
+                    for (CouncilMember member : season.getMembers()) {
+                        DataContext.addMember(season, member);
+                    }
+                }
+            }
+        }
     }
 
 }

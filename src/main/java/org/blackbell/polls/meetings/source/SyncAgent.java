@@ -5,14 +5,11 @@ import org.blackbell.polls.common.PollDateUtils;
 import org.blackbell.polls.data.repositories.MeetingRepository;
 import org.blackbell.polls.data.repositories.SeasonRepository;
 import org.blackbell.polls.data.repositories.TownRepository;
+import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.source.dm.DMImport;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
 import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
 import org.blackbell.polls.meetings.source.dm.dto.MeetingDTO;
-import org.blackbell.polls.meetings.model.Institution;
-import org.blackbell.polls.meetings.model.Meeting;
-import org.blackbell.polls.meetings.model.Season;
-import org.blackbell.polls.meetings.model.Town;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +54,7 @@ public class SyncAgent {
     public void syncMeetings(String townName, String institution, String seasonName) {
         try {
             Town town = getTown(townName);
-            Season season = seasonRepository.findByRef(seasonName);
+            Season season = seasonRepository.findByRef(seasonName); // TODO:get rid off
             DataImport dataImport = getDataImport(town);
             System.out.println(":: LatestSyncDate: " + town.getLastSyncDate());
             DMMeetingsResponse response = DMServiceClient.checkoutMeetingsData(town, Institution.valueOfDM(institution), seasonName);
@@ -69,17 +66,23 @@ public class SyncAgent {
                     meeting.setDate(PollDateUtils.parseDMDate(meetingDTO.getDate()));
                     meeting.setRef(generateUniqueKeyReference()); // TODO:
                     meeting.setSeason(season);
-                    meeting = dataImport.loadMeeting(meeting, meetingDTO.getId());
+                    dataImport.loadMeetingDetails(meeting, meetingDTO.getId());
+                    for (AgendaItem item : meeting.getAgendaItems()) {
+                        for (Poll poll : item.getPolls()) {
+                            dataImport.loadPollDetails(season, poll);
+                        }
+                    }
                     System.out.println("NEW MEETING: " + meeting);
                     meetings.add(meeting);
-                    return;
-//                    town.setLastSyncDate(meeting.getDate());
+                    town.setLastSyncDate(meeting.getDate());
                 } else {
                     System.out.println(": meeting already loaded: " + meetingDTO.getDate());
                 }
             }
-//            townRepository.save(town);
-//            meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
+            if (!meetings.isEmpty()) {
+                townRepository.save(town);
+                meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

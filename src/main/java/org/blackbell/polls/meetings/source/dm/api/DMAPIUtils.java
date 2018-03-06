@@ -37,7 +37,9 @@ public class DMAPIUtils {
         return Constants.DM_MEETING_REQUEST_URL.replaceAll("\\{dm_meeting_id\\}", dmMettingId);
     }
 
-    public static String getDMPollDetailRequestUrl(String dmPollId, String pollName) {
-        return Constants.DM_POLL_REQUEST_URL.replaceAll("\\{dm_poll_id\\}", dmPollId);
+    public static String getDMPollDetailRequestUrl(String dmPollId, String pollRoute) {
+        return Constants.DM_POLL_REQUEST_URL
+                .replaceAll("\\{dm_agenda_item_id\\}", dmPollId)
+                .replaceAll("\\{dm_poll_route\\}", pollRoute);
     }
 }

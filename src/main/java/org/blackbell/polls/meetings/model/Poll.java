@@ -1,11 +1,13 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.vote.*;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +26,12 @@ public class Poll {
 
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
+
+    @JsonProperty(value = "idBodProgramu")
+    private String extAgendaItemId;
+
+    @JsonProperty(value = "route")
+    private String extPollRouteId;
 
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     @ManyToOne
@@ -74,6 +82,22 @@ public class Poll {
         this.name = name;
     }
 
+    public String getExtAgendaItemId() {
+        return extAgendaItemId;
+    }
+
+    public void setExtAgendaItemId(String extAgendaItemId) {
+        this.extAgendaItemId = extAgendaItemId;
+    }
+
+    public String getExtPollRouteId() {
+        return extPollRouteId;
+    }
+
+    public void setExtPollRouteId(String extPollRouteId) {
+        this.extPollRouteId = extPollRouteId;
+    }
+
     public AgendaItem getAgendaItem() {
         return agendaItem;
     }
@@ -121,6 +145,38 @@ public class Poll {
     public void setAbsents(List<Absent> absents) {
         this.absents = absents;
     }
+
+    public void addVoteFor(CouncilMember member) {
+        if (votesFor == null) {
+            votesFor = new ArrayList<VoteFor>();
+        }
+        votesFor.add(new VoteFor(this, member));
+    }
+    public void addVoteAgainst(CouncilMember member) {
+        if (votesAgainst == null) {
+            votesAgainst = new ArrayList<VoteAgainst>();
+        }
+        votesAgainst.add(new VoteAgainst(this, member));
+    }
+    public void addNoVote(CouncilMember member) {
+        if (noVotes == null) {
+            noVotes = new ArrayList<NoVote>();
+        }
+        noVotes.add(new NoVote(this, member));
+    }
+    public void addAbstain(CouncilMember member) {
+        if (abstains == null) {
+            abstains = new ArrayList<Abstain>();
+        }
+        abstains.add(new Abstain(this, member));
+    }
+    public void addAbsent(CouncilMember member) {
+        if (absents == null) {
+            absents = new ArrayList<Absent>();
+        }
+        absents.add(new Absent(this, member));
+    }
+
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Transient

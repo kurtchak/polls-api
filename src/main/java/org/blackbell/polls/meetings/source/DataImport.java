@@ -15,9 +15,9 @@ public interface DataImport {
 
     List<Meeting> loadMeetings(Institution institution, Season season);
 
-    Meeting loadMeeting(Meeting meeting, String externalMeetingId);
+    void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception;
 
-    Poll loadPoll(Poll poll, String externalPollId);
+    void loadPollDetails(Season season, Poll poll) throws Exception;
 
     CouncilMember loadMembers(Institution institution, Season season);
 

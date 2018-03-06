@@ -1,15 +1,28 @@
 package org.blackbell.polls.meetings.source.dm.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Created by kurtcha on 5.3.2018.
  */
 public class VoterDTO {
 
+    @JsonProperty(value = "name")
     private String name;
+
+    @JsonProperty(value = "za")
     private boolean votedFor;
+
+    @JsonProperty(value = "proti")
     private boolean votedAgainst;
+
+    @JsonProperty(value = "nehlasoval")
     private boolean notVoted;
+
+    @JsonProperty(value = "zdrzalSa")
     private boolean abstain;
+
+    @JsonProperty(value = "nepritomny")
     private boolean absent;
 
     public String getName() {

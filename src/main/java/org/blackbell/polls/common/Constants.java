@@ -20,7 +20,7 @@ public class Constants {
     public static final String DM_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}?VolebneObdobie={season}";
     public static final String DM_COMMISION_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZKomisie/mesto-{city}";
     public static final String DM_MEETING_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZaKoDet/{dm_meeting_id}";
-    public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_poll_id}/{poll_name}";
+    public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_agenda_item_id}/{dm_poll_route}";
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
 
     static {

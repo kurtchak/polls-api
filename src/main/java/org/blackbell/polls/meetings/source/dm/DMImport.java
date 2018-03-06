@@ -1,5 +1,6 @@
 package org.blackbell.polls.meetings.source.dm;
 
+import org.blackbell.polls.DataContext;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.source.DataImport;
 import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
@@ -44,23 +45,13 @@ public class DMImport implements DataImport {
     }
 
     @Override
-    public Meeting loadMeeting(Meeting meeting, String externalMeetingId) {
-        try {
-            return DMParser.parseMeetingResponse(meeting, meeting.getSeason(), DMServiceClient.checkoutMeetingData(externalMeetingId));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception {
+        DMParser.parseMeetingResponse(meeting, DMServiceClient.checkoutMeetingData(externalMeetingId));
     }
 
     @Override
-    public Poll loadPoll(Poll poll, String extAgendaItemId) {
-        try {
-            return DMParser.parsePollResponse(poll, DMServiceClient.checkoutPollData(extAgendaItemId, poll.getName()));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public void loadPollDetails(Season season, Poll poll) throws Exception {
+        DMParser.parsePollDetail(season, poll, DataContext.getMembersMap(season), DMServiceClient.checkoutPollData(poll.getExtAgendaItemId(), poll.getExtPollRouteId()));
     }
 
     @Override
