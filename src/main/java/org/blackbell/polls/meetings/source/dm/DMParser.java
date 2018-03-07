@@ -1,5 +1,6 @@
 package org.blackbell.polls.meetings.source.dm;
 
+import org.blackbell.polls.common.PollDateUtils;
 import org.blackbell.polls.meetings.source.SyncAgent;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
@@ -217,23 +218,25 @@ public class DMParser {
         season.setRef(seasonDTO.getName());
         season.setInstitution(institution);
         season.setTown(town);
-        List<Meeting> meetingsMap = new ArrayList<>();
-        parseMeetings(seasonDTO, season, meetingsMap);
-        season.setMeetings(meetingsMap);
+        parseMeetings(seasonDTO, season);
         return season;
     }
 
-    private static void parseMeetings(SeasonDTO seasonDTO, Season season, List<Meeting> meetingsMap) {
+    private static void parseMeetings(SeasonDTO seasonDTO, Season season) {
         List<Meeting> meetings = new ArrayList<>();
         for (MeetingDTO meetingDTO : seasonDTO.getMeetingDTOs()) {
             try {
-//                meetings.add(parseMeeting(season, meetingDTO));
-//                meetingsMap.add(parseMeeting(season, meetingDTO));
+                Meeting meeting = new Meeting();
+                meeting.setName(meetingDTO.getName());
+                meeting.setDate(PollDateUtils.parseSimpleDate(meetingDTO.getDate()));
+                meeting.setExtId(meetingDTO.getId());
+                meetings.add(meeting);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("MeetingComponent for meeting id: " + meetingDTO.getId() + " and name: " + meetingDTO.getName() + " was not loaded. Details: " + e.getMessage());
             }
         }
+        season.setMeetings(meetings);
     }
 
     public static Meeting parseMeetingResponse(Meeting meeting, DMMeetingResponse meetingResponse) throws Exception {
@@ -258,19 +261,14 @@ public class DMParser {
             for (VoterDTO voterDTO : pollDetailResponse.getChildren()) {
                 CouncilMember member = findOrIntroduceCouncilMember(season, voterDTO.getName(), membersMap);
                 if (voterDTO.isVotedFor()) {
-                    System.out.println("DM_VOTE_FOR");
                     poll.addVoteFor(member);
                 } else if (voterDTO.isVotedAgainst()) {
-                    System.out.println("DM_VOTE_AGAINST");
                     poll.addVoteAgainst(member);
                 } else if (voterDTO.isNotVoted()) {
-                    System.out.println("DM_NO_VOTE");
                     poll.addNoVote(member);
                 } else if (voterDTO.isAbstain()) {
-                    System.out.println("DM_ABSTAIN");
                     poll.addAbstain(member);
                 } else if (voterDTO.isAbsent()) {
-                    System.out.println("DM_ABSENT");
                     poll.addAbsent(member);
                 }
             }

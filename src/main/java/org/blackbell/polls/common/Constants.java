@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
  * email: korcak@esten.sk
  */
 public class Constants {
+    public static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
+    public static final DateFormat DATE_FORMAT;
+
     public static final String FULLDATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final DateFormat FULLDATE_FORMAT;
 
@@ -24,6 +27,7 @@ public class Constants {
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
 
     static {
+        DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_PATTERN);
         FULLDATE_FORMAT = new SimpleDateFormat(FULLDATE_FORMAT_PATTERN);
         FULLDATE_WITH_T_FORMAT = new SimpleDateFormat(FULLDATE_WITH_T_FORMAT_PATTERN);
     }

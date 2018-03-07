@@ -21,4 +21,8 @@ public class PollDateUtils {
     public static Date parseDMDate(String dmDate) throws ParseException {
         return Constants.FULLDATE_WITH_T_FORMAT.parse(cutDateStringToTFormat(dmDate));
     }
+
+    public static Date parseSimpleDate(String dmDate) throws ParseException {
+        return Constants.DATE_FORMAT.parse(dmDate);
+    }
 }
