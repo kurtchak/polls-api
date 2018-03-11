@@ -42,9 +42,6 @@ public class MeetingsController {
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
 
-    @Autowired
-    private SyncAgent syncAgent;
-
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
     public List<Town> towns() throws Exception {
@@ -64,7 +61,6 @@ public class MeetingsController {
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season) throws Exception {
-        syncAgent.syncMeetings(city, institution, season);
         return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
     }
 

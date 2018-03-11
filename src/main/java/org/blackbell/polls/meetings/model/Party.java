@@ -29,6 +29,11 @@ public class Party {
     @JsonIgnore
     private String logo;
 
+    @JsonView(value = Views.CouncilMember.class)
+    @ManyToOne
+    @JoinColumn(name = "season_id")
+    private Season season;
+
     @JsonIgnore
     @OneToMany(mappedBy = "party", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<PartyNominee> partyNominees;

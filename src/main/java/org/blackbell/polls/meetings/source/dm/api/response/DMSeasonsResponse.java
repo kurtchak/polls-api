@@ -7,28 +7,28 @@ package org.blackbell.polls.meetings.source.dm.api.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.blackbell.polls.meetings.source.dm.dto.TownDTO;
+import org.blackbell.polls.meetings.source.dm.dto.SeasonDTO;
 
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DMTownResponse {
+public class DMSeasonsResponse {
 
     @JsonProperty(value = "data")
-    private List<TownDTO> townDTOs;
+    private List<SeasonDTO> SeasonDTOs;
 
-    public List<TownDTO> getTownDTOs() {
-        return townDTOs;
+    public List<SeasonDTO> getSeasonDTOs() {
+        return SeasonDTOs;
     }
 
-    public void setTownDTOs(List<TownDTO> townDTOs) {
-        this.townDTOs = townDTOs;
+    public void setSeasonDTOs(List<SeasonDTO> SeasonDTOs) {
+        this.SeasonDTOs = SeasonDTOs;
     }
 
     @Override
     public String toString() {
-        return "DMMeetingsResponse{" +
-                ", townDTOs=" + townDTOs +
+        return "DMSeasonsResponse{" +
+                ", SeasonDTOs=" + SeasonDTOs +
                 '}';
     }
 }

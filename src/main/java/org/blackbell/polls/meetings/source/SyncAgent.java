@@ -1,26 +1,24 @@
 package org.blackbell.polls.meetings.source;
 
-import org.blackbell.polls.DataContext;
-import org.blackbell.polls.common.PollDateUtils;
-import org.blackbell.polls.data.repositories.MeetingRepository;
-import org.blackbell.polls.data.repositories.SeasonRepository;
-import org.blackbell.polls.data.repositories.TownRepository;
+import org.blackbell.polls.data.repositories.*;
+import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.meetings.source.crawler.PresovCouncilMemberCrawler;
 import org.blackbell.polls.meetings.source.dm.DMImport;
-import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
-import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
-import org.blackbell.polls.meetings.source.dm.dto.MeetingDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by kurtcha on 25.2.2018.
  */
-@Service
+@Component
 public class SyncAgent {
+    private static final Logger log = LoggerFactory.getLogger(SyncAgent.class);
 
     @Autowired
     private MeetingRepository meetingRepository;
@@ -31,62 +29,107 @@ public class SyncAgent {
     @Autowired
     private TownRepository townRepository;
 
+    @Autowired
+    private PartyRepository partyRepository;
+
+    @Autowired
+    private CouncilMemberRepository councilMemberRepository;
+
+    private List<Town> towns;
+    private Map<Season, Map<String, CouncilMember>> allMembersMap;
+    private Map<String, Party> partiesMap;
+
     public SyncAgent() {}
 
-    public static String generateUniqueKeyReference() {
-        return "" + System.nanoTime();
-    }
-
-    private Town getTown(String townName) {
-        if (DataContext.getTowns() == null) {
-            DataContext.addTowns(townRepository.findAll());
+    @Scheduled(fixedRate = 3600000, initialDelay = 10000)
+    public void syncCouncilMembers() {
+        System.out.println("syncCouncilMembers...");
+        // AD-HOC
+        Season season = seasonRepository.findByRef("2014-2018");
+        List<Party> parties = partyRepository.findAll();
+        partiesMap = new HashMap<>();
+        for (Party party : parties) {
+            partiesMap.put(party.getName(), party);
         }
-        return DataContext.getTown(townName);
+        // AD-HOC
+        List<CouncilMember> councilMembers = new PresovCouncilMemberCrawler().getCouncilMembers(season, partiesMap);
+        councilMemberRepository.save(councilMembers);
+        System.out.println("CouncilMembers saved");
     }
 
-    public void syncSeasons(Town town) {
-        //TODO:
-        DataImport dataImport = getDataImport(town);
-        List<Season> seasons = dataImport.loadSeasons();
-
+    @Scheduled(fixedRate = 3600000, initialDelay = 1000000)
+    public void sync() {
+        towns = townRepository.findAll();
+        if (towns == null) {
+            log.info("No town to sync");
+        } else {
+            for (Town town : towns) {
+                syncSeasons(town);
+                town.setLastSyncDate(new Date());
+                townRepository.save(town);
+            }
+        }
     }
 
-    public void syncMeetings(String townName, String institution, String seasonName) {
+    //TODO: zaciatok a koniec volebneho obdobia nie je jasne definovany
+    private void syncSeasons(Town town) {
         try {
-            Town town = getTown(townName);
-            Season season = seasonRepository.findByRef(seasonName); // TODO:get rid off
+            Date syncDate = new Date();
             DataImport dataImport = getDataImport(town);
-            System.out.println(":: LatestSyncDate: " + town.getLastSyncDate());
-            DMMeetingsResponse response = DMServiceClient.checkoutMeetingsData(town, Institution.valueOfDM(institution), seasonName);
-            List<Meeting> meetings = new ArrayList<>();
-            for (MeetingDTO meetingDTO : response.getSeasonDTOs().get(0).getMeetingDTOs()) {
-                if (town.getLastSyncDate() == null || PollDateUtils.parseDMDate(meetingDTO.getDate()).after(town.getLastSyncDate())) {
-                    Meeting meeting = new Meeting();
-                    meeting.setName(meetingDTO.getName());
-                    meeting.setDate(PollDateUtils.parseDMDate(meetingDTO.getDate()));
-                    meeting.setRef(generateUniqueKeyReference()); // TODO:
-                    meeting.setSeason(season);
-                    dataImport.loadMeetingDetails(meeting, meetingDTO.getId());
-                    for (AgendaItem item : meeting.getAgendaItems()) {
-                        for (Poll poll : item.getPolls()) {
-                            dataImport.loadPollDetails(season, poll);
-                        }
-                    }
-                    System.out.println("NEW MEETING: " + meeting);
-                    meetings.add(meeting);
-                    town.setLastSyncDate(meeting.getDate());
-                } else {
-                    System.out.println(": meeting already loaded: " + meetingDTO.getDate());
+            List<Season> seasons = dataImport.loadSeasons(town);
+            List<Season> formerSeasons = seasonRepository.findByTown(town.getName());
+            for (Season season : seasons) {
+                if (!formerSeasons.contains(season)) {
+                    log.info("Adding new season for town %s: " + town.getName());
+                    seasonRepository.save(season);
+                }
+                if (season.getLastSyncDate() == null || season.getLastSyncDate().before(syncDate)) {
+                    syncMeetings(season);
                 }
             }
-            if (!meetings.isEmpty()) {
-                townRepository.save(town);
-                meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
-            }
         } catch (Exception e) {
+            log.error("An error occured during the %ss seasons synchronization.", town.getName());
             e.printStackTrace();
         }
 
+    }
+
+    private void syncMeetings(Season season) {
+        try {
+            DataImport dataImport = getDataImport(season.getTown());
+            System.out.println(season.getTown().getName() + " - " + season.getName() + " - " + season.getInstitution() + ":: LatestSyncDate: " + season.getLastSyncDate());
+            List<Meeting> meetings = dataImport.loadMeetings(season);
+            for (Meeting meeting : meetings) {
+               if (season.getLastSyncDate() == null || meeting.getDate().after(season.getLastSyncDate())) {
+                   loadMeeting(meeting, dataImport);
+                   meetings.add(meeting);
+                   season.setLastSyncDate(meeting.getDate());
+               } else {
+                   System.out.println(": meeting details already loaded: " + meeting.getDate());
+               }
+            }
+            if (!meetings.isEmpty()) {
+                seasonRepository.save(season);
+                meetingRepository.save(meetings);// TODO: check synchronization with other meetings and its retention
+            }
+        } catch (Exception e) {
+            log.error("An error occured during the %s meetings synchronization.", season.getRef());
+            e.printStackTrace();
+        }
+
+    }
+
+    private Meeting loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {
+        dataImport.loadMeetingDetails(meeting, meeting.getExtId());
+        if (meeting.getAgendaItems() != null) {
+            for (AgendaItem item : meeting.getAgendaItems()) {
+                for (Poll poll : item.getPolls()) {
+                    dataImport.loadPollDetails(poll, getMembersMap(meeting.getSeason()));
+                }
+            }
+        }
+        System.out.println("NEW MEETING: " + meeting);
+        return meeting;
     }
 
     private static DataImport getDataImport(Town town) {
@@ -96,4 +139,47 @@ public class SyncAgent {
                 return new DMImport();
         }
     }
+
+    // MEMBERS
+    public void addMember(Season season, CouncilMember member) {
+        if (allMembersMap == null) {
+            allMembersMap = new HashMap<>();
+        }
+        if (!allMembersMap.containsKey(season)) {
+            allMembersMap.put(season, new HashMap<>());
+        }
+        allMembersMap.get(season).put(member.getName(), member);
+    }
+
+    public CouncilMember getMember(Season season, String name) {
+        if (allMembersMap == null || !allMembersMap.containsKey(season)) {
+            return null;
+        }
+        return allMembersMap.get(season).get(name);
+    }
+
+    public Collection<CouncilMember> getMembers(Season season) {
+        return allMembersMap != null && allMembersMap.containsKey(season) ? allMembersMap.get(season).values() : null;
+    }
+
+    public void addMembers(Season season, List<CouncilMember> members) {
+        if (allMembersMap == null) {
+            allMembersMap = new HashMap<>();
+        }
+        if (!allMembersMap.containsKey(season)) {
+            allMembersMap.put(season, new HashMap<>());
+        }
+        for (CouncilMember member : members) {
+            allMembersMap.get(season).put(member.getName(), member);
+        }
+    }
+
+    public Map<Season, Map<String, CouncilMember>> getAllMembersMap() {
+        return allMembersMap;
+    }
+
+    public Map<String, CouncilMember> getMembersMap(Season season) {
+        return allMembersMap != null ? allMembersMap.get(season) : null;
+    }
+
 }

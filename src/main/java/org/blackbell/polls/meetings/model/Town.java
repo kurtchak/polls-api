@@ -1,5 +1,6 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
@@ -31,6 +32,8 @@ public class Town {
     private Source source;
 
     @JsonView(value = {Views.Towns.class})
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @Temporal(TemporalType.DATE)
     private Date lastSyncDate;
 
     public Town() {}

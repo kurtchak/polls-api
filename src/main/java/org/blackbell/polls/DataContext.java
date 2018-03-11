@@ -36,6 +36,10 @@ public class DataContext {
         return townsMap.get(name);
     }
 
+    public static boolean hasTown(String name) {
+        return townsMap != null && townsMap.containsKey(name);
+    }
+
     public static Collection<Town> getTowns() {
         return townsMap != null ? townsMap.values() : null;
     }
@@ -90,4 +94,6 @@ public class DataContext {
     public static Map<String, CouncilMember> getMembersMap(Season season) {
         return allMembersMap != null ? allMembersMap.get(season) : null;
     }
+
+
 }

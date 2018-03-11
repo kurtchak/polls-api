@@ -1,10 +1,12 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,6 +33,11 @@ public class Season {
     @JsonView(value = {Views.Seasons.class, Views.Towns.class})
     @Enumerated(EnumType.STRING)
     private Institution institution;
+
+    @JsonView(value = {Views.Towns.class})
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @Temporal(TemporalType.DATE)
+    private Date lastSyncDate;
 
     @JsonIgnore
     @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
@@ -80,6 +87,14 @@ public class Season {
         this.institution = institution;
     }
 
+    public Date getLastSyncDate() {
+        return lastSyncDate;
+    }
+
+    public void setLastSyncDate(Date lastSyncDate) {
+        this.lastSyncDate = lastSyncDate;
+    }
+
     public List<Meeting> getMeetings() {
         return meetings;
     }
@@ -94,5 +109,26 @@ public class Season {
 
     public void setMembers(List<CouncilMember> members) {
         this.members = members;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Season)) return false;
+
+        Season season = (Season) o;
+
+        if (!name.equals(season.name)) return false;
+        if (!town.equals(season.town)) return false;
+        return institution == season.institution;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + town.hashCode();
+        result = 31 * result + institution.hashCode();
+        return result;
     }
 }

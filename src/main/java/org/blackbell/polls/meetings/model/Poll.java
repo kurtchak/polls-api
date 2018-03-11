@@ -33,6 +33,34 @@ public class Poll {
     @JsonProperty(value = "route")
     private String extPollRouteId;
 
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "note")
+    private String note;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "voters")
+    private int voters;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "absent")
+    private int absent;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "votedFor")
+    private int votedFor;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "votedAgainst")
+    private int votedAgainst;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "abstain")
+    private int abstain;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "notVoted")
+    private int notVoted;
+
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
     @ManyToOne
     @JoinColumn(name = "agenda_item_id")
@@ -106,6 +134,14 @@ public class Poll {
         this.agendaItem = agendaItem;
     }
 
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
     public List<VoteFor> getVotesFor() {
         return votesFor;
     }
@@ -177,37 +213,55 @@ public class Poll {
         absents.add(new Absent(this, member));
     }
 
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @Transient
-    public int getVotedFor() {
-        return votesFor != null ? votesFor.size() : 0;
+    public int getVoters() {
+        return voters;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @Transient
-    public int getVotedAgainst() {
-        return votesAgainst != null ? votesAgainst.size() : 0;
+    public void setVoters(int voters) {
+        this.voters = voters;
     }
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @Transient
-    public int getNotVoted() {
-        return noVotes != null ? noVotes.size() : 0;
-    }
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @Transient
-    public int getAbstain() {
-        return abstains != null ? abstains.size() : 0;
-    }
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @Transient
     public int getAbsent() {
-        return absents != null ? absents.size() : 0;
+        return absent;
     }
 
+    public void setAbsent(int absent) {
+        this.absent = absent;
+    }
+
+    public int getVotedFor() {
+        return votedFor;
+    }
+
+    public void setVotedFor(int votedFor) {
+        this.votedFor = votedFor;
+    }
+
+    public int getVotedAgainst() {
+        return votedAgainst;
+    }
+
+    public void setVotedAgainst(int votedAgainst) {
+        this.votedAgainst = votedAgainst;
+    }
+
+    public int getAbstain() {
+        return abstain;
+    }
+
+    public void setAbstain(int abstain) {
+        this.abstain = abstain;
+    }
+
+    public int getNotVoted() {
+        return notVoted;
+    }
+
+    public void setNotVoted(int notVoted) {
+        this.notVoted = notVoted;
+    }
+
+    // TODO: When is Passed?
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Transient
     public VoteResult getResult() {
