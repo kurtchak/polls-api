@@ -52,7 +52,6 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}/seasons")
     public List<Season> seasons(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution) throws Exception {
-//        syncAgent.syncSeasons();
         return seasonRepository.findByTown(city);
     }
 
@@ -77,7 +76,6 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-//TODO:        checkLoaded(city, Institution.valueOfDM(institution));
         return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
     }
 
@@ -94,7 +92,6 @@ public class MeetingsController {
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
-        //checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
     }
 
@@ -103,7 +100,6 @@ public class MeetingsController {
     public Poll poll(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="ref") String ref) throws Exception {
-//        checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByRef(ref);
     }
 
@@ -112,7 +108,6 @@ public class MeetingsController {
     public Collection<AgendaItem> agenda(@PathVariable(value = "city") String city,
                                           @PathVariable(value = "institution") String institution,
                                           @PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
-        //checkLoaded(city, Institution.valueOfDM(institution));
         return agendaRepository.getByMeeting(meetingRef);
     }
 
@@ -121,22 +116,7 @@ public class MeetingsController {
     public AgendaItem agendaItem(@PathVariable(value="city") String city,
                      @PathVariable(value="institution") String institution,
                      @PathVariable(value="ref") String ref) throws Exception {
-        //checkLoaded(city, Institution.valueOfDM(institution));
         return agendaRepository.getByRef(ref);
-    }
-
-    private void checkDataLoaded() throws Exception {
-        if (DataContext.getTowns() == null) {
-            List<Town> towns = townRepository.findAll();
-            DataContext.addTowns(towns);
-            for (Town town : towns) {
-                for (Season season : town.getSeasons()) {
-                    for (CouncilMember member : season.getMembers()) {
-                        DataContext.addMember(season, member);
-                    }
-                }
-            }
-        }
     }
 
 }

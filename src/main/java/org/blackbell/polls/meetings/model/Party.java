@@ -84,11 +84,39 @@ public class Party {
         this.logo = logo;
     }
 
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason(Season season) {
+        this.season = season;
+    }
+
     public List<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
 
     public void setPartyNominees(List<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
+    }
+
+    // TODO: is it right
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Party)) return false;
+
+        Party party = (Party) o;
+
+        if (!name.equals(party.name)) return false;
+        return season.equals(party.season);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + season.hashCode();
+        return result;
     }
 }

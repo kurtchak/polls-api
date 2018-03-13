@@ -8,10 +8,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,19 +18,23 @@ import java.util.regex.Pattern;
 public class PresovCouncilMemberCrawler {
 
     private static final String PRESOV_MSZ_MEMBERS_ROOT = "http://www.presov.sk/poslanci-msz.html";
+
     private static final String MEMBER_LINK_RE = "<a href=\"javascript:osoba_podrobnosti\\((?<id>\\d+),1\\)\" title=\"[^\"]+\"> <img src=\"(?<image>\\/portals_pictures\\/i_\\d+\\/i_\\d+.jpg)\" width=\"\\d+\" height=\"\\d+\" title=\"(?<name>[^\"]+)\" alt=\"[^\"]+\"><\\/a>";
+
     private static final String MEMBER_DETAIL_URL = "http://www.presov.sk/admin_new/modules/osoba_v_novom_okne.php?id_osoba=%s&all_data=1";
-    //private static final String MEMBER_DETAIL_RE = "<p>[^:]+:\\s*(?<phonenumber>[^<]+)<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s+<\\/p>(?<functions>.*?<br>\\s*)?";
-    private static final String MEMBER_DETAIL_RE = "<div class=\"float_left\">\\s*<p>(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*<\\/p>\\s*<p>(?<address>[^<]+)(<br>\\s*)*(?<partycandidate>Kandidát(ka)? politickej strany (?<candidateparty>[^<]+))?\\s*(?<partiescandidate>(Kandidát(ka)? koalície politických strán (?<candidateparties>[^<]+))|Nezávislá kandidátka|Nezávislý kandidát)?<\\/p>\\s*<p>((?<clubmember>((Člen(ka)?|P(odp)?redseda|P(odp)?redsedníčka) Poslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)\\s*<br>)?\\s*((?<functions>.*(<br>|<\\/p>)\\s*)+)\\s*<\\/div>";
+
+    private static final String MEMBER_DETAIL_RE = "<div class=\"float_left\\\">\\s*<p>(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*(<a href=\"mailto:(?<email2>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*)?(<\\/p>)?\\s*<p>(?<address>[^<]+)(\\s*<br(\\s*\\/)?>\\s*)*(?<partycandidate>Kandidát(ka)? politickej strany (?<candidateparty>[^<]+))?\\s*(?<partiescandidate>((Kandidát(ka)? koalície politických strán|Kandidát(ka)? politickej koalície)\\s*(?<candidateparties>[^<]+))|Nezávislá kandidátka|Nezávislý kandidát)?(\\s*<br(\\s*\\/)?>\\s*)?<\\/p>\\s*<p>((?<clubmember>((Člen(ka)?|P(odp)?redseda|P(odp)?redsedníčka) Poslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)\\s*<br(\\s*\\/)?>)?\\s*((?<functions>.*(<br(\\s*\\/)?>|<\\/p>)\\s*)+)\\s*<\\/div>";
     private static final Pattern MEMBER_DETAIL_PATTERN = Pattern.compile(MEMBER_DETAIL_RE);
+
     private static final Pattern CHAIRMAN_PATTERN = Pattern.compile("Predseda|Predsedkyňa");
     private static final Pattern VICECHAIRMAN_PATTERN = Pattern.compile("Podpredseda|Podpredsedkyňa");
     private static final Pattern MEMBER_PATTERN = Pattern.compile("Člen|Členka");
+
     private static final String PORTAL_BASE_URL = "http://www.presov.sk";
 
     private Map<String, Club> clubsMap = new HashMap<>();
 
-    public List<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap) {
+    public List<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
         List<CouncilMember> members = new ArrayList<>();
         try {
             Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
@@ -47,6 +48,13 @@ public class PresovCouncilMemberCrawler {
                     String id = matcher.group("id");
                     String image = matcher.group("image");
                     String name = matcher.group("name");
+
+                    // Check if not exists already
+                    String simpleName = PollsUtils.getSimpleName(name);
+                    if (councilMembersMap.containsKey(simpleName)) {
+                        System.out.println("Council member '" + simpleName + "' already known.");
+                        continue;
+                    }
 
                     CouncilMember member = new CouncilMember();
                     member.setName(PollsUtils.getSimpleName(name));
@@ -81,14 +89,29 @@ public class PresovCouncilMemberCrawler {
             if (matcher.find()) {
                 //System.out.println("Phone: " + matcher.group("phone"));
                 //System.out.println("Phone number: " + matcher.group("phonenumber"));
-                m.setEmail(matcher.group("email"));
+                String emails = "";
+                if (matcher.group("email") != null && !matcher.group("email").isEmpty()) {
+                    emails = matcher.group("email");
+                }
+                if (matcher.group("email2") != null && !matcher.group("email2").isEmpty()) {
+                    emails += ", " + matcher.group("email2");
+                }
+                m.setEmail(emails);
                 m.setPhone(matcher.group("phonenumber"));
                 String partyCandidate = matcher.group("candidateparty");
+                if (partiesMap == null) {
+                    partiesMap = new HashMap<>();
+                }
                 if (partyCandidate != null && !partyCandidate.isEmpty()) {
                     List<PartyNominee> partyNominees = new ArrayList<>();
                     PartyNominee nominee = new PartyNominee();
+                    String partyName = PollsUtils.cleanAndTrim(partyCandidate);
+                    if (!partiesMap.containsKey(partyName)) {
+                        partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
+
+                    }
                     nominee.setCouncilMember(m);
-                    nominee.setParty(partiesMap.get(partyCandidate));
+                    nominee.setParty(partiesMap.get(partyName));
                     nominee.setSeason(m.getSeason());
                     partyNominees.add(nominee);
                     m.setPartyNominees(partyNominees);
@@ -96,11 +119,14 @@ public class PresovCouncilMemberCrawler {
                 String partiesCandidate = matcher.group("candidateparties");
                 if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
                     List<PartyNominee> partyNominees = new ArrayList<>();
-                    String[] parties = partiesCandidate.split("\\s*,\\s*");
-                    for (String party : parties) {
+                    List<String> partyList = PollsUtils.splitCleanAndTrim(partiesCandidate);
+                    for (String partyName : partyList) {
+                        if (!partiesMap.containsKey(partyName)) {
+                            partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
+                        }
                         PartyNominee nominee = new PartyNominee();
                         nominee.setCouncilMember(m);
-                        nominee.setParty(partiesMap.get(party));
+                        nominee.setParty(partiesMap.get(partyName));
                         nominee.setSeason(m.getSeason());
                         partyNominees.add(nominee);
                     }
@@ -120,32 +146,38 @@ public class PresovCouncilMemberCrawler {
 
                 String clubPartiesString = matcher.group("clubparties");
                 if (clubPartiesString != null && !clubPartiesString.isEmpty()) {
-                    String[] clubParties = clubPartiesString.split("\\s*,\\s*");
-                    String clubName = String.join("-", clubParties);
+                    List<String> partyList = PollsUtils.splitCleanAndTrim(clubPartiesString);
+                    String clubName = PollsUtils.generateClubName(partyList);
                     if (!clubsMap.containsKey(clubName)) {
+                        System.out.println(":NEW CLUB: " + clubName);
                         Club club = new Club();
+                        club.setSeason(m.getSeason());
+                        club.setRef(clubName);
                         List<ClubParty> clubParties1 = new ArrayList<>();
-                        for (String party : clubParties) {
-                            ClubParty clubParty = new ClubParty();
-                            clubParty.setParty(partiesMap.get(party));
-                            clubParty.setSeason(m.getSeason());
-                            clubParty.setClub(club);
-                            clubParties1.add(clubParty);
+                        for (String partyName : partyList) {
+                            if (!partiesMap.containsKey(partyName)) {
+                                partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
+                            }
+                            clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
                         }
                         club.setParties(clubParties1);
-                        List<ClubMember> clubMembers = new ArrayList<>();
-                        ClubMember clubMember = new ClubMember();
-                        clubMember.setCouncilMember(m);
-                        clubMember.setClub(club);
-                        clubMembers.add(clubMember);
-                        m.setClubMembers(clubMembers);
-                        club.addMember(clubMember);
+                        clubsMap.put(club.getRef(), club);
                     }
+                    Club club = clubsMap.get(clubName);
+                    List<ClubMember> clubMembers = new ArrayList<>();
+                    ClubMember clubMember = new ClubMember();
+                    System.out.println("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
+                    clubMember.setCouncilMember(m);
+                    clubMember.setClub(club);
+                    clubMembers.add(clubMember);
+                    m.setClubMembers(clubMembers);
+                    club.addMember(clubMember);
+                    clubsMap.put(clubName, club);
                 }
 
                 String functionsString = matcher.group("functions");
                 if (functionsString != null && !functionsString.isEmpty()) {
-                    String[] functions = functionsString.split("\\s*(<br>|<\\/p>)\\s*");
+                    String[] functions = functionsString.split("\\s*(<br(\\s*\\/)?>|<\\/p>)\\s*");
                     functionsString = String.join(", ", functions);
                     m.setOtherFunctions(functionsString);
                 }
@@ -158,7 +190,25 @@ public class PresovCouncilMemberCrawler {
         }
     }
 
-//    public static void main(String[] args) {
+    public static Party introduceParty(Season season, String partyName) {
+        System.out.println(":NEW PARTY: " + partyName);
+        Party party = new Party();
+        party.setRef(partyName);
+        party.setName(partyName);
+        party.setSeason(season);
+        return party;
+    }
+
+    private static ClubParty introduceClubParty(Season season, Club club, Party party) {
+        ClubParty clubParty = new ClubParty();
+        System.out.println("CLUB["+club.getRef()+"]: NEW CLUB PARTY: " + party.getName());
+        clubParty.setParty(party);
+        clubParty.setSeason(season);
+        clubParty.setClub(club);
+        return clubParty;
+    }
+
+    //    public static void main(String[] args) {
 //    	new PresovCouncilMemberCrawler().getCouncilMembers();
 //    }
 }

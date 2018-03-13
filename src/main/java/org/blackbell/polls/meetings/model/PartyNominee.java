@@ -20,8 +20,8 @@ public class PartyNominee {
     private long id;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
-    @ManyToOne
-    @JoinColumn(name = "party_id", insertable = false, updatable = false)
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "party_id")
     private Party party;
 
     @JsonIgnore

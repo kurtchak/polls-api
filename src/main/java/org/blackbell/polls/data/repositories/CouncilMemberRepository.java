@@ -2,6 +2,7 @@ package org.blackbell.polls.data.repositories;
 
 import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.Season;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,7 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
 
     @Query(value = "select m from CouncilMember m where m.ref = :ref")
     CouncilMember findByRef(@Param(value = "ref") String memberRef);
+
+    @Query(value = "select m from CouncilMember m where m.season = :season")
+    List<CouncilMember> findBySeason(@Param(value = "season") Season season);
 }

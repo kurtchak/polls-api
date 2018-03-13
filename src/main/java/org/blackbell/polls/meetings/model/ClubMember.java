@@ -20,7 +20,6 @@ public class ClubMember {
     @JoinColumn(name = "club_id")
     private Club club;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;

@@ -1,5 +1,6 @@
 package org.blackbell.polls.meetings.source;
 
+import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
@@ -51,10 +52,25 @@ public class SyncAgent {
         for (Party party : parties) {
             partiesMap.put(party.getName(), party);
         }
-        // AD-HOC
-        List<CouncilMember> councilMembers = new PresovCouncilMemberCrawler().getCouncilMembers(season, partiesMap);
-        councilMemberRepository.save(councilMembers);
-        System.out.println("CouncilMembers saved");
+
+        towns = townRepository.findAll();
+        for (Town town : towns) {
+            Map<String, CouncilMember> councilMembersMap = new HashMap<>();
+            List<CouncilMember> councilMembers = councilMemberRepository.findBySeason(season);
+            for (CouncilMember councilMember : councilMembers) {
+                councilMembersMap.put(councilMember.getName(), councilMember);
+            }
+            if ("presov".equals(town.getRef())) {
+                List<CouncilMember> newCouncilMembers = new PresovCouncilMemberCrawler().getCouncilMembers(season, partiesMap, councilMembersMap);
+                if (councilMembers != null) {
+                    councilMemberRepository.save(newCouncilMembers);
+                    System.out.println("New CouncilMembers saved");
+                } else {
+                    System.out.println(String.format("No new CouncilMembers found for town '%s' and season '%s'", town.getName(), season.getName()));
+                }
+            }
+        }
+        System.out.println("Council Members Sync finished");
     }
 
     @Scheduled(fixedRate = 3600000, initialDelay = 1000000)

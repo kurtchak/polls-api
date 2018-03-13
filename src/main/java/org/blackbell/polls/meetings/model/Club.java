@@ -16,6 +16,8 @@ public class Club {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
+    private String ref;
+
     @JsonIgnore
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ClubParty> clubParties;
@@ -24,7 +26,7 @@ public class Club {
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
 
@@ -50,6 +52,18 @@ public class Club {
 
     public void setClubMembers(List<ClubMember> clubMembers) {
         this.clubMembers = clubMembers;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public void setRef(String ref) {
+        this.ref = ref;
+    }
+
+    public void setClubParties(List<ClubParty> clubParties) {
+        this.clubParties = clubParties;
     }
 
     public Season getSeason() {
