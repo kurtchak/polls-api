@@ -109,11 +109,38 @@ public class Town {
         return institutionSeasons;
     }
 
+    @Override
+    public String toString() {
+        return "Town{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", source=" + source +
+                ", lastSyncDate=" + lastSyncDate +
+                '}';
+    }
+
     public void addSeasons(List<Season> seasons) {
         if (this.seasons == null) {
             this.seasons = seasons;
         } else {
             seasons.addAll(seasons);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Town)) return false;
+
+        Town town = (Town) o;
+
+        return ref.equals(town.getRef());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return ref.hashCode();
     }
 }

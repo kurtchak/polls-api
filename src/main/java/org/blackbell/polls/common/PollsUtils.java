@@ -1,7 +1,5 @@
 package org.blackbell.polls.common;
 
-import org.blackbell.polls.meetings.source.dm.dto.MeetingDTO;
-
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
@@ -19,10 +17,6 @@ public class PollsUtils {
         return dateString.substring(0,19);
     }
 
-    public static Date parseMeetingDate(MeetingDTO meetingDTO) throws ParseException {
-        return Constants.FULLDATE_WITH_T_FORMAT.parse(cutDateStringToTFormat(meetingDTO.getDate()));
-    }
-
     public static Date parseDMDate(String dmDate) throws ParseException {
         return Constants.FULLDATE_WITH_T_FORMAT.parse(cutDateStringToTFormat(dmDate));
     }
@@ -33,22 +27,28 @@ public class PollsUtils {
 
     public static String getSimpleName(String name) {
         String result = name;
-        Pattern titleRE = Pattern.compile("(\\w+\\.|MPH|MBA|DBA)");
+        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
         Matcher m = titleRE.matcher(name);
         while (m.find()) {
-            result = result.replaceAll(m.group(), "");
+            result = result.replace(m.group(), "");
         }
         return result.replaceAll(",", "")
                 .replaceAll("  ", " ")
                 .trim();
     }
 
+    public static String startWithFirstname(String fullname) {
+        String[] name = fullname.split("\\s", 2);
+        return String.join(" ", Arrays.asList(name[1], name[0]));
+    }
+
     public static String getTitles(String name) {
         String result = "";
-        Pattern titleRE = Pattern.compile("(\\w+\\.|MPH|MBA|DBA)");
+        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
         Matcher m = titleRE.matcher(name);
         while (m.find()) {
-            result += m.group() + ", ";
+            String title = !m.group().endsWith(".") ? m.group() + "." : m.group();
+            result += title + ", ";
         }
         return !result.isEmpty() ? result.substring(0, result.length() - 2) : null;
     }

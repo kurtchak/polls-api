@@ -14,21 +14,21 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DMSeasonsResponse {
 
-    @JsonProperty(value = "data")
-    private List<SeasonDTO> SeasonDTOs;
+    @JsonProperty(value = "Data")
+    private List<SeasonDTO> seasonDTOs;
 
     public List<SeasonDTO> getSeasonDTOs() {
-        return SeasonDTOs;
+        return seasonDTOs;
     }
 
     public void setSeasonDTOs(List<SeasonDTO> SeasonDTOs) {
-        this.SeasonDTOs = SeasonDTOs;
+        this.seasonDTOs = SeasonDTOs;
     }
 
     @Override
     public String toString() {
         return "DMSeasonsResponse{" +
-                ", SeasonDTOs=" + SeasonDTOs +
+                ", seasonDTOs=" + seasonDTOs +
                 '}';
     }
 }

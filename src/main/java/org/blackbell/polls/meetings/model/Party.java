@@ -20,7 +20,7 @@ public class Party {
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class})
     private String name;
 
     @JsonIgnore
@@ -35,7 +35,7 @@ public class Party {
     private Season season;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
     private List<PartyNominee> partyNominees;
 
     public Party() {}

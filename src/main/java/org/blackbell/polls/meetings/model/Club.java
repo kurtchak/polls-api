@@ -1,6 +1,8 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -16,7 +18,11 @@ public class Club {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class})
     private String ref;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class})
+    private String name;
 
     @JsonIgnore
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -25,6 +31,10 @@ public class Club {
     @JsonIgnore
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
+
+    @ManyToOne
+    @JoinColumn(name = "town_id")
+    private Town town;
 
     @ManyToOne
     @JoinColumn(name = "season_id")
@@ -36,10 +46,6 @@ public class Club {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public List<ClubParty> getClubParties() {
-        return clubParties;
     }
 
     public void setParties(List<ClubParty> clubParties) {
@@ -62,8 +68,28 @@ public class Club {
         this.ref = ref;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<ClubParty> getClubParties() {
+        return clubParties;
+    }
+
     public void setClubParties(List<ClubParty> clubParties) {
         this.clubParties = clubParties;
+    }
+
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
     }
 
     public Season getSeason() {
@@ -74,10 +100,11 @@ public class Club {
         this.season = season;
     }
 
-    public void addMember(ClubMember clubMember) {
+    public void addClubMember(ClubMember clubMember) {
         if (clubMembers == null) {
             clubMembers = new ArrayList<>();
         }
         clubMembers.add(clubMember);
+        clubMember.setClub(this);
     }
 }

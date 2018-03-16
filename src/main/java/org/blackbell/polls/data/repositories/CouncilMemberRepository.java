@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Repository
 public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Long> {
-    @Query(value = "select m from CouncilMember m where m.season.town.name = :town and m.season.ref = :season and m.season.institution = :institution")
+    @Query(value = "select m from CouncilMember m where m.season.town.ref = :town and m.season.ref = :season and m.season.institution = :institution")
     List<CouncilMember> getByTownAndSeasonAndInstitution(@Param(value = "town") String town, @Param(value = "season") String season, @Param(value = "institution") Institution institution);
 
     @Query(value = "select m from CouncilMember m where m.ref = :ref")

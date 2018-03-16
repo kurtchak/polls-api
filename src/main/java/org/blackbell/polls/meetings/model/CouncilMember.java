@@ -4,12 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.CouncilMemberSerializer;
-import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,11 +44,7 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMember.class})
     private String phone;
 
-    @JsonView(value = {Views.CouncilMember.class})
-    @Enumerated(EnumType.STRING)
-    private ClubFunction clubFunction;
-
-    @JsonView(value = {Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
 
@@ -134,14 +129,6 @@ public class CouncilMember {
         this.phone = phone;
     }
 
-    public ClubFunction getClubFunction() {
-        return clubFunction;
-    }
-
-    public void setClubFunction(ClubFunction clubFunction) {
-        this.clubFunction = clubFunction;
-    }
-
     public List<ClubMember> getClubMembers() {
         return clubMembers;
     }
@@ -191,7 +178,6 @@ public class CouncilMember {
 
         if (id != that.id) return false;
         return name.equals(that.name);
-
     }
 
     @Override
@@ -199,5 +185,29 @@ public class CouncilMember {
         int result = (int) (id ^ (id >>> 32));
         result = 31 * result + name.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "CouncilMember{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", titles='" + titles + '\'' +
+                ", picture='" + picture + '\'' +
+                ", extId='" + extId + '\'' +
+                ", email='" + email + '\'' +
+                ", phone='" + phone + '\'' +
+                ", otherFunctions='" + otherFunctions + '\'' +
+                ", season=" + season +
+                '}';
+    }
+
+    public void addClubMember(ClubMember clubMember) {
+        if (clubMembers == null) {
+            clubMembers = new ArrayList<>();
+        }
+        clubMembers.add(clubMember);
+        clubMember.setCouncilMember(this);
     }
 }

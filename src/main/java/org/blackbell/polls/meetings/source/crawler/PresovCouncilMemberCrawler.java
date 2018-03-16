@@ -6,9 +6,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +21,7 @@ import java.util.regex.Pattern;
  * Created by kurtcha on 10.3.2018.
  */
 public class PresovCouncilMemberCrawler {
+    private static final Logger log = LoggerFactory.getLogger(PresovCouncilMemberCrawler.class);
 
     private static final String PRESOV_MSZ_MEMBERS_ROOT = "http://www.presov.sk/poslanci-msz.html";
 
@@ -35,6 +41,9 @@ public class PresovCouncilMemberCrawler {
     private Map<String, Club> clubsMap = new HashMap<>();
 
     public List<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
+        if (partiesMap == null) {
+            partiesMap = new HashMap<>();
+        }
         List<CouncilMember> members = new ArrayList<>();
         try {
             Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
@@ -42,7 +51,7 @@ public class PresovCouncilMemberCrawler {
 
             Pattern memberPattern = Pattern.compile(MEMBER_LINK_RE);
             for (Element page : linksOnPage) {
-                System.out.println(page.toString());
+                log.info(page.toString());
                 Matcher matcher = memberPattern.matcher(page.toString());
                 if (matcher.find()) {
                     String id = matcher.group("id");
@@ -52,7 +61,7 @@ public class PresovCouncilMemberCrawler {
                     // Check if not exists already
                     String simpleName = PollsUtils.getSimpleName(name);
                     if (councilMembersMap.containsKey(simpleName)) {
-                        System.out.println("Council member '" + simpleName + "' already known.");
+                        log.info("Council member '" + simpleName + "' already known.");
                         continue;
                     }
 
@@ -68,7 +77,7 @@ public class PresovCouncilMemberCrawler {
 
                     members.add(member);
                 } else {
-                    System.out.println("No match");
+                    log.info("No match");
                 }
 //                break;
             }
@@ -80,15 +89,15 @@ public class PresovCouncilMemberCrawler {
 
     private void loadCouncilMemberDetails(CouncilMember m, String id, Map<String, Party> partiesMap) {
         try {
-            System.out.println(m.getName() + " :: DETAILS: ");
+            log.info(m.getName() + " :: DETAILS: ");
             Document document = Jsoup.connect(String.format(MEMBER_DETAIL_URL, id)).get();
             Element detail = document.select("div[class=\"float_left\"]").first();
-            System.out.println(detail.toString());
+            log.info(detail.toString());
             Matcher matcher = MEMBER_DETAIL_PATTERN.matcher(detail.toString());
-            System.out.println("Groups found: " + matcher.groupCount());
+//            log.info("Groups found: " + matcher.groupCount());
             if (matcher.find()) {
-                //System.out.println("Phone: " + matcher.group("phone"));
-                //System.out.println("Phone number: " + matcher.group("phonenumber"));
+                //log.info("Phone: " + matcher.group("phone"));
+                //log.info("Phone number: " + matcher.group("phonenumber"));
                 String emails = "";
                 if (matcher.group("email") != null && !matcher.group("email").isEmpty()) {
                     emails = matcher.group("email");
@@ -99,16 +108,12 @@ public class PresovCouncilMemberCrawler {
                 m.setEmail(emails);
                 m.setPhone(matcher.group("phonenumber"));
                 String partyCandidate = matcher.group("candidateparty");
-                if (partiesMap == null) {
-                    partiesMap = new HashMap<>();
-                }
                 if (partyCandidate != null && !partyCandidate.isEmpty()) {
                     List<PartyNominee> partyNominees = new ArrayList<>();
                     PartyNominee nominee = new PartyNominee();
                     String partyName = PollsUtils.cleanAndTrim(partyCandidate);
                     if (!partiesMap.containsKey(partyName)) {
                         partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
-
                     }
                     nominee.setCouncilMember(m);
                     nominee.setParty(partiesMap.get(partyName));
@@ -135,44 +140,45 @@ public class PresovCouncilMemberCrawler {
 
                 String clubMemberString = matcher.group("clubmember");
                 if (clubMemberString != null && !clubMemberString.isEmpty()) {
+                    ClubFunction clubFunction;
                     if (CHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
-                        m.setClubFunction(ClubFunction.CHAIRMAN);
+                        clubFunction = ClubFunction.CHAIRMAN;
                     } else if (VICECHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
-                        m.setClubFunction(ClubFunction.VICECHAIRMAN);
+                        clubFunction = ClubFunction.VICECHAIRMAN;
                     } else {
-                        m.setClubFunction(ClubFunction.MEMBER);
+                        clubFunction = ClubFunction.MEMBER;
                     }
-                }
 
-                String clubPartiesString = matcher.group("clubparties");
-                if (clubPartiesString != null && !clubPartiesString.isEmpty()) {
-                    List<String> partyList = PollsUtils.splitCleanAndTrim(clubPartiesString);
-                    String clubName = PollsUtils.generateClubName(partyList);
-                    if (!clubsMap.containsKey(clubName)) {
-                        System.out.println(":NEW CLUB: " + clubName);
-                        Club club = new Club();
-                        club.setSeason(m.getSeason());
-                        club.setRef(clubName);
-                        List<ClubParty> clubParties1 = new ArrayList<>();
-                        for (String partyName : partyList) {
-                            if (!partiesMap.containsKey(partyName)) {
-                                partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
+                    String clubPartiesString = matcher.group("clubparties");
+                    if (clubPartiesString != null && !clubPartiesString.isEmpty()) {
+                        List<String> partyList = PollsUtils.splitCleanAndTrim(clubPartiesString);
+                        String clubName = PollsUtils.generateClubName(partyList);
+                        if (!clubsMap.containsKey(clubName)) {
+                            log.info(":NEW CLUB: " + clubName);
+                            Club club = new Club();
+                            club.setTown(m.getSeason().getTown()); //TODO: proxy
+                            club.setSeason(m.getSeason());
+                            club.setRef(PollsUtils.generateUniqueKeyReference());
+                            club.setName(clubName);
+                            List<ClubParty> clubParties1 = new ArrayList<>();
+                            for (String partyName : partyList) {
+                                log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
+                                if (!partiesMap.containsKey(partyName)) {
+                                    partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
+                                }
+                                clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
                             }
-                            clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
+                            club.setParties(clubParties1);
+                            clubsMap.put(club.getName(), club);
                         }
-                        club.setParties(clubParties1);
-                        clubsMap.put(club.getRef(), club);
+                        Club club = clubsMap.get(clubName);
+                        log.info("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
+                        ClubMember clubMember = new ClubMember();
+                        clubMember.setCouncilMember(m);
+                        clubMember.setClubFunction(clubFunction);
+                        m.addClubMember(clubMember);
+                        club.addClubMember(clubMember);
                     }
-                    Club club = clubsMap.get(clubName);
-                    List<ClubMember> clubMembers = new ArrayList<>();
-                    ClubMember clubMember = new ClubMember();
-                    System.out.println("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
-                    clubMember.setCouncilMember(m);
-                    clubMember.setClub(club);
-                    clubMembers.add(clubMember);
-                    m.setClubMembers(clubMembers);
-                    club.addMember(clubMember);
-                    clubsMap.put(clubName, club);
                 }
 
                 String functionsString = matcher.group("functions");
@@ -182,7 +188,7 @@ public class PresovCouncilMemberCrawler {
                     m.setOtherFunctions(functionsString);
                 }
             } else {
-                System.out.println("No match");
+                log.info("No match");
             }
 
         } catch (IOException e) {
@@ -191,7 +197,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     public static Party introduceParty(Season season, String partyName) {
-        System.out.println(":NEW PARTY: " + partyName);
+        log.info(":NEW PARTY: " + partyName);
         Party party = new Party();
         party.setRef(partyName);
         party.setName(partyName);
@@ -201,7 +207,7 @@ public class PresovCouncilMemberCrawler {
 
     private static ClubParty introduceClubParty(Season season, Club club, Party party) {
         ClubParty clubParty = new ClubParty();
-        System.out.println("CLUB["+club.getRef()+"]: NEW CLUB PARTY: " + party.getName());
+        log.info("CLUB["+club.getRef()+"]: NEW CLUB PARTY: " + party.getName());
         clubParty.setParty(party);
         clubParty.setSeason(season);
         clubParty.setClub(club);

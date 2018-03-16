@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
-import org.blackbell.polls.meetings.source.SyncAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +40,9 @@ public class MeetingsController {
 
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
+
+    @Autowired
+    private ClubRepository clubRepository;
 
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
@@ -119,4 +121,17 @@ public class MeetingsController {
         return agendaRepository.getByRef(ref);
     }
 
+    @JsonView(value = Views.Clubs.class)
+    @RequestMapping("/{city}/{institution}/clubs/{season}")
+    public Collection<Club> clubs(@PathVariable(value="city") String city,
+                                 @PathVariable(value="institution") String institution,
+                                 @PathVariable(value="season") String season) throws Exception {
+        return clubRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+    }
+
+    @JsonView(value = Views.Club.class)
+    @RequestMapping("/{city}/{institution}/clubs/{season}/{ref}")
+    public Collection<Club> club(@PathVariable(value="ref") String ref) throws Exception {
+        return clubRepository.findByRef(ref);
+    }
 }

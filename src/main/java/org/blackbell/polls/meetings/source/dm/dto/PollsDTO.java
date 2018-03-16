@@ -22,4 +22,11 @@ public class PollsDTO extends AgendaItemComponentDTO {
     public void setPollDTOs(List<PollDTO> pollDTOs) {
         this.pollDTOs = pollDTOs;
     }
+
+    @Override
+    public String toString() {
+        return "PollsDTO{" +
+                "pollDTOs=" + pollDTOs +
+                '}';
+    }
 }

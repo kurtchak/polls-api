@@ -2,7 +2,6 @@ package org.blackbell.polls.meetings.source;
 
 import org.blackbell.polls.meetings.model.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +18,6 @@ public interface DataImport {
 
     void loadPollDetails(Poll poll, Map<String, CouncilMember> membersMap) throws Exception;
 
-    CouncilMember loadMembers(Season season);
+    List<CouncilMember> loadMembers(Season season);
 
 }

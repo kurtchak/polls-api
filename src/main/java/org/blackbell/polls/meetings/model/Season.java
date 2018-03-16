@@ -7,14 +7,13 @@ import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
 @Entity
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "ref"})})
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "name", "institution"})})
 public class Season {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -38,14 +37,6 @@ public class Season {
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
     private Date lastSyncDate;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
-    private List<Meeting> meetings;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
-    private List<CouncilMember> members;
 
     public long getId() {
         return id;
@@ -95,22 +86,6 @@ public class Season {
         this.lastSyncDate = lastSyncDate;
     }
 
-    public List<Meeting> getMeetings() {
-        return meetings;
-    }
-
-    public void setMeetings(List<Meeting> meetings) {
-        this.meetings = meetings;
-    }
-
-    public List<CouncilMember> getMembers() {
-        return members;
-    }
-
-    public void setMembers(List<CouncilMember> members) {
-        this.members = members;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -130,5 +105,17 @@ public class Season {
         result = 31 * result + town.hashCode();
         result = 31 * result + institution.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Season{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", town=" + town +
+                ", institution=" + institution +
+                ", lastSyncDate=" + lastSyncDate +
+                '}';
     }
 }

@@ -67,23 +67,23 @@ public class Poll {
     private AgendaItem agendaItem;
 
     @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VoteFor> votesFor;
 
     @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VoteAgainst> votesAgainst;
 
     @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<NoVote> noVotes;
 
     @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Abstain> abstains;
 
     @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Absent> absents;
 
     public long getId() {
@@ -268,4 +268,22 @@ public class Poll {
         return getVotedFor() > getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
     }
 
+    @Override
+    public String toString() {
+        return "Poll{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", extAgendaItemId='" + extAgendaItemId + '\'' +
+                ", extPollRouteId='" + extPollRouteId + '\'' +
+                ", note='" + note + '\'' +
+                ", voters=" + voters +
+                ", absent=" + absent +
+                ", votedFor=" + votedFor +
+                ", votedAgainst=" + votedAgainst +
+                ", abstain=" + abstain +
+                ", notVoted=" + notVoted +
+                ", agendaItem=" + agendaItem +
+                '}';
+    }
 }

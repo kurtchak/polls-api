@@ -26,6 +26,8 @@ public class Constants {
     public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_agenda_item_id}/{dm_poll_route}";
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
 
+    public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
+
     static {
         DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_PATTERN);
         FULLDATE_FORMAT = new SimpleDateFormat(FULLDATE_FORMAT_PATTERN);

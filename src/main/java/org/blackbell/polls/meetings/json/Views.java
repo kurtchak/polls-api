@@ -40,4 +40,10 @@ public class Views {
 
     public class AgendaItem {
     }
+
+    public class Club {
+    }
+
+    public class Clubs {
+    }
 }

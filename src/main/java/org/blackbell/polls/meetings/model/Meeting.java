@@ -29,6 +29,8 @@ public class Meeting {
     @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     private String name;
 
+    private String extId;
+
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @ManyToOne @JoinColumn(name = "season_id")
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
@@ -46,7 +48,6 @@ public class Meeting {
     @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private List<MeetingAttachment> attachments;
-    private String extId;
 
     public long getId() {
         return id;
