@@ -87,7 +87,7 @@ public class MeetingsController {
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
-        return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
+        return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
     }
 
     @JsonView(value = Views.Meeting.class)
