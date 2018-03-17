@@ -39,6 +39,12 @@ public class Poll {
     @Enumerated(EnumType.STRING)
     private Institution institution;
 
+    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
+    private String agendaItemRef;
+
+    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
+    private String agendaItemName;
+
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
@@ -78,7 +84,7 @@ public class Poll {
     @JsonProperty(value = "notVoted")
     private int notVoted;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
     @ManyToOne
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
@@ -149,6 +155,22 @@ public class Poll {
 
     public void setInstitution(Institution institution) {
         this.institution = institution;
+    }
+
+    public String getAgendaItemRef() {
+        return agendaItemRef;
+    }
+
+    public void setAgendaItemRef(String agendaItemRef) {
+        this.agendaItemRef = agendaItemRef;
+    }
+
+    public String getAgendaItemName() {
+        return agendaItemName;
+    }
+
+    public void setAgendaItemName(String agendaItemName) {
+        this.agendaItemName = agendaItemName;
     }
 
     public Date getDate() {
