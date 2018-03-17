@@ -1,11 +1,14 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,13 +28,23 @@ public class Town {
     @JsonView(value = {Views.Towns.class})
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    private Source source;
+
+    @JsonView(value = {Views.Towns.class})
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @Temporal(TemporalType.DATE)
+    private Date lastSyncDate;
+
     public Town() {}
 
-    public Town(String ref, String name) {
+    public Town(String ref, String name, Source source) {
         this.ref = ref;
         this.name = name;
+        this.source = source;
     }
 
+    @JsonView(value = {Views.Towns.class})
     @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
     private List<Season> seasons;
 
@@ -59,6 +72,22 @@ public class Town {
         this.name = name;
     }
 
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
+    }
+
+    public Date getLastSyncDate() {
+        return lastSyncDate;
+    }
+
+    public void setLastSyncDate(Date lastSyncDate) {
+        this.lastSyncDate = lastSyncDate;
+    }
+
     public List<Season> getSeasons() {
         return seasons;
     }
@@ -80,11 +109,38 @@ public class Town {
         return institutionSeasons;
     }
 
+    @Override
+    public String toString() {
+        return "Town{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", source=" + source +
+                ", lastSyncDate=" + lastSyncDate +
+                '}';
+    }
+
     public void addSeasons(List<Season> seasons) {
         if (this.seasons == null) {
             this.seasons = seasons;
         } else {
             seasons.addAll(seasons);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Town)) return false;
+
+        Town town = (Town) o;
+
+        return ref.equals(town.getRef());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return ref.hashCode();
     }
 }

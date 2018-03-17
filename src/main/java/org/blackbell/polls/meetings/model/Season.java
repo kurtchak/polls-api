@@ -1,26 +1,27 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.Date;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
 @Entity
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "ref"})})
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"town_id", "name", "institution"})})
 public class Season {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class, Views.Towns.class})
     private String ref;
 
-    @JsonView(value = {Views.Seasons.class})
+    @JsonView(value = {Views.Seasons.class, Views.Towns.class})
     private String name;
 
     @JsonIgnore
@@ -28,17 +29,14 @@ public class Season {
     @JoinColumn(name = "town_id")
     private Town town;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Seasons.class, Views.Towns.class})
     @Enumerated(EnumType.STRING)
     private Institution institution;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
-    private List<Meeting> meetings;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "season", cascade = CascadeType.ALL)
-    private List<CouncilMember> members;
+    @JsonView(value = {Views.Towns.class})
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @Temporal(TemporalType.DATE)
+    private Date lastSyncDate;
 
     public long getId() {
         return id;
@@ -80,19 +78,44 @@ public class Season {
         this.institution = institution;
     }
 
-    public List<Meeting> getMeetings() {
-        return meetings;
+    public Date getLastSyncDate() {
+        return lastSyncDate;
     }
 
-    public void setMeetings(List<Meeting> meetings) {
-        this.meetings = meetings;
+    public void setLastSyncDate(Date lastSyncDate) {
+        this.lastSyncDate = lastSyncDate;
     }
 
-    public List<CouncilMember> getMembers() {
-        return members;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Season)) return false;
+
+        Season season = (Season) o;
+
+        if (!name.equals(season.name)) return false;
+        if (!town.equals(season.town)) return false;
+        return institution == season.institution;
+
     }
 
-    public void setMembers(List<CouncilMember> members) {
-        this.members = members;
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + town.hashCode();
+        result = 31 * result + institution.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Season{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", town=" + town +
+                ", institution=" + institution +
+                ", lastSyncDate=" + lastSyncDate +
+                '}';
     }
 }

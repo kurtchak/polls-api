@@ -14,7 +14,7 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Repository
-public interface PartyRepository extends JpaRepository<CouncilMember, Long> {
+public interface PartyRepository extends JpaRepository<Party, Long> {
     @Query(value = "select p from Party p where p.ref = :ref")
     Party getByRef(@Param(value = "ref") String ref);
 

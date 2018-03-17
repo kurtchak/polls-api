@@ -41,22 +41,8 @@ public class MeetingsController {
     @Autowired
     private CouncilMemberRepository councilMemberRepository;
 
-    //TODO: update to match institution
-    public void checkLoaded(String city, Institution institution) throws Exception {
-        Town town = townRepository.findByRef(city);
-        if (town == null) {
-            log.info("No town with name `"+city+"`. Loading from external WebService...");
-            town = new Town(city, city);
-        }
-        List<Season> seasons;
-        if (town.getSeasons() == null || town.getSeasons(institution) == null) {
-            Application.loadMeetingsData(town, institution);
-            seasons = town.getSeasons(institution);
-            log.info("Loaded " + (seasons != null ? seasons.size() : 0) + " seasons for `" + town.getName() + "`");
-            townRepository.save(town);
-            log.info(town.getName() + "`s data saved.");
-        }
-    }
+    @Autowired
+    private ClubRepository clubRepository;
 
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
@@ -69,8 +55,7 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}/seasons")
     public List<Season> seasons(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
-        return seasonRepository.findByTownAndInstitution(city, Institution.valueOfDM(institution));
+        return seasonRepository.findByTown(city);
     }
 
     @JsonView(value = Views.Meetings.class)
@@ -78,8 +63,7 @@ public class MeetingsController {
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
-        return meetingRepository.getByTownAndInstitution(city, Institution.valueOfDM(institution));
+        return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
     }
 
     @JsonView(value = Views.CouncilMembers.class)
@@ -87,8 +71,15 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
         return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+    }
+
+    @JsonView(value = Views.CouncilMember.class)
+    @RequestMapping("/{city}/{institution}/member/{ref}")
+    public CouncilMember member(@PathVariable(value="city") String city,
+                                @PathVariable(value="institution") String institution,
+                                @PathVariable(value="ref") String ref) throws Exception {
+        return councilMemberRepository.findByRef(ref);
     }
 
     @JsonView(value = Views.Polls.class)
@@ -96,7 +87,6 @@ public class MeetingsController {
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season) throws Exception {
-        checkLoaded(city, Institution.valueOfDM(institution));
         return pollRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
     }
 
@@ -129,4 +119,17 @@ public class MeetingsController {
         return agendaRepository.getByRef(ref);
     }
 
+    @JsonView(value = Views.Clubs.class)
+    @RequestMapping("/{city}/{institution}/clubs/{season}")
+    public Collection<Club> clubs(@PathVariable(value="city") String city,
+                                 @PathVariable(value="institution") String institution,
+                                 @PathVariable(value="season") String season) throws Exception {
+        return clubRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+    }
+
+    @JsonView(value = Views.Club.class)
+    @RequestMapping("/{city}/{institution}/clubs/{season}/{ref}")
+    public Collection<Club> club(@PathVariable(value="ref") String ref) throws Exception {
+        return clubRepository.findByRef(ref);
+    }
 }
