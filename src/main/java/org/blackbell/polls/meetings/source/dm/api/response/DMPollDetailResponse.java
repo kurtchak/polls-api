@@ -12,7 +12,7 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DMPollResponse {
+public class DMPollDetailResponse {
 
     @JsonProperty(value = "children")
     private List<VoterDTO> children;

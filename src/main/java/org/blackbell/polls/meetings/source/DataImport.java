@@ -3,23 +3,21 @@ package org.blackbell.polls.meetings.source;
 import org.blackbell.polls.meetings.model.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by kurtcha on 25.2.2018.
  */
 public interface DataImport {
 
-    Town loadTown();
+    List<Season> loadSeasons(Town town) throws Exception;
 
-    List<Season> loadSeasons();
+    List<Meeting> loadMeetings(Season season) throws Exception;
 
-    List<Meeting> loadMeetings(Institution institution, Season season);
+    void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception;
 
-    Meeting loadMeeting(Meeting meeting, String externalMeetingId);
+    void loadPollDetails(Poll poll, Map<String, CouncilMember> membersMap) throws Exception;
 
-    Poll loadPoll(Poll poll, String externalPollId);
+    List<CouncilMember> loadMembers(Season season);
 
-    CouncilMember loadMembers(Institution institution, Season season);
-
-    void syncSeasons();
 }

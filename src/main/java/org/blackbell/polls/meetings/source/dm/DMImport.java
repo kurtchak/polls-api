@@ -1,76 +1,41 @@
 package org.blackbell.polls.meetings.source.dm;
 
-import org.blackbell.polls.data.repositories.*;
+import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.source.DataImport;
 import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
-import org.blackbell.polls.meetings.model.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by kurtcha on 25.2.2018.
  */
 public class DMImport implements DataImport {
 
-    @Autowired
-    private TownRepository townRepository;
-
-    @Autowired
-    private SeasonRepository seasonRepository;
-
-    @Autowired
-    private MeetingRepository meetingRepository;
-
-    @Autowired
-    private PollRepository pollRepository;
-
-    @Autowired
-    private CouncilMemberRepository councilMemberRepository;
-
     @Override
-    public Town loadTown() {
-        return null;
+    public List<Season> loadSeasons(Town town) throws Exception {
+        return DMParser.parseSeasonsResponse(town, DMServiceClient.checkoutSeasonsData(town));
     }
 
     @Override
-    public List<Season> loadSeasons() {
-        return null;
+    public List<Meeting> loadMeetings(Season season) throws Exception {
+        return DMParser.parseMeetingsResponse(season, DMServiceClient.checkoutMeetingsData(season.getTown(), season.getInstitution(), season.getName()));
     }
 
     @Override
-    public List<Meeting> loadMeetings(Institution institution, Season season) {
-        return null;
+    public void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception {
+        DMParser.parseMeetingResponse(meeting, DMServiceClient.checkoutMeetingData(externalMeetingId));
     }
 
     @Override
-    public Meeting loadMeeting(Meeting meeting, String externalMeetingId) {
-        try {
-            return DMParser.parseMeetingResponse(meeting, meeting.getSeason(), DMServiceClient.checkoutMeetingData(externalMeetingId));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public void loadPollDetails(Poll poll, Map<String, CouncilMember> membersMap) throws Exception {
+        DMParser.parsePollDetail(poll, membersMap, DMServiceClient.checkoutPollData(poll.getExtAgendaItemId(), poll.getExtPollRouteId()));
     }
 
+    //TODO:
     @Override
-    public Poll loadPoll(Poll poll, String extAgendaItemId) {
-        try {
-            return DMParser.parsePollResponse(poll, DMServiceClient.checkoutPollData(extAgendaItemId, poll.getName()));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public List<CouncilMember> loadMembers(Season season) {
         return null;
-    }
-
-    @Override
-    public CouncilMember loadMembers(Institution institution, Season season) {
-        return null;
-    }
-
-    @Override
-    public void syncSeasons() {
-
     }
 
 }

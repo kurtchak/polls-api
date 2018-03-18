@@ -22,7 +22,7 @@ public abstract class Vote {
     private long id;
 
     @JsonView(value = Views.Poll.class)
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 

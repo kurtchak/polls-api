@@ -1,10 +1,12 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,8 +26,11 @@ public class AgendaItem {
     @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.Agenda.class, Views.AgendaItem.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne
+    @JsonProperty(value = "idBodProgramu")
+    private String extId;
+
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 
@@ -62,6 +67,14 @@ public class AgendaItem {
         this.name = name;
     }
 
+    public String getExtId() {
+        return extId;
+    }
+
+    public void setExtId(String extId) {
+        this.extId = extId;
+    }
+
     public Meeting getMeeting() {
         return meeting;
     }
@@ -84,5 +97,21 @@ public class AgendaItem {
 
     public void setAttachments(List<AgendaItemAttachment> attachments) {
         this.attachments = attachments;
+    }
+
+    public void addPoll(Poll poll) {
+        if (polls == null) {
+            polls = new ArrayList<>();
+        }
+        polls.add(poll);
+        poll.setAgendaItem(this);
+    }
+
+    public void addAgendaItemAttachment(AgendaItemAttachment attachment) {
+        if (attachments == null) {
+            attachments = new ArrayList<>();
+        }
+        attachments.add(attachment);
+        attachment.setAgendaItem(this);
     }
 }

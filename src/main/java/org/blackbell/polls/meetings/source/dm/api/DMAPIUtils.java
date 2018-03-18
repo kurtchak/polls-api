@@ -12,11 +12,11 @@ public class DMAPIUtils {
     public static String getDMMeetingsRequestUrl(Town city, Institution institution, String season) {
         if (Institution.KOMISIA.equals(institution)) {
             return Constants.DM_COMMISION_MEETINGS_REQUEST_URL
-                    .replaceAll("\\{city\\}", city.getName())
+                    .replaceAll("\\{city\\}", city.getRef())
                     .replaceAll("\\{season\\}", season);
         }
         return Constants.DM_MEETINGS_REQUEST_URL
-                .replaceAll("\\{city\\}", city.getName())
+                .replaceAll("\\{city\\}", city.getRef())
                 .replaceAll("\\{institution\\}", institution.getDMValue())
                 .replaceAll("\\{season\\}", season);
     }
@@ -30,14 +30,16 @@ public class DMAPIUtils {
     }
 
     public static String getDMSeasonsRequestUrl(Town city) {
-        return Constants.DM_SEASONS_REQUEST_URL.replaceAll("\\{city\\}", city.getName());
+        return Constants.DM_SEASONS_REQUEST_URL.replaceAll("\\{city\\}", city.getRef());
     }
 
     public static String getDMMeetingDetailRequestUrl(String dmMettingId) {
         return Constants.DM_MEETING_REQUEST_URL.replaceAll("\\{dm_meeting_id\\}", dmMettingId);
     }
 
-    public static String getDMPollDetailRequestUrl(String dmPollId, String pollName) {
-        return Constants.DM_POLL_REQUEST_URL.replaceAll("\\{dm_poll_id\\}", dmPollId);
+    public static String getDMPollDetailRequestUrl(String dmPollId, String pollRoute) {
+        return Constants.DM_POLL_REQUEST_URL
+                .replaceAll("\\{dm_agenda_item_id\\}", dmPollId)
+                .replaceAll("\\{dm_poll_route\\}", pollRoute);
     }
 }

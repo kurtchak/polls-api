@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
  * email: korcak@esten.sk
  */
 public class Constants {
+    public static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
+    public static final DateFormat DATE_FORMAT;
+
     public static final String FULLDATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final DateFormat FULLDATE_FORMAT;
 
@@ -20,10 +23,13 @@ public class Constants {
     public static final String DM_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}?VolebneObdobie={season}";
     public static final String DM_COMMISION_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZKomisie/mesto-{city}";
     public static final String DM_MEETING_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZaKoDet/{dm_meeting_id}";
-    public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_poll_id}/{poll_name}";
+    public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_agenda_item_id}/{dm_poll_route}";
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
 
+    public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
+
     static {
+        DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_PATTERN);
         FULLDATE_FORMAT = new SimpleDateFormat(FULLDATE_FORMAT_PATTERN);
         FULLDATE_WITH_T_FORMAT = new SimpleDateFormat(FULLDATE_WITH_T_FORMAT_PATTERN);
     }

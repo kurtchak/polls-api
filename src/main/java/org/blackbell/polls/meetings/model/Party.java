@@ -20,7 +20,7 @@ public class Party {
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     private String name;
 
     @JsonIgnore
@@ -29,8 +29,13 @@ public class Party {
     @JsonIgnore
     private String logo;
 
+    @JsonView(value = Views.CouncilMember.class)
+    @ManyToOne
+    @JoinColumn(name = "season_id")
+    private Season season;
+
     @JsonIgnore
-    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
     private List<PartyNominee> partyNominees;
 
     public Party() {}
@@ -79,11 +84,39 @@ public class Party {
         this.logo = logo;
     }
 
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason(Season season) {
+        this.season = season;
+    }
+
     public List<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
 
     public void setPartyNominees(List<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
+    }
+
+    // TODO: is it right
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Party)) return false;
+
+        Party party = (Party) o;
+
+        if (!name.equals(party.name)) return false;
+        return season.equals(party.season);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + season.hashCode();
+        return result;
     }
 }

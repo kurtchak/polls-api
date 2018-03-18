@@ -4,43 +4,36 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
 import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 
 import javax.persistence.*;
 
 /**
- * Created by Ján Korčák on 2.4.2017.
- * email: korcak@esten.sk
+ * Created by kurtcha on 11.3.2018.
  */
 @Entity
-@JsonSerialize(using = PartyNomineeSerializer.class)
-public class PartyNominee {
+@JsonSerialize(using = ClubPartySerializer.class)
+public class ClubParty {
     @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     @ManyToOne
+    @JoinColumn(name = "club_id")
+    private Club club;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Club.class})
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "party_id")
     private Party party;
-
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "council_member_id")
-    private CouncilMember councilMember;
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
-
-    public PartyNominee() {}
-
-    public PartyNominee(Party party, CouncilMember member, Season season) {
-        this.party = party;
-        this.councilMember = member;
-        this.season = season;
-    }
 
     public long getId() {
         return id;
@@ -50,20 +43,20 @@ public class PartyNominee {
         this.id = id;
     }
 
+    public Club getClub() {
+        return club;
+    }
+
+    public void setClub(Club club) {
+        this.club = club;
+    }
+
     public Party getParty() {
         return party;
     }
 
     public void setParty(Party party) {
         this.party = party;
-    }
-
-    public CouncilMember getCouncilMember() {
-        return councilMember;
-    }
-
-    public void setCouncilMember(CouncilMember councilMember) {
-        this.councilMember = councilMember;
     }
 
     public Season getSeason() {

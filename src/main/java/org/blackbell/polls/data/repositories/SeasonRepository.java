@@ -21,4 +21,10 @@ public interface SeasonRepository extends JpaRepository<Season, Long> {
 
     @Query(value = "select s from Season s where s.town.name = :town")
     List<Season> findByTown(@Param(value = "town") String town);
+
+    @Query(value = "select s from Season s where s.town = :town")
+    List<Season> findByTown(@Param(value = "town") Town town);
+
+    @Query(value = "select s from Season s where s.town.name = :town and s.name = :season and s.institution = :institution")
+    Season findByTownAndInstitutionAndName(@Param(value = "town") String town, @Param(value = "season") String season, @Param(value = "institution") Institution institution);
 }

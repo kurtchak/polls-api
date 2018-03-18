@@ -12,7 +12,7 @@ import org.blackbell.polls.meetings.source.dm.dto.TownDTO;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DMTownResponse {
+public class DMTownsResponse {
 
     @JsonProperty(value = "data")
     private List<TownDTO> townDTOs;
@@ -27,7 +27,7 @@ public class DMTownResponse {
 
     @Override
     public String toString() {
-        return "DMMeetingsResponse{" +
+        return "DMTownsResponse{" +
                 ", townDTOs=" + townDTOs +
                 '}';
     }
