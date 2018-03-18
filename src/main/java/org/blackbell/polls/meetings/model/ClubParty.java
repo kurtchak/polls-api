@@ -21,7 +21,7 @@ public class ClubParty {
     @JoinColumn(name = "club_id")
     private Club club;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Clubs.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Club.class})
     @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "party_id")
     private Party party;

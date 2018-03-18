@@ -20,7 +20,7 @@ public class Party {
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     private String name;
 
     @JsonIgnore
