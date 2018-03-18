@@ -7,7 +7,6 @@ package org.blackbell.polls;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -64,17 +62,19 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Meetings.class)
-    @RequestMapping({"/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}", "/{city}/{institution}/meetings/{season}/{dateFrom}/{dateTo}"})
+    @RequestMapping({"/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}",
+                     "/{city}/{institution}/meetings/{season}/{dateFrom}/{dateTo}"})
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season,
-                                  @PathVariable(value = "dateFrom") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
-                                  @PathVariable(value = "dateTo") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+                                  @PathVariable(value="dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
+                                  @PathVariable(value="dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season, dateFrom, dateTo);
     }
 
     @JsonView(value = Views.CouncilMembers.class)
-    @RequestMapping({"/{city}/{institution}/{season}/members", "/{city}/{institution}/members/{season}"})
+    @RequestMapping({"/{city}/{institution}/{season}/members",
+                     "/{city}/{institution}/members/{season}"})
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
@@ -82,7 +82,8 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.CouncilMember.class)
-    @RequestMapping("/{city}/{institution}/member/{ref}")
+    @RequestMapping({"/meetings/{ref}",
+                     "/{city}/{institution}/member/{ref}"})
     public CouncilMember member(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution,
                                 @PathVariable(value="ref") String ref) throws Exception {
@@ -90,54 +91,60 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Polls.class)
-    @RequestMapping({"/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}", "/{city}/{institution}/polls/{season}/{dateFrom}/{dateTo}"})
+    @RequestMapping({"/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}",
+                     "/{city}/{institution}/polls/{season}/{dateFrom}/{dateTo}"})
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season,
-                                  @PathVariable(value = "dateFrom") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
-                                  @PathVariable(value = "dateTo") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+                                  @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
+                                  @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution), dateFrom, dateTo);
     }
 
     @JsonView(value = Views.Meeting.class)
-    @RequestMapping({"/meetings/{ref}", "/{city}/{institution}/meeting/{ref}"})
+    @RequestMapping({"/meetings/{ref}",
+                     "/{city}/{institution}/meeting/{ref}"})
     public Meeting meeting(@PathVariable(value="ref") String ref) throws Exception {
         return meetingRepository.getByRef(ref);
     }
     @JsonView(value = Views.CouncilMember.class)
-    @RequestMapping({"/members/{ref}", "/{city}/{institution}/member/{ref}"})
+    @RequestMapping({"/members/{ref}",
+                     "/{city}/{institution}/member/{ref}"})
     public CouncilMember member(@PathVariable(value="ref") String ref) throws Exception {
         return councilMemberRepository.findByRef(ref);
     }
 
     @JsonView(value = Views.Poll.class)
-    @RequestMapping({"/polls/{ref}", "/{city}/{institution}/poll/{ref}"})
+    @RequestMapping({"/polls/{ref}",
+                     "/{city}/{institution}/poll/{ref}"})
     public Poll poll(@PathVariable(value="ref") String ref) throws Exception {
         return pollRepository.getByRef(ref);
     }
 
     @JsonView(value = Views.Agenda.class)
-    @RequestMapping({"/meetings/{meeting_ref}/agenda", "/{city}/{institution}/meeting/{meeting_ref}/agenda"})
+    @RequestMapping({"/meetings/{meeting_ref}/agenda",
+                     "/{city}/{institution}/meeting/{meeting_ref}/agenda"})
     public Collection<AgendaItem> agenda(@PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
         return agendaRepository.getByMeeting(meetingRef);
     }
 
     @JsonView(value = Views.AgendaItem.class)
-    @RequestMapping({"/agenda/{ref}", "/{city}/{institution}/agenda/{ref}"})
+    @RequestMapping({"/agenda/{ref}",
+                     "/{city}/{institution}/agenda/{ref}"})
     public AgendaItem agendaItem(@PathVariable(value="ref") String ref) throws Exception {
         return agendaRepository.getByRef(ref);
     }
 
     @JsonView(value = Views.Clubs.class)
-    @RequestMapping("/{city}/{institution}/clubs/{season}")
+    @RequestMapping("/{city}/{institution}/{season}/clubs")
     public Collection<Club> clubs(@PathVariable(value="city") String city,
-                                 @PathVariable(value="institution") String institution,
-                                 @PathVariable(value="season") String season) throws Exception {
+                                  @PathVariable(value="institution") String institution,
+                                  @PathVariable(value="season") String season) throws Exception {
         return clubRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
     }
 
     @JsonView(value = Views.Club.class)
-    @RequestMapping("/{city}/{institution}/clubs/{season}/{ref}")
+    @RequestMapping("/clubs/{ref}")
     public Collection<Club> club(@PathVariable(value="ref") String ref) throws Exception {
         return clubRepository.findByRef(ref);
     }
