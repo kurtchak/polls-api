@@ -14,16 +14,17 @@ public class ClubMember {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class, Views.CouncilMembers.class})
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "club_id")
     private Club club;
 
+    @JsonView(value = {Views.ClubMembers.class})
     @ManyToOne
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.ClubMembers.class})
     @Enumerated(EnumType.STRING)
     private ClubFunction clubFunction;
 

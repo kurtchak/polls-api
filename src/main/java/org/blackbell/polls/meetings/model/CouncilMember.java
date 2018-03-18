@@ -23,22 +23,22 @@ public class CouncilMember {
     private long id;
 
     @Column(unique = true)
-    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String name;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String titles;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String picture;
 
     @JsonIgnore
     private String extId;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String email;
 
     @JsonView(value = {Views.CouncilMember.class})
@@ -48,7 +48,7 @@ public class CouncilMember {
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
 
-    @JsonView(value = {Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String otherFunctions;
 
     @JsonView(value = Views.CouncilMember.class)

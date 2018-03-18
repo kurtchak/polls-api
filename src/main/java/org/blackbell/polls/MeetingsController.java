@@ -47,6 +47,9 @@ public class MeetingsController {
     @Autowired
     private ClubRepository clubRepository;
 
+    @Autowired
+    private PartyRepository partyRepository;
+
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
     public List<Town> towns() throws Exception {
@@ -136,16 +139,38 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Clubs.class)
-    @RequestMapping("/{city}/{institution}/{season}/clubs")
+    @RequestMapping("/{city}/{season}/clubs")
     public Collection<Club> clubs(@PathVariable(value="city") String city,
-                                  @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season) throws Exception {
-        return clubRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+        return clubRepository.getByTownAndSeason(city, season);
     }
 
     @JsonView(value = Views.Club.class)
     @RequestMapping("/clubs/{ref}")
     public Collection<Club> club(@PathVariable(value="ref") String ref) throws Exception {
         return clubRepository.findByRef(ref);
+    }
+
+    @JsonView(value = Views.ClubMembers.class)
+    @RequestMapping("/clubs/{ref}/members")
+    public Collection<ClubMember> clubMembers(@PathVariable(value="city") String city,
+                                              @PathVariable(value="season") String season,
+                                              @PathVariable(value="ref") String ref) throws Exception {
+        return clubRepository.getClubMembersByTownAndSeasonAndRef(city, season, ref);
+    }
+
+    @JsonView(value = Views.Parties.class)
+    @RequestMapping("/{city}/{season}/parties")
+    public Collection<Party> parties(@PathVariable(value="city") String city,
+                                     @PathVariable(value="season") String season) throws Exception {
+        return partyRepository.getByTownAndSeasonAndInstitution(city, season);
+    }
+
+    @JsonView(value = Views.PartyNominees.class)
+    @RequestMapping("/parties/{ref}/members")
+    public Collection<PartyNominee> partyNominees(@PathVariable(value="city") String city,
+                                                  @PathVariable(value="season") String season,
+                                                  @PathVariable(value="ref") String ref) throws Exception {
+        return partyRepository.getPartyNomineesByTownAndSeason(city, season, ref);
     }
 }

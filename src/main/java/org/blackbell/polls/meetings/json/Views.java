@@ -46,4 +46,16 @@ public class Views {
 
     public class Clubs {
     }
+
+    public class Parties {
+    }
+
+    public class Party {
+    }
+
+    public class PartyNominees {
+    }
+
+    public class ClubMembers {
+    }
 }

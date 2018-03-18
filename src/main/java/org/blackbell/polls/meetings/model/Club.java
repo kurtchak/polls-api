@@ -18,10 +18,10 @@ public class Club {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
     private String name;
 
     @JsonView(value = {Views.Club.class})
