@@ -17,8 +17,16 @@ import java.util.List;
  */
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
-    @Query(value = "select m from Meeting m where m.season.town.ref = :town and m.season.ref = :season and m.season.institution = :institution")
-    List<Meeting> getByTownAndInstitutionAndSeason(@Param(value = "town") String town, @Param(value = "institution") Institution institution, @Param(value = "season") String season);
+    @Query(value = "select m from Meeting m " +
+                        "where m.season.town.ref = :town " +
+                            "and m.season.ref = :season " +
+                            "and m.season.institution = :institution " +
+                            "and m.date between :dateFrom and :dateTo")
+    List<Meeting> getByTownAndInstitutionAndSeason(@Param(value = "town") String town,
+                                                   @Param(value = "institution") Institution institution,
+                                                   @Param(value = "season") String season,
+                                                   @Param(value = "dateFrom") Date dateFrom,
+                                                   @Param(value = "dateTo") Date dateTo);
 
     @Query(value = "select m from Meeting m where m.ref = :ref")
     Meeting getByRef(@Param(value = "ref") String ref);

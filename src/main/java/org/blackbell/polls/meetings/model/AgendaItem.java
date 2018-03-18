@@ -23,14 +23,14 @@ public class AgendaItem {
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.Agenda.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.Agenda.class, Views.AgendaItem.class})
     private String name;
 
     @JsonProperty(value = "idBodProgramu")
     private String extId;
 
-    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 

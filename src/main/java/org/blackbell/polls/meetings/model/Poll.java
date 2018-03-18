@@ -29,22 +29,6 @@ public class Poll {
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
 
-    @JsonIgnore
-    private String townRef;
-
-    @JsonIgnore
-    private String seasonRef;
-
-    @JsonIgnore
-    @Enumerated(EnumType.STRING)
-    private Institution institution;
-
-    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
-    private String agendaItemRef;
-
-    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class})
-    private String agendaItemName;
-
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
@@ -84,8 +68,8 @@ public class Poll {
     @JsonProperty(value = "notVoted")
     private int notVoted;
 
-    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
-    @ManyToOne
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
 
@@ -131,46 +115,6 @@ public class Poll {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getTownRef() {
-        return townRef;
-    }
-
-    public void setTownRef(String townRef) {
-        this.townRef = townRef;
-    }
-
-    public String getSeasonRef() {
-        return seasonRef;
-    }
-
-    public void setSeasonRef(String seasonRef) {
-        this.seasonRef = seasonRef;
-    }
-
-    public Institution getInstitution() {
-        return institution;
-    }
-
-    public void setInstitution(Institution institution) {
-        this.institution = institution;
-    }
-
-    public String getAgendaItemRef() {
-        return agendaItemRef;
-    }
-
-    public void setAgendaItemRef(String agendaItemRef) {
-        this.agendaItemRef = agendaItemRef;
-    }
-
-    public String getAgendaItemName() {
-        return agendaItemName;
-    }
-
-    public void setAgendaItemName(String agendaItemName) {
-        this.agendaItemName = agendaItemName;
     }
 
     public Date getDate() {

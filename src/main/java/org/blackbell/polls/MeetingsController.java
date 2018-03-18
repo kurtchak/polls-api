@@ -6,17 +6,22 @@ package org.blackbell.polls;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.common.Constants;
+import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -59,11 +64,13 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Meetings.class)
-    @RequestMapping({"/{city}/{institution}/{season}/meetings", "/{city}/{institution}/meetings/{season}"})
+    @RequestMapping({"/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}", "/{city}/{institution}/meetings/{season}/{dateFrom}/{dateTo}"})
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
-                                  @PathVariable(value="season") String season) throws Exception {
-        return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season);
+                                  @PathVariable(value="season") String season,
+                                  @PathVariable(value = "dateFrom") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
+                                  @PathVariable(value = "dateTo") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+        return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season, dateFrom, dateTo);
     }
 
     @JsonView(value = Views.CouncilMembers.class)
@@ -83,11 +90,13 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Polls.class)
-    @RequestMapping({"/{city}/{institution}/{season}/polls", "/{city}/{institution}/polls/{season}"})
+    @RequestMapping({"/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}", "/{city}/{institution}/polls/{season}/{dateFrom}/{dateTo}"})
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
-                                  @PathVariable(value = "season") String season) throws Exception {
-        return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+                                  @PathVariable(value = "season") String season,
+                                  @PathVariable(value = "dateFrom") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
+                                  @PathVariable(value = "dateTo") @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+        return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution), dateFrom, dateTo);
     }
 
     @JsonView(value = Views.Meeting.class)
