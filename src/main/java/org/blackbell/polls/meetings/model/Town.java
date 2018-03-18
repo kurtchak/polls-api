@@ -21,11 +21,11 @@ public class Town {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Towns.class})
+    @JsonView(value = {Views.Towns.class, Views.Club.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Towns.class})
+    @JsonView(value = {Views.Towns.class, Views.Club.class})
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +36,10 @@ public class Town {
     @Temporal(TemporalType.DATE)
     private Date lastSyncDate;
 
+    @JsonView(value = {Views.Towns.class})
+    @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
+    private List<Season> seasons;
+
     public Town() {}
 
     public Town(String ref, String name, Source source) {
@@ -43,10 +47,6 @@ public class Town {
         this.name = name;
         this.source = source;
     }
-
-    @JsonView(value = {Views.Towns.class})
-    @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
-    private List<Season> seasons;
 
     public long getId() {
         return id;

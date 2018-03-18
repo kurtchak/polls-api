@@ -1,5 +1,6 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -8,6 +9,7 @@ import org.blackbell.polls.meetings.model.vote.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,6 +28,11 @@ public class Poll {
 
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @Temporal(TemporalType.DATE)
+    private Date date;
 
     @JsonProperty(value = "idBodProgramu")
     private String extAgendaItemId;
@@ -61,8 +68,8 @@ public class Poll {
     @JsonProperty(value = "notVoted")
     private int notVoted;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class})
-    @ManyToOne
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
 
@@ -108,6 +115,14 @@ public class Poll {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     public String getExtAgendaItemId() {
