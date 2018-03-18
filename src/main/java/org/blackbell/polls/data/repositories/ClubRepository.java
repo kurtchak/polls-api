@@ -25,4 +25,7 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
 
     @Query(value = "select c from ClubMember c where c.club.season.town.ref = :town and c.club.season.ref = :season and c.club.ref = :ref")
     Collection<ClubMember> getClubMembersByTownAndSeasonAndRef(@Param(value = "town") String town, @Param(value = "season") String season, @Param(value = "ref") String ref);
+
+    @Query(value = "select c from ClubMember c where c.club.ref = :ref")
+    Collection<ClubMember> getClubMembersByClubRef(@Param(value = "ref") String ref);
 }

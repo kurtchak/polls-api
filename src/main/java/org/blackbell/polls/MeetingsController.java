@@ -153,10 +153,8 @@ public class MeetingsController {
 
     @JsonView(value = Views.ClubMembers.class)
     @RequestMapping("/clubs/{ref}/members")
-    public Collection<ClubMember> clubMembers(@PathVariable(value="city") String city,
-                                              @PathVariable(value="season") String season,
-                                              @PathVariable(value="ref") String ref) throws Exception {
-        return clubRepository.getClubMembersByTownAndSeasonAndRef(city, season, ref);
+    public Collection<ClubMember> clubMembers(@PathVariable(value="ref") String ref) throws Exception {
+        return clubRepository.getClubMembersByClubRef(ref);
     }
 
     @JsonView(value = Views.Parties.class)
@@ -167,7 +165,7 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.PartyNominees.class)
-    @RequestMapping("/parties/{ref}/members")
+    @RequestMapping("/{city}/{season}/parties/{ref}/members")
     public Collection<PartyNominee> partyNominees(@PathVariable(value="city") String city,
                                                   @PathVariable(value="season") String season,
                                                   @PathVariable(value="ref") String ref) throws Exception {
