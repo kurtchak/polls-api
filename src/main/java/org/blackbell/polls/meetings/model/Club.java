@@ -24,7 +24,7 @@ public class Club {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class})
     private String name;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ClubParty> clubParties;
 
@@ -32,10 +32,12 @@ public class Club {
     @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
 
+    @JsonView(value = {Views.Club.class})
     @ManyToOne
     @JoinColumn(name = "town_id")
     private Town town;
 
+    @JsonView(value = {Views.Club.class})
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;

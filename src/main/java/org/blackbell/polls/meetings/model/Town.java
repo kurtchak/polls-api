@@ -21,11 +21,11 @@ public class Town {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Towns.class})
+    @JsonView(value = {Views.Towns.class, Views.Clubs.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Towns.class})
+    @JsonView(value = {Views.Towns.class, Views.Clubs.class})
     private String name;
 
     @Enumerated(EnumType.STRING)
