@@ -17,19 +17,19 @@ public class Party {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private int id;
 
+    @JsonView(value = {Views.Parties.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
+    @JsonView(value = {Views.Parties.class, Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     private String name;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Party.class})
     private String description;
 
-    @JsonIgnore
+    @JsonView(value = {Views.Parties.class, Views.Party.class})
     private String logo;
 
-    @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;

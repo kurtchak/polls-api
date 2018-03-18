@@ -13,7 +13,7 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-@JsonSerialize(using = PartyNomineeSerializer.class)
+//@JsonSerialize(using = PartyNomineeSerializer.class)
 public class PartyNominee {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -24,7 +24,7 @@ public class PartyNominee {
     @JoinColumn(name = "party_id")
     private Party party;
 
-    @JsonIgnore
+    @JsonView(value = {Views.PartyNominees.class})
     @ManyToOne
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
