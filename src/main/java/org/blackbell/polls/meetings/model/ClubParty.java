@@ -2,7 +2,10 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
+import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 
 import javax.persistence.*;
 
@@ -10,6 +13,7 @@ import javax.persistence.*;
  * Created by kurtcha on 11.3.2018.
  */
 @Entity
+@JsonSerialize(using = ClubPartySerializer.class)
 public class ClubParty {
     @JsonIgnore
     @Id
