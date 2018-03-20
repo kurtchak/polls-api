@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -65,13 +66,21 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Meetings.class)
-    @RequestMapping({"/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}",
+    @RequestMapping({"/{city}/{institution}/{season}/meetings",
+                     "/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}",
                      "/{city}/{institution}/meetings/{season}/{dateFrom}/{dateTo}"})
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
                                   @PathVariable(value="season") String season,
                                   @PathVariable(value="dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value="dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+        //TODO: kontrola
+        dateTo = dateTo == null ? new Date() : dateTo;
+        if (dateFrom == null) {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.MONTH, -2);
+            dateFrom = cal.getTime();
+        }
         return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season, dateFrom, dateTo);
     }
 
@@ -94,13 +103,21 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Polls.class)
-    @RequestMapping({"/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}",
+    @RequestMapping({"/{city}/{institution}/{season}/polls",
+                     "/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}",
                      "/{city}/{institution}/polls/{season}/{dateFrom}/{dateTo}"})
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
                                   @PathVariable(value = "season") String season,
                                   @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+        //TODO: kontrola
+        dateTo = dateTo == null ? new Date() : dateTo;
+        if (dateFrom == null) {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.MONTH, -2);
+            dateFrom = cal.getTime();
+        }
         return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution), dateFrom, dateTo);
     }
 

@@ -40,7 +40,7 @@ public class SyncAgent {
 
     public SyncAgent() {}
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 60000)
+    @Scheduled(fixedRate = 86400000, initialDelay = 86400000)
     public void syncCouncilMembers() {
         log.info("syncCouncilMembers...");
         // AD-HOC
@@ -124,11 +124,9 @@ public class SyncAgent {
             DataImport dataImport = getDataImport(season.getTown());
             log.info(season.getTown().getName() + " - " + season.getName() + " - " + season.getInstitution() + ":: LatestSyncDate: " + season.getLastSyncDate());
             List<Meeting> meetings = dataImport.loadMeetings(season);
-            List<Meeting> newMeetings = new ArrayList<>();
             for (Meeting meeting : meetings) {
                if (season.getLastSyncDate() == null || meeting.getDate().after(season.getLastSyncDate())) {
                    loadMeeting(meeting, dataImport);
-//                   newMeetings.add(meeting);
                    meetingRepository.save(meeting);// TODO: check synchronization with other meetings and its retention
                    season.setLastSyncDate(meeting.getDate()); // set now()
                    seasonRepository.save(season);
