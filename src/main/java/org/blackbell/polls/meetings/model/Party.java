@@ -30,10 +30,6 @@ public class Party {
     @JsonView(value = {Views.Parties.class, Views.Party.class})
     private String logo;
 
-    @ManyToOne
-    @JoinColumn(name = "season_id")
-    private Season season;
-
     @JsonIgnore
     @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
     private List<PartyNominee> partyNominees;
@@ -84,14 +80,6 @@ public class Party {
         this.logo = logo;
     }
 
-    public Season getSeason() {
-        return season;
-    }
-
-    public void setSeason(Season season) {
-        this.season = season;
-    }
-
     public List<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
@@ -100,7 +88,6 @@ public class Party {
         this.partyNominees = partyNominees;
     }
 
-    // TODO: is it right
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -108,15 +95,12 @@ public class Party {
 
         Party party = (Party) o;
 
-        if (!name.equals(party.name)) return false;
-        return season.equals(party.season);
+        return id == party.id;
 
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + season.hashCode();
-        return result;
+        return id;
     }
 }

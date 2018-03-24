@@ -1,6 +1,6 @@
 package org.blackbell.polls.meetings.source.dm.api;
 
-import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.InstitutionType;
 import org.blackbell.polls.meetings.model.Town;
 import org.blackbell.polls.meetings.source.dm.api.response.*;
 import org.springframework.web.client.RestTemplate;
@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
  * email: korcak@esten.sk
  */
 public class DMServiceClient {
-    public static DMMeetingsResponse checkoutMeetingsData(Town city, Institution institution, String season) throws Exception {
+    public static DMMeetingsResponse checkoutMeetingsData(Town city, InstitutionType institution, String season) throws Exception {
         String url = DMAPIUtils.getDMMeetingsRequestUrl(city, institution, season);
         System.out.println(">> checkoutMeetingsData >> " + url);
         DMMeetingsResponse meetingsResponse = new RestTemplate().getForObject(url, DMMeetingsResponse.class);

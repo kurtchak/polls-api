@@ -1,8 +1,6 @@
 package org.blackbell.polls.data.repositories;
 
 import org.blackbell.polls.meetings.model.AgendaItem;
-import org.blackbell.polls.meetings.model.Institution;
-import org.blackbell.polls.meetings.model.Meeting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

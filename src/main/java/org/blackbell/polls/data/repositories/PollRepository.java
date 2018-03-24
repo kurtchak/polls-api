@@ -1,6 +1,6 @@
 package org.blackbell.polls.data.repositories;
 
-import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.InstitutionType;
 import org.blackbell.polls.meetings.model.Poll;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,13 +18,13 @@ import java.util.List;
 public interface PollRepository extends JpaRepository<Poll, Long> {
     @Query(value =
             "select p from Poll p " +
-                "where p.agendaItem.meeting.season.town.ref = :town " +
+                "where p.agendaItem.meeting.town.ref = :town " +
                     "and p.agendaItem.meeting.season.ref = :season " +
-                    "and p.agendaItem.meeting.season.institution = :institution " +
-                    "and p.date between :dateFrom and :dateTo")
+                    "and p.agendaItem.meeting.institution.type = :institution " +
+                    "and p.agendaItem.meeting.date between :dateFrom and :dateTo")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
-                                                @Param(value = "institution") Institution institution,
+                                                @Param(value = "institution") InstitutionType institution,
                                                 @Param(value = "dateFrom") Date dateFrom,
                                                 @Param(value = "dateTo") Date dateTo);
 

@@ -25,11 +25,11 @@ public class DMParser {
 
     private static Season parseSeason(Town town, Institution institution, SeasonDTO seasonDTO) {
         Season season = new Season();
-        season.setTown(town);
+//        season.setTown(town);
         season.setName(seasonDTO.getName());
         season.setRef(seasonDTO.getName());
         //season.setRef(town.getName() + "_" + institution + "_" + seasonDTO.getName());
-        season.setInstitution(institution);
+//        season.setInstitution(institution);
         return season;
     }
 
@@ -152,8 +152,8 @@ public class DMParser {
         if (seasonsResponse.getSeasonDTOs() != null) {
             for (SeasonDTO seasonDTO : seasonsResponse.getSeasonDTOs()) {
 //                log.info("seasonDTO: " + seasonDTO);
-//TODO:odkomentovat                for (Institution institution : Institution.values()) {
-                    seasons.add(parseSeason(town, Institution.ZASTUPITELSTVO, seasonDTO));
+//TODO:odkomentovat                for (InstitutionType institution : InstitutionType.values()) {
+//                    seasons.add(parseSeason(town, InstitutionType.ZASTUPITELSTVO, seasonDTO));
 //                }
             }
         }

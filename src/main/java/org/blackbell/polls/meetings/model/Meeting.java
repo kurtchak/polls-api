@@ -32,9 +32,17 @@ public class Meeting {
     private String extId;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne @JoinColumn(name = "season_id")
+    @ManyToOne @JoinColumn(name = "season_id", insertable = false, updatable = false)
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "town_id", insertable = false, updatable = false)
+    private Town town;
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    private Institution institution;
 
     @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
@@ -79,6 +87,22 @@ public class Meeting {
 
     public void setSeason(Season season) {
         this.season = season;
+    }
+
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
+    }
+
+    public Institution getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
     }
 
     public Date getDate() {
@@ -136,11 +160,9 @@ public class Meeting {
                 ", ref='" + ref + '\'' +
                 ", name='" + name + '\'' +
                 ", season=" + season +
+                ", town=" + town +
+                ", institution=" + institution +
                 ", date=" + date +
-                ", agendaItems=" + agendaItems +
-                ", attachments=" + attachments +
-                ", extId='" + extId + '\'' +
-                ", agendaItems count = '" + (getAgendaItems() != null ? getAgendaItems().size() : 0) + '\'' +
                 '}';
     }
 }

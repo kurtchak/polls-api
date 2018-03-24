@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
-import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 
 import javax.persistence.*;
 

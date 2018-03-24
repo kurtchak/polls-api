@@ -1,33 +1,99 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import javax.persistence.*;
+
 /**
- * Created by Ján Korčák on 2.4.2017.
+ * Created by Ján Korčák on 23.3.2018.
  * email: korcak@esten.sk
  */
-public enum Institution {
-    ZASTUPITELSTVO,
-    MESTSKA_RADA,
-    KOMISIA;
+@Entity
+public class Institution {
+    @JsonIgnore
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private int id;
 
-    public static final String DM_MZ = "mz";
-    public static final String DM_MR = "mr";
-    public static final String DM_K = "k";
+    @JsonView(value = {})
+    @Column(unique = true)
+    private String ref;
 
-    public static Institution valueOfDM(String institution) {
-        switch(institution) {
-            case DM_MZ: return ZASTUPITELSTVO;
-            case DM_MR: return MESTSKA_RADA;
-            case DM_K: return KOMISIA;
-            default:return ZASTUPITELSTVO;
-        }
+    @Enumerated(EnumType.STRING)
+    private InstitutionType type;
+
+    @JsonView(value = {})
+    private String name;
+
+    @JsonView(value = {})
+    private String description;
+
+    public Institution() {}
+
+    public int getId() {
+        return id;
     }
 
-    public String getDMValue() {
-        switch(this) {
-            case ZASTUPITELSTVO: return DM_MZ;
-            case MESTSKA_RADA: return DM_MR;
-            case KOMISIA: return DM_K;
-            default:return DM_MZ;
-        }
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public void setRef(String ref) {
+        this.ref = ref;
+    }
+
+    public InstitutionType getType() {
+        return type;
+    }
+
+    public void setType(InstitutionType type) {
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Institution)) return false;
+
+        Institution that = (Institution) o;
+
+        return id == that.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return "Institution{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", type=" + type +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }

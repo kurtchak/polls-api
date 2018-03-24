@@ -19,7 +19,8 @@ public class DMImport implements DataImport {
 
     @Override
     public List<Meeting> loadMeetings(Season season) throws Exception {
-        return DMParser.parseMeetingsResponse(season, DMServiceClient.checkoutMeetingsData(season.getTown(), season.getInstitution(), season.getName()));
+//        return DMParser.parseMeetingsResponse(season, DMServiceClient.checkoutMeetingsData(season.getTown(), season.getInstitution(), season.getName()));
+        return null;
     }
 
     @Override

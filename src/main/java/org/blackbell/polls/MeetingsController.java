@@ -61,7 +61,7 @@ public class MeetingsController {
     @RequestMapping("/{city}/{institution}/seasons")
     public List<Season> seasons(@PathVariable(value="city") String city,
                                 @PathVariable(value="institution") String institution) throws Exception {
-        return seasonRepository.findByTown(city);
+        return seasonRepository.findAll(); // TODO: by meetings
     }
 
     @JsonView(value = Views.Meetings.class)
@@ -72,7 +72,7 @@ public class MeetingsController {
                                   @PathVariable(value="season") String season,
                                   @PathVariable(value="dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value="dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
-        return meetingRepository.getByTownAndInstitutionAndSeason(city, Institution.valueOfDM(institution), season, dateFrom, dateTo);
+        return meetingRepository.getByTownAndInstitutionAndSeason(city, InstitutionType.fromRef(institution), season, dateFrom, dateTo);
     }
 
     @JsonView(value = Views.CouncilMembers.class)
@@ -81,7 +81,7 @@ public class MeetingsController {
     public Collection<CouncilMember> members(@PathVariable(value="city") String city,
                                              @PathVariable(value="institution") String institution,
                                              @PathVariable(value="season") String season) throws Exception {
-        return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution));
+        return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution));
     }
 
     @JsonView(value = Views.CouncilMember.class)
@@ -101,7 +101,7 @@ public class MeetingsController {
                                   @PathVariable(value = "season") String season,
                                   @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
-        return pollRepository.getByTownAndSeasonAndInstitution(city, season, Institution.valueOfDM(institution), dateFrom, dateTo);
+        return pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
     }
 
     @JsonView(value = Views.Meeting.class)

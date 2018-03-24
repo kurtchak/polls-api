@@ -1,6 +1,7 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
@@ -26,25 +27,10 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
-    private String name;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
-    private String titles;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
-    private String picture;
-
     @JsonIgnore
     private String extId;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
-    private String email;
-
-    @JsonView(value = {Views.CouncilMember.class})
-    private String phone;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     private List<ClubMember> clubMembers;
 
@@ -53,13 +39,33 @@ public class CouncilMember {
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "season_id")
+    @JoinColumn(name = "season_id", insertable = false, updatable = false)
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
+    @JsonView(value = Views.CouncilMember.class)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "town_id", insertable = false, updatable = false)
+//    @JsonSerialize(using = SeasonAsPropertySerializer.class)
+    private Town town;
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    private Institution institution;
+
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
-    private List<PartyNominee> partyNominees;
+    @OneToOne
+    @JoinColumn(name = "politician_id")
+    private Politician politician;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonProperty("position")
+    @JoinColumn(name = "member_type")
+    @Enumerated(EnumType.STRING)
+    private MemberType memberType;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.PartyNominees.class})
+    private String description;
 
     @JsonView(value = Views.CouncilMember.class)
     @OneToMany(mappedBy = "councilMember")
@@ -81,52 +87,12 @@ public class CouncilMember {
         this.ref = ref;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getTitles() {
-        return titles;
-    }
-
-    public void setTitles(String titles) {
-        this.titles = titles;
-    }
-
-    public String getPicture() {
-        return picture;
-    }
-
-    public void setPicture(String picture) {
-        this.picture = picture;
-    }
-
     public String getExtId() {
         return extId;
     }
 
     public void setExtId(String extId) {
         this.extId = extId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public List<ClubMember> getClubMembers() {
@@ -145,20 +111,52 @@ public class CouncilMember {
         this.otherFunctions = otherFunctions;
     }
 
-    public List<PartyNominee> getPartyNominees() {
-        return partyNominees;
-    }
-
-    public void setPartyNominees(List<PartyNominee> partyNominees) {
-        this.partyNominees = partyNominees;
-    }
-
     public Season getSeason() {
         return season;
     }
 
     public void setSeason(Season season) {
         this.season = season;
+    }
+
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
+    }
+
+    public Institution getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
+    }
+
+    public Politician getPolitician() {
+        return politician;
+    }
+
+    public void setPolitician(Politician politician) {
+        this.politician = politician;
+    }
+
+    public MemberType getMemberType() {
+        return memberType;
+    }
+
+    public void setMemberType(MemberType memberType) {
+        this.memberType = memberType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public List<Vote> getVotes() {
@@ -169,45 +167,34 @@ public class CouncilMember {
         this.votes = votes;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        CouncilMember that = (CouncilMember) o;
-
-        if (id != that.id) return false;
-        return name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + name.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "CouncilMember{" +
-                "id=" + id +
-                ", ref='" + ref + '\'' +
-                ", name='" + name + '\'' +
-                ", titles='" + titles + '\'' +
-                ", picture='" + picture + '\'' +
-                ", extId='" + extId + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", otherFunctions='" + otherFunctions + '\'' +
-                ", season=" + season +
-                '}';
-    }
-
     public void addClubMember(ClubMember clubMember) {
         if (clubMembers == null) {
             clubMembers = new ArrayList<>();
         }
         clubMembers.add(clubMember);
         clubMember.setCouncilMember(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CouncilMember)) return false;
+
+        CouncilMember that = (CouncilMember) o;
+
+        if (!season.equals(that.season)) return false;
+        if (!town.equals(that.town)) return false;
+        if (institution != that.institution) return false;
+        return politician.equals(that.politician);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = season.hashCode();
+        result = 31 * result + town.hashCode();
+        result = 31 * result + institution.hashCode();
+        result = 31 * result + politician.hashCode();
+        return result;
     }
 }
