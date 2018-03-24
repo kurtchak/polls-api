@@ -87,11 +87,13 @@ public class DMParser {
                 poll.setName(pollDTO.getName());
                 poll.setExtAgendaItemId(pollDTO.getAgendaItemId());
                 poll.setExtPollRouteId(pollDTO.getPollRoute());
-                poll.setVotedFor(pollDTO.getVotedFor());
-                poll.setVotedAgainst(pollDTO.getVotedAgainst());
-                poll.setNotVoted(pollDTO.getNotVoted());
-                poll.setAbstain(pollDTO.getAbstain());
-                poll.setAbsent(pollDTO.getAbsent());
+                VotesCount vc = new VotesCount();
+                vc.setVotedFor(pollDTO.getVotedFor());
+                vc.setVotedAgainst(pollDTO.getVotedAgainst());
+                vc.setNotVoted(pollDTO.getNotVoted());
+                vc.setAbstain(pollDTO.getAbstain());
+                vc.setAbsent(pollDTO.getAbsent());
+                poll.setVotesCount(vc);
                 poll.setVoters(pollDTO.getVoters());
                 poll.setNote(pollDTO.getNote());
                 //TODO: members...
@@ -131,17 +133,19 @@ public class DMParser {
                 String name = PollsUtils.startWithFirstname(PollsUtils.getSimpleName(voterDTO.getName()));
 //                log.info("Voter: " + voterDTO.getName() + "\t => \t" + "Simple name: " + name);
                 CouncilMember member = membersMap.get(name);
+                Votes votes = new Votes();
                 if (voterDTO.isVotedFor()) {
-                    poll.addVoteFor(member);
+                    votes.addVoteFor(member);
                 } else if (voterDTO.isVotedAgainst()) {
-                    poll.addVoteAgainst(member);
+                    votes.addVoteAgainst(member);
                 } else if (voterDTO.isNotVoted()) {
-                    poll.addNoVote(member);
+                    votes.addNoVote(member);
                 } else if (voterDTO.isAbstain()) {
-                    poll.addAbstain(member);
+                    votes.addAbstain(member);
                 } else if (voterDTO.isAbsent()) {
-                    poll.addAbsent(member);
+                    votes.addAbsent(member);
                 }
+                poll.setVotes(votes);
             }
         }
         return poll;

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.VoteChoice;
+import org.hibernate.annotations.DiscriminatorFormula;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import javax.persistence.*;
@@ -16,6 +17,10 @@ import javax.persistence.*;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "voted", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorOptions(force = true)
+//@DiscriminatorFormula(
+//        "CASE WHEN voted == VOTED_FOR THEN 'Voted' " +
+//                " WHEN txt_value IS NOT NULL THEN 'TEXT' end"
+//)
 public abstract class Vote {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -26,7 +31,7 @@ public abstract class Vote {
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
-    @JsonView(value = {Views.Poll.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMember.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted", insertable = false, updatable = false)
     private VoteChoice voted;
@@ -49,6 +54,15 @@ public abstract class Vote {
 
     public VoteChoice getVoted() {
         return voted;
+    }
+
+    @Override
+    public String toString() {
+        return "Vote{" +
+                "id=" + id +
+                ", voted=" + voted +
+                ", councilMember=" + councilMember +
+                '}';
     }
 
     public void setVoted(VoteChoice voted) {

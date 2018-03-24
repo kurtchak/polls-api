@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.vote.Vote;
 
@@ -41,11 +42,11 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String email;
 
-    @JsonView(value = {Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class})
     private String phone;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<ClubMember> clubMembers;
 
     @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class})
@@ -59,6 +60,7 @@ public class CouncilMember {
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
+    @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
     private List<PartyNominee> partyNominees;
 
     @JsonView(value = Views.CouncilMember.class)

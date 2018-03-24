@@ -5,12 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.vote.*;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Ján Korčák on 22.2.2017.
@@ -48,50 +45,18 @@ public class Poll {
     @JsonProperty(value = "voters")
     private int voters;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @JsonProperty(value = "absent")
-    private int absent;
+    @JsonView(value = {Views.Polls.class, Views.AgendaItem.class})
+    @Embedded
+    private VotesCount votesCount;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @JsonProperty(value = "votedFor")
-    private int votedFor;
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @JsonProperty(value = "votedAgainst")
-    private int votedAgainst;
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @JsonProperty(value = "abstain")
-    private int abstain;
-
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
-    @JsonProperty(value = "notVoted")
-    private int notVoted;
+    @JsonView(value = {Views.Poll.class})
+    @Embedded
+    private Votes votes;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
-
-    @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<VoteFor> votesFor;
-
-    @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<VoteAgainst> votesAgainst;
-
-    @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<NoVote> noVotes;
-
-    @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Abstain> abstains;
-
-    @JsonView(value = Views.Poll.class)
-    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Absent> absents;
 
     public long getId() {
         return id;
@@ -157,77 +122,6 @@ public class Poll {
         this.note = note;
     }
 
-    public List<VoteFor> getVotesFor() {
-        return votesFor;
-    }
-
-    public void setVotesFor(List<VoteFor> votesFor) {
-        this.votesFor = votesFor;
-    }
-
-    public List<VoteAgainst> getVotesAgainst() {
-        return votesAgainst;
-    }
-
-    public void setVotesAgainst(List<VoteAgainst> votesAgainst) {
-        this.votesAgainst = votesAgainst;
-    }
-
-    public List<NoVote> getNoVotes() {
-        return noVotes;
-    }
-
-    public void setNoVotes(List<NoVote> noVotes) {
-        this.noVotes = noVotes;
-    }
-
-    public List<Abstain> getAbstains() {
-        return abstains;
-    }
-
-    public void setAbstains(List<Abstain> abstains) {
-        this.abstains = abstains;
-    }
-
-    public List<Absent> getAbsents() {
-        return absents;
-    }
-
-    public void setAbsents(List<Absent> absents) {
-        this.absents = absents;
-    }
-
-    public void addVoteFor(CouncilMember member) {
-        if (votesFor == null) {
-            votesFor = new ArrayList<VoteFor>();
-        }
-        votesFor.add(new VoteFor(this, member));
-    }
-    public void addVoteAgainst(CouncilMember member) {
-        if (votesAgainst == null) {
-            votesAgainst = new ArrayList<VoteAgainst>();
-        }
-        votesAgainst.add(new VoteAgainst(this, member));
-    }
-    public void addNoVote(CouncilMember member) {
-        if (noVotes == null) {
-            noVotes = new ArrayList<NoVote>();
-        }
-        noVotes.add(new NoVote(this, member));
-    }
-    public void addAbstain(CouncilMember member) {
-        if (abstains == null) {
-            abstains = new ArrayList<Abstain>();
-        }
-        abstains.add(new Abstain(this, member));
-    }
-    public void addAbsent(CouncilMember member) {
-        if (absents == null) {
-            absents = new ArrayList<Absent>();
-        }
-        absents.add(new Absent(this, member));
-    }
-
     public int getVoters() {
         return voters;
     }
@@ -236,51 +130,27 @@ public class Poll {
         this.voters = voters;
     }
 
-    public int getAbsent() {
-        return absent;
+    public Votes getVotes() {
+        return votes;
     }
 
-    public void setAbsent(int absent) {
-        this.absent = absent;
+    public void setVotes(Votes votes) {
+        this.votes = votes;
     }
 
-    public int getVotedFor() {
-        return votedFor;
+    public VotesCount getVotesCount() {
+        return votesCount;
     }
 
-    public void setVotedFor(int votedFor) {
-        this.votedFor = votedFor;
-    }
-
-    public int getVotedAgainst() {
-        return votedAgainst;
-    }
-
-    public void setVotedAgainst(int votedAgainst) {
-        this.votedAgainst = votedAgainst;
-    }
-
-    public int getAbstain() {
-        return abstain;
-    }
-
-    public void setAbstain(int abstain) {
-        this.abstain = abstain;
-    }
-
-    public int getNotVoted() {
-        return notVoted;
-    }
-
-    public void setNotVoted(int notVoted) {
-        this.notVoted = notVoted;
+    public void setVotesCount(VotesCount votesCount) {
+        this.votesCount = votesCount;
     }
 
     // TODO: When is Passed?
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Transient
     public VoteResult getResult() {
-        return getVotedFor() > getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
+        return votesCount != null && votesCount.getVotedFor() > votesCount.getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
     }
 
     @Override
@@ -293,11 +163,11 @@ public class Poll {
                 ", extPollRouteId='" + extPollRouteId + '\'' +
                 ", note='" + note + '\'' +
                 ", voters=" + voters +
-                ", absent=" + absent +
-                ", votedFor=" + votedFor +
-                ", votedAgainst=" + votedAgainst +
-                ", abstain=" + abstain +
-                ", notVoted=" + notVoted +
+                ", absent=" + votesCount.getAbsent() +
+                ", votedFor=" + votesCount.getVotedFor() +
+                ", votedAgainst=" + votesCount.getVotedAgainst() +
+                ", abstain=" + votesCount.getAbstain() +
+                ", notVoted=" + votesCount.getNotVoted() +
                 ", agendaItem=" + agendaItem +
                 '}';
     }

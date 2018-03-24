@@ -2,9 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 
 import javax.persistence.*;
 
@@ -13,7 +11,7 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-//@JsonSerialize(using = PartyNomineeSerializer.class)
+//@JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
 public class PartyNominee {
     @JsonIgnore
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
