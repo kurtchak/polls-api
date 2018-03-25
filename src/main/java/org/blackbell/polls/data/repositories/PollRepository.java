@@ -21,7 +21,7 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                 "where p.agendaItem.meeting.season.town.ref = :town " +
                     "and p.agendaItem.meeting.season.ref = :season " +
                     "and p.agendaItem.meeting.season.institution = :institution " +
-                    "and p.date between :dateFrom and :dateTo")
+                    "and p.agendaItem.meeting.date between :dateFrom and :dateTo")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
                                                 @Param(value = "institution") Institution institution,

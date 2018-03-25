@@ -29,8 +29,8 @@ public class AgendaItem {
     @JsonProperty(value = "idBodProgramu")
     private String extId;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.AgendaItem.class, Views.CouncilMember.class})
+    @ManyToOne
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 

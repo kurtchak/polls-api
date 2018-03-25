@@ -26,11 +26,6 @@ public class Poll {
     @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
-    @Temporal(TemporalType.DATE)
-    private Date date;
-
     @JsonProperty(value = "idBodProgramu")
     private String extAgendaItemId;
 
@@ -54,7 +49,7 @@ public class Poll {
     private Votes votes;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
 
@@ -80,14 +75,6 @@ public class Poll {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
     }
 
     public String getExtAgendaItemId() {
