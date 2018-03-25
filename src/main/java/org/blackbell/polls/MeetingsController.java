@@ -10,6 +10,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.meetings.model.vote.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,9 @@ public class MeetingsController {
 
     @Autowired
     private PartyRepository partyRepository;
+
+    @Autowired
+    private VoteRepository voteRepository;
 
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
@@ -132,6 +136,13 @@ public class MeetingsController {
                      "/{city}/{institution}/member/{ref}"})
     public CouncilMember member(@PathVariable(value="ref") String ref) throws Exception {
         return councilMemberRepository.findByRef(ref);
+    }
+
+    @JsonView(value = Views.Votes.class)
+    @RequestMapping({"/members/{ref}/votes",
+            "/{city}/{institution}/member/{ref}/votes"})
+    public List<Vote> memberVotes(@PathVariable(value="ref") String memberRef) throws Exception {
+        return voteRepository.findByCouncilMemberRef(memberRef);
     }
 
     @JsonView(value = Views.Poll.class)

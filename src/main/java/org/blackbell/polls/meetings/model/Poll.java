@@ -19,11 +19,11 @@ public class Poll {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.AgendaItem.class})
     private String name;
 
     @JsonProperty(value = "idBodProgramu")
@@ -48,7 +48,7 @@ public class Poll {
     @Embedded
     private Votes votes;
 
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.Votes.class})
     @ManyToOne
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;

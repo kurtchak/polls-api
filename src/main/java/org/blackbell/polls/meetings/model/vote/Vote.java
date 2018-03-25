@@ -31,7 +31,7 @@ public abstract class Vote {
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
-    @JsonView(value = {Views.CouncilMember.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Votes.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted", insertable = false, updatable = false)
     private VoteChoice voted;

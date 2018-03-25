@@ -85,7 +85,8 @@ public class CouncilMember {
     @JsonProperty("nominee")
     private List<PartyNominee> partyNominees;
 
-    @JsonView(value = Views.CouncilMember.class)
+//    @JsonView(value = Views.CouncilMember.class)
+    @JsonIgnore
     @OneToMany(mappedBy = "councilMember")
     private List<Vote> votes;
 

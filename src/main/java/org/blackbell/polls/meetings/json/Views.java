@@ -58,4 +58,7 @@ public class Views {
 
     public class ClubMembers {
     }
+
+    public class Votes {
+    }
 }

@@ -17,7 +17,7 @@ import javax.persistence.*;
 @DiscriminatorValue("ABSTAIN")
 public class Abstain extends Vote {
 
-    @JsonView(value = Views.CouncilMember.class)
+    @JsonView(value = {Views.CouncilMember.class, Views.Votes.class})
     @ManyToOne
     @JoinColumn(name = "poll_id")
     private Poll poll;
