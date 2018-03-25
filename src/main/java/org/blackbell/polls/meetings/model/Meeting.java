@@ -22,11 +22,11 @@ public class Meeting {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     private String name;
 
     private String extId;

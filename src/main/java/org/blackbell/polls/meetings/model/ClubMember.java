@@ -20,7 +20,7 @@ public class ClubMember {
     private Club club;
 
     @JsonView(value = {Views.ClubMembers.class})
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 

@@ -26,10 +26,12 @@ public class PoliticianPartyNomineesSerializer extends StdSerializer<List<PartyN
     @Override
     public void serialize(List<PartyNominee> value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonProcessingException {
-        jgen.writeStartArray();
-        for (PartyNominee pn : value) {
-            jgen.writeString(pn.getParty().getName());
+        if (value != null) {
+            jgen.writeStartArray();
+            for (PartyNominee pn : value) {
+                jgen.writeString(pn.getParty().getName());
+            }
+            jgen.writeEndArray();
         }
-        jgen.writeEndArray();
     }
 }

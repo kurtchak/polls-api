@@ -109,4 +109,17 @@ public class Club {
         clubMembers.add(clubMember);
         clubMember.setClub(this);
     }
+
+    @Override
+    public String toString() {
+        return "Club{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", clubParties=" + clubParties +
+                ", clubMembers=" + clubMembers +
+                ", town=" + town +
+                ", season=" + season +
+                '}';
+    }
 }

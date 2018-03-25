@@ -1,6 +1,7 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
@@ -11,6 +12,7 @@ import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -46,10 +48,27 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMember.class, Views.Poll.class})
     private String phone;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonSerialize(using = PoliticianClubSerializer.class)
+//    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonSerialize(using = PoliticianClubSerializer.class)
+    @JsonIgnore
     private List<ClubMember> clubMembers;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonProperty("memberOf")
+    public ClubMember getActualClubMember() {
+        if (clubMembers != null) {
+            Calendar cal = Calendar.getInstance();
+            for (ClubMember cm : clubMembers) {
+                String[] range = cm.getClub().getSeason().getName().split("-");
+                if (Integer.valueOf(range[0]) <= cal.get(Calendar.YEAR)
+                        && Integer.valueOf(range[1]) >= cal.get(Calendar.YEAR)) {
+                    return cm;
+                }
+            }
+        }
+        return null;
+    }
 
     @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class})
     private String otherFunctions;
@@ -63,6 +82,7 @@ public class CouncilMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
+    @JsonProperty("nominee")
     private List<PartyNominee> partyNominees;
 
     @JsonView(value = Views.CouncilMember.class)

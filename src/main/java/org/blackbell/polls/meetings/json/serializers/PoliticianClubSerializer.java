@@ -13,7 +13,7 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * Created by Ján Korčák on 24.3.2018.
+ * Created by Ján Korčák on 25.3.2018.
  * email: korcak@esten.sk
  */
 public class PoliticianClubSerializer extends StdSerializer<List<ClubMember>> {
@@ -29,13 +29,15 @@ public class PoliticianClubSerializer extends StdSerializer<List<ClubMember>> {
     @Override
     public void serialize(List<ClubMember> value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonProcessingException {
-        for (ClubMember cm : value) {
-            Calendar cal = Calendar.getInstance();
-            String[] range = cm.getClub().getSeason().getName().split("-");
-            if (Integer.valueOf(range[0]) <= cal.get(Calendar.YEAR)
-                    && Integer.valueOf(range[1]) >= cal.get(Calendar.YEAR)) {
-                provider.findValueSerializer(ClubMember.class).serialize(cm, jgen, provider);
-                break;
+        if (value != null) {
+            for (ClubMember cm : value) {
+                Calendar cal = Calendar.getInstance();
+                String[] range = cm.getClub().getSeason().getName().split("-");
+                if (Integer.valueOf(range[0]) <= cal.get(Calendar.YEAR)
+                        && Integer.valueOf(range[1]) >= cal.get(Calendar.YEAR)) {
+                    provider.findValueSerializer(ClubMember.class).serialize(cm, jgen, provider);
+                    break;
+                }
             }
         }
     }
