@@ -14,15 +14,13 @@ import org.blackbell.polls.meetings.model.vote.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 public class MeetingsController {
@@ -139,10 +137,12 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Votes.class)
-    @RequestMapping({"/members/{ref}/votes",
-            "/{city}/{institution}/member/{ref}/votes"})
-    public List<Vote> memberVotes(@PathVariable(value="ref") String memberRef) throws Exception {
-        return voteRepository.findByCouncilMemberRef(memberRef);
+    @RequestMapping({"/members/{ref}/votes/{page}/{size}",
+            "/{city}/{institution}/member/{ref}/votes/{page}/{size}"})
+    public List<Vote> memberVotes(@PathVariable(value="ref") String memberRef,
+                                  @PathVariable(value="page") String page,
+                                  @PathVariable(value="size") String size) throws Exception {
+        return voteRepository.findByCouncilMemberRef(memberRef, new PageRequest(Integer.valueOf(page), Integer.valueOf(size)));
     }
 
     @JsonView(value = Views.Poll.class)
