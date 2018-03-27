@@ -154,12 +154,6 @@ public class MeetingsController {
         return clubRepository.findByRef(ref);
     }
 
-    @JsonView(value = Views.ClubMembers.class)
-    @RequestMapping("/clubs/{ref}/members")
-    public Collection<ClubMember> clubMembers(@PathVariable(value="ref") String ref) throws Exception {
-        return clubRepository.getClubMembersByClubRef(ref);
-    }
-
     @JsonView(value = Views.Parties.class)
     @RequestMapping("/{city}/{season}/parties")
     public Collection<Party> parties(@PathVariable(value="city") String city,
