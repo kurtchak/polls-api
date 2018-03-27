@@ -1,11 +1,14 @@
 package org.blackbell.polls.data.repositories;
 
+import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.Poll;
 import org.blackbell.polls.meetings.model.vote.Vote;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 /**
