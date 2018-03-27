@@ -62,6 +62,22 @@ public class ClubParty {
         return season;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ClubParty)) return false;
+
+        ClubParty clubParty = (ClubParty) o;
+
+        return id == clubParty.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >>> 32));
+    }
+
     public void setSeason(Season season) {
         this.season = season;
     }

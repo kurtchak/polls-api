@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 19.2.2017.
@@ -19,7 +19,7 @@ public class AgendaItem {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
@@ -37,11 +37,11 @@ public class AgendaItem {
     @JsonView(value = {Views.AgendaItem.class})
     @JsonIgnore
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
-    private List<Poll> polls;
+    private Set<Poll> polls;
 
     @JsonView(value = {Views.AgendaItem.class, Views.Poll.class})
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
-    private List<AgendaItemAttachment> attachments;
+    private Set<AgendaItemAttachment> attachments;
 
     public long getId() {
         return id;
@@ -83,25 +83,25 @@ public class AgendaItem {
         this.meeting = meeting;
     }
 
-    public List<Poll> getPolls() {
+    public Set<Poll> getPolls() {
         return polls;
     }
 
-    public void setPolls(List<Poll> polls) {
+    public void setPolls(Set<Poll> polls) {
         this.polls = polls;
     }
 
-    public List<AgendaItemAttachment> getAttachments() {
+    public Set<AgendaItemAttachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(List<AgendaItemAttachment> attachments) {
+    public void setAttachments(Set<AgendaItemAttachment> attachments) {
         this.attachments = attachments;
     }
 
     public void addPoll(Poll poll) {
         if (polls == null) {
-            polls = new ArrayList<>();
+            polls = new HashSet<>();
         }
         polls.add(poll);
         poll.setAgendaItem(this);
@@ -109,7 +109,7 @@ public class AgendaItem {
 
     public void addAgendaItemAttachment(AgendaItemAttachment attachment) {
         if (attachments == null) {
-            attachments = new ArrayList<>();
+            attachments = new HashSet<>();
         }
         attachments.add(attachment);
         attachment.setAgendaItem(this);

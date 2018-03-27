@@ -7,24 +7,24 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.blackbell.polls.meetings.model.PartyNominee;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 14.4.2017.
  * email: korcak@esten.sk
  */
-public class PoliticianPartyNomineesSerializer extends StdSerializer<List<PartyNominee>> {
+public class PoliticianPartyNomineesSerializer extends StdSerializer<Set<PartyNominee>> {
 
     public PoliticianPartyNomineesSerializer() {
         this(null);
     }
 
-    public PoliticianPartyNomineesSerializer(Class<List<PartyNominee>> t) {
+    public PoliticianPartyNomineesSerializer(Class<Set<PartyNominee>> t) {
         super(t);
     }
 
     @Override
-    public void serialize(List<PartyNominee> value, JsonGenerator jgen, SerializerProvider provider)
+    public void serialize(Set<PartyNominee> value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonProcessingException {
         if (value != null) {
             jgen.writeStartArray();

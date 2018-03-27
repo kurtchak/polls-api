@@ -7,9 +7,7 @@ import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Ján Korčák on 6.3.2017.
@@ -38,7 +36,7 @@ public class Town {
 
     @JsonView(value = {Views.Towns.class})
     @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
-    private List<Season> seasons;
+    private Set<Season> seasons;
 
     public Town() {}
 
@@ -88,18 +86,18 @@ public class Town {
         this.lastSyncDate = lastSyncDate;
     }
 
-    public List<Season> getSeasons() {
+    public Set<Season> getSeasons() {
         return seasons;
     }
 
-    public void setSeasons(List<Season> seasons) {
+    public void setSeasons(Set<Season> seasons) {
         this.seasons = seasons;
     }
 
-    public List<Season> getSeasons(Institution institution) {
-        List<Season> institutionSeasons = null;
+    public Set<Season> getSeasons(Institution institution) {
+        Set<Season> institutionSeasons = null;
         if (seasons != null) {
-            institutionSeasons = new ArrayList<>();
+            institutionSeasons = new HashSet<>();
             for (Season season : seasons) {
                 if (institution.equals(season.getInstitution())) {
                     institutionSeasons.add(season);
@@ -120,7 +118,7 @@ public class Town {
                 '}';
     }
 
-    public void addSeasons(List<Season> seasons) {
+    public void addSeasons(Set<Season> seasons) {
         if (this.seasons == null) {
             this.seasons = seasons;
         } else {

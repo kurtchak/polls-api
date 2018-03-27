@@ -1,14 +1,11 @@
 package org.blackbell.polls.data.repositories;
 
-import org.blackbell.polls.meetings.model.Institution;
-import org.blackbell.polls.meetings.model.Poll;
 import org.blackbell.polls.meetings.model.vote.Vote;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,8 +14,11 @@ import java.util.List;
  */
 @Repository
 public interface VoteRepository extends JpaRepository<Vote, Long> {
-    @Query(value =
-            "select p from Vote p " +
-                "where p.councilMember.ref = :memberRef")
+    @Query(value = "select v from Vote v " +
+            "join fetch v.poll p " +
+            "join fetch p.agendaItem a " +
+            "join fetch a.meeting m " +
+            "join fetch v.councilMember cm " +
+            "where cm.ref = :memberRef")
     List<Vote> findByCouncilMemberRef(@Param(value = "memberRef") String memberRef);
 }

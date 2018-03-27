@@ -71,4 +71,20 @@ public class PartyNominee {
     public void setSeason(Season season) {
         this.season = season;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PartyNominee)) return false;
+
+        PartyNominee that = (PartyNominee) o;
+
+        return id == that.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >>> 32));
+    }
 }

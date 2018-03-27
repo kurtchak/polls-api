@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,7 +106,7 @@ public class PresovCouncilMemberCrawler {
                 m.setPhone(matcher.group("phonenumber"));
                 String partyCandidate = matcher.group("candidateparty");
                 if (partyCandidate != null && !partyCandidate.isEmpty()) {
-                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    Set<PartyNominee> partyNominees = new HashSet<>();
                     PartyNominee nominee = new PartyNominee();
                     String partyName = PollsUtils.cleanAndTrim(partyCandidate);
                     if (!partiesMap.containsKey(partyName)) {
@@ -123,7 +120,7 @@ public class PresovCouncilMemberCrawler {
                 }
                 String partiesCandidate = matcher.group("candidateparties");
                 if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
-                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    Set<PartyNominee> partyNominees = new HashSet<>();
                     List<String> partyList = PollsUtils.splitCleanAndTrim(partiesCandidate);
                     for (String partyName : partyList) {
                         if (!partiesMap.containsKey(partyName)) {
@@ -160,7 +157,7 @@ public class PresovCouncilMemberCrawler {
                             club.setSeason(m.getSeason());
                             club.setRef(PollsUtils.generateUniqueKeyReference());
                             club.setName(clubName);
-                            List<ClubParty> clubParties1 = new ArrayList<>();
+                            Set<ClubParty> clubParties1 = new HashSet<>();
                             for (String partyName : partyList) {
                                 log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
                                 if (!partiesMap.containsKey(partyName)) {
@@ -168,7 +165,7 @@ public class PresovCouncilMemberCrawler {
                                 }
                                 clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
                             }
-                            club.setParties(clubParties1);
+                            club.setClubParties(clubParties1);
                             clubsMap.put(club.getName(), club);
                         }
                         Club club = clubsMap.get(clubName);

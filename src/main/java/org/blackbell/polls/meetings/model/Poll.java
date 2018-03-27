@@ -1,13 +1,15 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.VoteListSerializer;
+import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 22.2.2017.
@@ -44,9 +46,15 @@ public class Poll {
     @Embedded
     private VotesCount votesCount;
 
-    @JsonView(value = {Views.Poll.class})
-    @Embedded
-    private Votes votes;
+    @JsonView(value = Views.Poll.class)
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL)
+    @JsonProperty("votes")
+    @JsonSerialize(using = VoteListSerializer.class)
+//    @Enumerated(EnumType.STRING)
+//    @ElementCollection
+//    @MapKeyEnumerated(EnumType.STRING)
+//    @MapKeyColumn(name = "voted")
+    private Set<Vote> votes;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.Votes.class})
     @ManyToOne
@@ -117,11 +125,11 @@ public class Poll {
         this.voters = voters;
     }
 
-    public Votes getVotes() {
+    public Set<Vote> getVotes() {
         return votes;
     }
 
-    public void setVotes(Votes votes) {
+    public void setVotes(Set<Vote> votes) {
         this.votes = votes;
     }
 

@@ -133,19 +133,20 @@ public class DMParser {
                 String name = PollsUtils.startWithFirstname(PollsUtils.getSimpleName(voterDTO.getName()));
 //                log.info("Voter: " + voterDTO.getName() + "\t => \t" + "Simple name: " + name);
                 CouncilMember member = membersMap.get(name);
-                Votes votes = new Votes();
-                if (voterDTO.isVotedFor()) {
-                    votes.addVoteFor(member);
-                } else if (voterDTO.isVotedAgainst()) {
-                    votes.addVoteAgainst(member);
-                } else if (voterDTO.isNotVoted()) {
-                    votes.addNoVote(member);
-                } else if (voterDTO.isAbstain()) {
-                    votes.addAbstain(member);
-                } else if (voterDTO.isAbsent()) {
-                    votes.addAbsent(member);
-                }
-                poll.setVotes(votes);
+                //TODO: prerobit
+//                Votes votes = new Votes();
+//                if (voterDTO.isVotedFor()) {
+//                    votes.addVoteFor(member);
+//                } else if (voterDTO.isVotedAgainst()) {
+//                    votes.addVoteAgainst(member);
+//                } else if (voterDTO.isNotVoted()) {
+//                    votes.addNoVote(member);
+//                } else if (voterDTO.isAbstain()) {
+//                    votes.addAbstain(member);
+//                } else if (voterDTO.isAbsent()) {
+//                    votes.addAbsent(member);
+//                }
+//                poll.setVotesMap(votes);
             }
         }
         return poll;

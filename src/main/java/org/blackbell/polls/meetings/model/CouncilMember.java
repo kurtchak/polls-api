@@ -5,15 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.PoliticianClubSerializer;
 import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
-import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Ján Korčák on 4.3.2017.
@@ -27,32 +23,32 @@ public class CouncilMember {
     private long id;
 
     @Column(unique = true)
-    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String ref;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String name;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String titles;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String picture;
 
     @JsonIgnore
     private String extId;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String email;
 
-    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     private String phone;
 
 //    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
 //    @JsonSerialize(using = PoliticianClubSerializer.class)
     @JsonIgnore
-    private List<ClubMember> clubMembers;
+    private Set<ClubMember> clubMembers;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @JsonProperty("memberOf")
@@ -70,7 +66,7 @@ public class CouncilMember {
         return null;
     }
 
-    @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     private String otherFunctions;
 
     @JsonView(value = Views.CouncilMember.class)
@@ -79,16 +75,16 @@ public class CouncilMember {
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
     @JsonProperty("nominee")
-    private List<PartyNominee> partyNominees;
+    private Set<PartyNominee> partyNominees;
 
 //    @JsonView(value = Views.CouncilMember.class)
-    @JsonIgnore
-    @OneToMany(mappedBy = "councilMember")
-    private List<Vote> votes;
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "councilMember")
+//    private List<Vote> votes;
 
     public long getId() {
         return id;
@@ -154,11 +150,11 @@ public class CouncilMember {
         this.phone = phone;
     }
 
-    public List<ClubMember> getClubMembers() {
+    public Set<ClubMember> getClubMembers() {
         return clubMembers;
     }
 
-    public void setClubMembers(List<ClubMember> clubMembers) {
+    public void setClubMembers(Set<ClubMember> clubMembers) {
         this.clubMembers = clubMembers;
     }
 
@@ -170,11 +166,11 @@ public class CouncilMember {
         this.otherFunctions = otherFunctions;
     }
 
-    public List<PartyNominee> getPartyNominees() {
+    public Set<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
 
-    public void setPartyNominees(List<PartyNominee> partyNominees) {
+    public void setPartyNominees(Set<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
     }
 
@@ -186,13 +182,13 @@ public class CouncilMember {
         this.season = season;
     }
 
-    public List<Vote> getVotes() {
-        return votes;
-    }
-
-    public void setVotes(List<Vote> votes) {
-        this.votes = votes;
-    }
+//    public List<Vote> getVotes() {
+//        return votes;
+//    }
+//
+//    public void setVotes(List<Vote> votes) {
+//        this.votes = votes;
+//    }
 
     @Override
     public boolean equals(Object o) {
@@ -230,7 +226,7 @@ public class CouncilMember {
 
     public void addClubMember(ClubMember clubMember) {
         if (clubMembers == null) {
-            clubMembers = new ArrayList<>();
+            clubMembers = new HashSet<>();
         }
         clubMembers.add(clubMember);
         clubMember.setCouncilMember(this);

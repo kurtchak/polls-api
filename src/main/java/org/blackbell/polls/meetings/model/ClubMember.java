@@ -19,12 +19,12 @@ public class ClubMember {
     @JoinColumn(name = "club_id")
     private Club club;
 
-    @JsonView(value = {Views.ClubMembers.class})
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonView(value = {Views.ClubMembers.class, Views.Club.class})
+    @ManyToOne
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.ClubMembers.class})
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.ClubMembers.class, Views.Club.class})
     @Enumerated(EnumType.STRING)
     private ClubFunction clubFunction;
 
@@ -67,17 +67,12 @@ public class ClubMember {
 
         ClubMember that = (ClubMember) o;
 
-        if (!getClub().equals(that.getClub())) return false;
-        if (!getCouncilMember().equals(that.getCouncilMember())) return false;
-        return getClubFunction() == that.getClubFunction();
+        return id == that.id;
 
     }
 
     @Override
     public int hashCode() {
-        int result = getClub().hashCode();
-        result = 31 * result + getCouncilMember().hashCode();
-        result = 31 * result + getClubFunction().hashCode();
-        return result;
+        return (int) (id ^ (id >>> 32));
     }
 }
