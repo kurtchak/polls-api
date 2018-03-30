@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.PoliticianClubSerializer;
 import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 
@@ -51,7 +52,8 @@ public class CouncilMember {
     private Set<ClubMember> clubMembers;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @JsonProperty("memberOf")
+    @JsonProperty("club")
+    @JsonSerialize(using = PoliticianClubSerializer.class)
     public ClubMember getActualClubMember() {
         if (clubMembers != null) {
             Calendar cal = Calendar.getInstance();
@@ -75,7 +77,7 @@ public class CouncilMember {
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
+    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
     @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
     @JsonProperty("nominee")
