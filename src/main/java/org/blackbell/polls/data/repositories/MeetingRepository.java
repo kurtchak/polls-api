@@ -35,6 +35,7 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
                     "left join fetch m.season s " +
                     "left join fetch s.town t " +
                     "left join fetch m.agendaItems a " +
+                    "left join fetch a.attachments aa " +
                     "left join fetch m.attachments at " +
                 "where m.ref = :ref")
     Meeting getByRef(@Param(value = "ref") String ref);
