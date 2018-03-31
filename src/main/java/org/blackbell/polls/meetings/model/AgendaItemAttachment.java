@@ -78,4 +78,20 @@ public class AgendaItemAttachment {
     public void setAgendaItem(AgendaItem agendaItem) {
         this.agendaItem = agendaItem;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AgendaItemAttachment)) return false;
+
+        AgendaItemAttachment that = (AgendaItemAttachment) o;
+
+        return getId() == that.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
 }

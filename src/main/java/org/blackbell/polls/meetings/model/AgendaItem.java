@@ -114,4 +114,20 @@ public class AgendaItem {
         attachments.add(attachment);
         attachment.setAgendaItem(this);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AgendaItem)) return false;
+
+        AgendaItem that = (AgendaItem) o;
+
+        return getId() == that.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
 }

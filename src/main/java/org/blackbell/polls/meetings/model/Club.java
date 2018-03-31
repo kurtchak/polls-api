@@ -1,7 +1,13 @@
 package org.blackbell.polls.meetings.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.ClubMembersSerializer;
+import org.blackbell.polls.meetings.json.serializers.ClubPartiesSerializer;
+import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
+import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -25,10 +31,14 @@ public class Club {
 
     @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @JsonSerialize(using = ClubPartiesSerializer.class)
+    @JsonProperty("parties")
     private Set<ClubParty> clubParties;
 
     @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @JsonSerialize(using = ClubMembersSerializer.class)
+    @JsonProperty("members")
     private Set<ClubMember> clubMembers;
 
     @JsonView(value = {Views.Club.class})

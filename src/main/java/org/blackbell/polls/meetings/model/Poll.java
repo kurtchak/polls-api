@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.VoteListSerializer;
-import org.blackbell.polls.meetings.model.vote.Vote;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -165,5 +164,21 @@ public class Poll {
                 ", notVoted=" + votesCount.getNotVoted() +
                 ", agendaItem=" + agendaItem +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Poll)) return false;
+
+        Poll poll = (Poll) o;
+
+        return getId() == poll.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
     }
 }

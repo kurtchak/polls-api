@@ -18,7 +18,7 @@ import java.util.List;
 @Repository
 public interface ClubRepository extends JpaRepository<Club, Long> {
     @Query(value =
-            "select c from Club c " +
+            "select distinct c from Club c " +
                     "join fetch c.season s " +
                 "where s.town.ref = :town " +
                     "and s.ref = :season")
@@ -27,13 +27,13 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
 
     @Query(value =
             "select c from Club c " +
-                    "join fetch c.season s " +
-                    "join fetch s.town t " +
-                    "join fetch c.clubMembers cm " +
-                    "join fetch cm.councilMember cmb " +
-                    "join fetch cmb.partyNominees pn " +
-                    "join fetch c.clubParties cp " +
-                    "join fetch cp.party p " +
+                    "left join fetch c.season s " +
+                    "left join fetch s.town t " +
+                    "left join fetch c.clubMembers cm " +
+                    "left join fetch cm.councilMember cmb " +
+                    "left join fetch cmb.partyNominees pn " +
+                    "left join fetch c.clubParties cp " +
+                    "left join fetch cp.party p " +
                 "where c.ref = :ref")
     Club findByRef(@Param(value = "ref") String ref);
 

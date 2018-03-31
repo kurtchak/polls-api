@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
-    @Query(value = "select m from Meeting m " +
+    @Query(value = "select distinct m from Meeting m " +
                         "join fetch m.season s " +
                         "where m.season.town.ref = :town " +
                             "and m.season.ref = :season " +
@@ -32,13 +32,10 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     @Query(value =
             "select m from Meeting m " +
-                    "join fetch m.season s " +
-                    "join fetch s.town t " +
-                    "join fetch m.agendaItems a " +
-                    "join fetch m.attachments at " +
+                    "left join fetch m.season s " +
+                    "left join fetch s.town t " +
+                    "left join fetch m.agendaItems a " +
+                    "left join fetch m.attachments at " +
                 "where m.ref = :ref")
     Meeting getByRef(@Param(value = "ref") String ref);
-
-    @Query(value = "select max(m.date) from Meeting m where m.season.town = :town and m.season.name = :season and m.season.institution = :institution")
-    Date getLatestMeetingDate(@Param(value = "town") Town town, @Param(value = "institution") Institution institution, @Param(value = "season") String season);
 }

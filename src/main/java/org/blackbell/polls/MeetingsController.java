@@ -10,7 +10,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
-import org.blackbell.polls.meetings.model.vote.Vote;
+import org.blackbell.polls.meetings.model.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,6 +146,13 @@ public class MeetingsController {
     public Collection<Club> clubs(@PathVariable(value="city") String city,
                                   @PathVariable(value="season") String season) throws Exception {
         return clubRepository.getByTownAndSeason(city, season);
+    }
+
+    @JsonView(value = Views.CouncilMembers.class)
+    @RequestMapping("/{city}/{season}/clubs/free")
+    public Collection<CouncilMember> freeMembers(@PathVariable(value="city") String city,
+                                           @PathVariable(value="season") String season) throws Exception {
+        return councilMemberRepository.getFreeCouncilMembers(city, season);
     }
 
     @JsonView(value = Views.Club.class)

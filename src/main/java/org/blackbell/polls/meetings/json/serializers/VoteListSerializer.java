@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.VoteChoice;
-import org.blackbell.polls.meetings.model.vote.Vote;
+import org.blackbell.polls.meetings.model.Vote;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,7 +51,7 @@ public class VoteListSerializer extends StdSerializer<Set<Vote>> {
                 }
                 jgen.writeFieldName(label);
                 jgen.writeStartObject();
-                jgen.writeFieldName("members");
+                jgen.writeFieldName("voters");
                 jgen.writeStartArray(votersMap.get(voteChoice).size());
                 for (CouncilMember cm : votersMap.get(voteChoice)) {
 //                System.out.println("vote: " + v);

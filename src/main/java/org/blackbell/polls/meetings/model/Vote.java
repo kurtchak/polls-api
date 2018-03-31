@@ -1,11 +1,7 @@
-package org.blackbell.polls.meetings.model.vote;
+package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.CouncilMember;
-import org.blackbell.polls.meetings.model.Poll;
-import org.blackbell.polls.meetings.model.VoteChoice;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import javax.persistence.*;
 
@@ -83,4 +79,19 @@ public class Vote {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Vote)) return false;
+
+        Vote vote = (Vote) o;
+
+        return getId() == vote.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
 }
