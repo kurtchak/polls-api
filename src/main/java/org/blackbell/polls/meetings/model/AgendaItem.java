@@ -39,7 +39,7 @@ public class AgendaItem {
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private Set<Poll> polls;
 
-    @JsonView(value = {Views.AgendaItem.class, Views.Poll.class})
+    @JsonView(value = {Views.AgendaItem.class, Views.Poll.class, Views.Meeting.class})
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private Set<AgendaItemAttachment> attachments;
 

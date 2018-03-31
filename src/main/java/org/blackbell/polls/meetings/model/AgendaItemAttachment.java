@@ -16,14 +16,14 @@ public class AgendaItemAttachment {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String source;
 
     @ManyToOne @JoinColumn(name = "agenda_item_id")
