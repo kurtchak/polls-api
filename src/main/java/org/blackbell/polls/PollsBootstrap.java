@@ -22,18 +22,7 @@ public class PollsBootstrap implements ApplicationListener<ContextRefreshedEvent
     }
 
     public void printApplicationLabel() {
-        log.info("\n" +
-                "\n" +
-                "______ _            _    _          _ _  ______     _ _     \n" +
-                "| ___ \\ |          | |  | |        | | | | ___ \\   | | |    \n" +
-                "| |_/ / | __ _  ___| | _| |__   ___| | | | |_/ /__ | | |___ \n" +
-                "| ___ \\ |/ _` |/ __| |/ / '_ \\ / _ \\ | | |  __/ _ \\| | / __|\n" +
-                "| |_/ / | (_| | (__|   <| |_) |  __/ | | | | | (_) | | \\__ \\\n" +
-                "\\____/|_|\\__,_|\\___|_|\\_\\_.__/ \\___|_|_| \\_|  \\___/|_|_|___/\n" +
-                "                                                            \n" +
-                "                                                            \n" +
-                "\n");
-
+        log.info("Polls bootstrap");
     }
 
 }
