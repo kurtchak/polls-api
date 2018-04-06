@@ -7,9 +7,7 @@ import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Ján Korčák on 6.3.2017.

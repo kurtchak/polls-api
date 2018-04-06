@@ -18,16 +18,32 @@ import java.util.List;
 public interface PollRepository extends JpaRepository<Poll, Long> {
     @Query(value =
             "select p from Poll p " +
-                "where p.agendaItem.meeting.town.ref = :town " +
-                    "and p.agendaItem.meeting.season.ref = :season " +
-                    "and p.agendaItem.meeting.institution.type = :institution " +
-                    "and p.agendaItem.meeting.date between :dateFrom and :dateTo")
+                    "join fetch p.agendaItem a " +
+                    "join fetch a.meeting m " +
+                    "join fetch m.season s " +
+                    "join fetch s.town t " +
+                    "join fetch a.attachments at " +
+                "where s.town.ref = :town " +
+                    "and s.ref = :season " +
+                    "and s.institution = :institution " +
+                    "and (:dateFrom is null and :dateTo is null " +
+                            "or m.date between :dateFrom and :dateTo)")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
                                                 @Param(value = "institution") InstitutionType institution,
                                                 @Param(value = "dateFrom") Date dateFrom,
                                                 @Param(value = "dateTo") Date dateTo);
 
-    @Query(value = "select p from Poll p where p.ref = :ref")
+    @Query(value = "select p from Poll p " +
+                        "join fetch p.agendaItem a " +
+                        "join fetch a.meeting m " +
+                        "join fetch m.season s " +
+                        "join fetch p.votes v " +
+                        "join fetch v.councilMember cm " +
+                        "join fetch cm.partyNominees pn " +
+                        "join fetch pn.party pt " +
+                        "join fetch cm.clubMembers cbm " +
+                        "join fetch cbm.club c " +
+                    "where p.ref = :ref")
     Poll getByRef(@Param(value = "ref") String pollRef);
 }

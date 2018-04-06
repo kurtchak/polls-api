@@ -17,6 +17,8 @@ import java.util.List;
 @Repository
 public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Long> {
     @Query(value = "select m from CouncilMember m " +
+                            "join fetch m.clubMembers cm " +
+                            "join fetch m.partyNominees pn " +
                         "where m.town.ref = :town " +
                             "and m.season.ref = :season " +
                             "and m.institution.type = :institution")
@@ -24,7 +26,15 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
                                                          @Param(value = "season") String season,
                                                          @Param(value = "institution") InstitutionType institution);
 
-    @Query(value = "select m from CouncilMember m where m.ref = :ref")
+    @Query(value =
+            "select m from CouncilMember m " +
+                    "join fetch m.clubMembers cm " +
+                    "join fetch cm.club c " +
+                    "join fetch c.season s " +
+                    "join fetch c.clubParties cp " +
+                    "join fetch cp.party p " +
+                    "join fetch m.partyNominees pn " +
+                "where m.ref = :ref")
     CouncilMember findByRef(@Param(value = "ref") String memberRef);
 
     @Query(value = "select m from CouncilMember m where m.season = :season")

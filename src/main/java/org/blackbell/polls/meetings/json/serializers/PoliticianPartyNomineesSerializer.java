@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.blackbell.polls.meetings.model.PartyNominee;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 14.4.2017.
