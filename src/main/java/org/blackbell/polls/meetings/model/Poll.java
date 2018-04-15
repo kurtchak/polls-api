@@ -141,7 +141,7 @@ public class Poll {
     }
 
     // TODO: When is Passed?
-    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class, Views.Votes.class})
     @Transient
     public VoteResult getResult() {
         return votesCount != null && votesCount.getVotedFor() > votesCount.getVotedAgainst() ? VoteResult.PASSED : VoteResult.REJECTED;
