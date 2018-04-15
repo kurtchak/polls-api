@@ -148,7 +148,7 @@ public class MeetingsController {
         return clubRepository.getByTownAndSeason(city, season);
     }
 
-    @JsonView(value = Views.CouncilMembers.class)
+    @JsonView(value = {Views.CouncilMembers.class, Views.Club.class})
     @RequestMapping("/{city}/{season}/clubs/free")
     public Collection<CouncilMember> freeMembers(@PathVariable(value="city") String city,
                                            @PathVariable(value="season") String season) throws Exception {
