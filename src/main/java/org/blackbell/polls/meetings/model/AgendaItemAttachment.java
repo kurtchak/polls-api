@@ -16,14 +16,14 @@ public class AgendaItemAttachment {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String source;
 
     @ManyToOne @JoinColumn(name = "agenda_item_id")
@@ -77,5 +77,21 @@ public class AgendaItemAttachment {
 
     public void setAgendaItem(AgendaItem agendaItem) {
         this.agendaItem = agendaItem;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AgendaItemAttachment)) return false;
+
+        AgendaItemAttachment that = (AgendaItemAttachment) o;
+
+        return getId() == that.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
     }
 }

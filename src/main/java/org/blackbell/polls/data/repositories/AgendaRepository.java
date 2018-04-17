@@ -14,9 +14,17 @@ import java.util.List;
  */
 @Repository
 public interface AgendaRepository extends JpaRepository<AgendaItem, Long> {
-    @Query(value = "select m from AgendaItem m where m.meeting.ref = :meetingRef")
+    @Query(value =
+            "select a from AgendaItem a " +
+                    "join fetch a.meeting m " +
+                    "join fetch a.polls p " +
+                    "where a.meeting.ref = :meetingRef")
     List<AgendaItem> getByMeeting(@Param(value = "meetingRef") String meetingRef);
 
-    @Query(value = "select m from AgendaItem m where m.ref = :ref")
+    @Query(value =
+            "select a from AgendaItem a " +
+                    "join fetch a.meeting m " +
+                    "join fetch a.polls p " +
+                    "where m.ref = :ref")
     AgendaItem getByRef(@Param(value = "ref") String ref);
 }

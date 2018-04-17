@@ -16,11 +16,25 @@ import java.util.List;
  */
 @Repository
 public interface ClubRepository extends JpaRepository<Club, Long> {
-    @Query(value = "select c from Club c where c.town.ref = :town and c.season.ref = :season")
-    List<Club> getByTownAndSeason(@Param(value = "town") String town, @Param(value = "season") String season);
+    @Query(value =
+            "select distinct c from Club c " +
+                    "join fetch c.season s " +
+                "where s.town.ref = :town " +
+                    "and s.ref = :season")
+    List<Club> getByTownAndSeason(@Param(value = "town") String town,
+                                  @Param(value = "season") String season);
 
-    @Query(value = "select c from Club c where c.ref = :ref")
-    List<Club> findByRef(@Param(value = "ref") String ref);
+    @Query(value =
+            "select c from Club c " +
+                    "left join fetch c.season s " +
+                    "left join fetch s.town t " +
+                    "left join fetch c.clubMembers cm " +
+                    "left join fetch cm.councilMember cmb " +
+                    "left join fetch cmb.partyNominees pn " +
+                    "left join fetch c.clubParties cp " +
+                    "left join fetch cp.party p " +
+                "where c.ref = :ref")
+    Club findByRef(@Param(value = "ref") String ref);
 
     @Query(value = "select c from ClubMember c where c.club.town.ref = :town and c.club.season.ref = :season and c.club.ref = :ref")
     Collection<ClubMember> getClubMembersByTownAndSeasonAndRef(@Param(value = "town") String town, @Param(value = "season") String season, @Param(value = "ref") String ref);

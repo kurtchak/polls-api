@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 2.4.2017.
@@ -32,7 +32,7 @@ public class Party {
 
     @JsonIgnore
     @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
-    private List<PartyNominee> partyNominees;
+    private Set<PartyNominee> partyNominees;
 
     public Party() {}
 
@@ -80,14 +80,15 @@ public class Party {
         this.logo = logo;
     }
 
-    public List<PartyNominee> getPartyNominees() {
+    public Set<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
 
-    public void setPartyNominees(List<PartyNominee> partyNominees) {
+    public void setPartyNominees(Set<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
     }
 
+    // TODO: is it right
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

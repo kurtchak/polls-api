@@ -19,16 +19,29 @@ import java.util.List;
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     @Query(value = "select m from Meeting m " +
                         "where m.town.ref = :town " +
+//    @Query(value = "select distinct m from Meeting m " +
+//                        "join fetch m.season s " +
+//                        "where m.season.town.ref = :town " +
                             "and m.season.ref = :season " +
                             "and m.institution.type = :institution " +
                             "and m.date between :dateFrom and :dateTo")
+//                            "and m.season.institution = :institution " +
+//                            "and (:dateFrom is null and :dateTo is null " +
+//                                "or m.date between :dateFrom and :dateTo)")
     List<Meeting> getByTownAndInstitutionAndSeason(@Param(value = "town") String town,
                                                    @Param(value = "institution") InstitutionType institution,
                                                    @Param(value = "season") String season,
                                                    @Param(value = "dateFrom") Date dateFrom,
                                                    @Param(value = "dateTo") Date dateTo);
 
-    @Query(value = "select m from Meeting m where m.ref = :ref")
+    @Query(value =
+            "select m from Meeting m " +
+                    "left join fetch m.season s " +
+                    "left join fetch s.town t " +
+                    "left join fetch m.agendaItems a " +
+                    "left join fetch a.attachments aa " +
+                    "left join fetch m.attachments at " +
+                "where m.ref = :ref")
     Meeting getByRef(@Param(value = "ref") String ref);
 
     @Query(value = "select max(m.date) from Meeting m " +

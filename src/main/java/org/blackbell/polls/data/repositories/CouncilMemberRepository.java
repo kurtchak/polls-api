@@ -16,17 +16,44 @@ import java.util.List;
  */
 @Repository
 public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Long> {
-    @Query(value = "select m from CouncilMember m " +
-                        "where m.town.ref = :town " +
-                            "and m.season.ref = :season " +
-                            "and m.institution.type = :institution")
-    List<CouncilMember> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
-                                                         @Param(value = "season") String season,
-                                                         @Param(value = "institution") InstitutionType institution);
+    @Query(value =
+            "select distinct m from CouncilMember m " +
+                    "left join fetch m.clubMembers cm " +
+                    "left join fetch m.partyNominees pn " +
+                "where m.season.town.ref = :town " +
+                    "and m.season.ref = :season " +
+                    "and m.season.institution = :institution")
+//    List<CouncilMember> getByTownAndSeasonAndInstitution(@Param(value = "town") String town, @Param(value = "season") String season, @Param(value = "institution") Institution institution);
+//    @Query(value = "select m from CouncilMember m " +
+//                        "where m.town.ref = :town " +
+//                            "and m.season.ref = :season " +
+//                            "and m.institution.type = :institution")
+//    List<CouncilMember> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
+//                                                         @Param(value = "season") String season,
+//                                                         @Param(value = "institution") InstitutionType institution);
 
-    @Query(value = "select m from CouncilMember m where m.ref = :ref")
+    @Query(value =
+            "select m from CouncilMember m " +
+                    "left join fetch m.clubMembers cm " +
+                    "left join fetch cm.club c " +
+                    "left join fetch c.season s " +
+                    "left join fetch c.clubParties cp " +
+                    "left join fetch cp.party p " +
+                    "left join fetch m.partyNominees pn " +
+                "where m.ref = :ref")
     CouncilMember findByRef(@Param(value = "ref") String memberRef);
 
     @Query(value = "select m from CouncilMember m where m.season = :season")
     List<CouncilMember> findBySeason(@Param(value = "season") Season season);
+
+    @Query(value =
+            "select distinct m from CouncilMember m " +
+                    "left join fetch m.clubMembers cm " +
+                    "left join fetch m.partyNominees pn " +
+                    "where m.season.town.ref = :town " +
+                        "and not exists (select cm.id from ClubMember cm " +
+                                            "where cm.councilMember.id = m.id " +
+                                            "and cm.club.season.ref = :season)")
+    List<CouncilMember> getFreeCouncilMembers(@Param(value = "town") String town, @Param(value = "season") String season);
+
 }

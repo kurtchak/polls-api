@@ -2,7 +2,9 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.PartyNomineeSerializer;
 
 import javax.persistence.*;
 
@@ -77,5 +79,21 @@ public class PartyNominee {
 
     public void setTown(Town town) {
         this.town = town;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PartyNominee)) return false;
+
+        PartyNominee that = (PartyNominee) o;
+
+        return id == that.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >>> 32));
     }
 }

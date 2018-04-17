@@ -10,6 +10,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.meetings.model.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 public class MeetingsController {
@@ -50,6 +49,9 @@ public class MeetingsController {
     @Autowired
     private PartyRepository partyRepository;
 
+    @Autowired
+    private VoteRepository voteRepository;
+
     @JsonView(value = Views.Towns.class)
     @RequestMapping("/cities")
     public List<Town> towns() throws Exception {
@@ -65,7 +67,8 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.Meetings.class)
-    @RequestMapping({"/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}",
+    @RequestMapping({"/{city}/{institution}/{season}/meetings",
+                     "/{city}/{institution}/{season}/meetings/{dateFrom}/{dateTo}",
                      "/{city}/{institution}/meetings/{season}/{dateFrom}/{dateTo}"})
     public List<Meeting> meetings(@PathVariable(value="city") String city,
                                   @PathVariable(value="institution") String institution,
@@ -84,17 +87,9 @@ public class MeetingsController {
         return councilMemberRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution));
     }
 
-    @JsonView(value = Views.CouncilMember.class)
-    @RequestMapping({"/meetings/{ref}",
-                     "/{city}/{institution}/member/{ref}"})
-    public CouncilMember member(@PathVariable(value="city") String city,
-                                @PathVariable(value="institution") String institution,
-                                @PathVariable(value="ref") String ref) throws Exception {
-        return councilMemberRepository.findByRef(ref);
-    }
-
     @JsonView(value = Views.Polls.class)
-    @RequestMapping({"/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}",
+    @RequestMapping({"/{city}/{institution}/{season}/polls",
+                     "/{city}/{institution}/{season}/polls/{dateFrom}/{dateTo}",
                      "/{city}/{institution}/polls/{season}/{dateFrom}/{dateTo}"})
     public Collection<Poll> polls(@PathVariable(value = "city") String city,
                                   @PathVariable(value = "institution") String institution,
@@ -110,11 +105,19 @@ public class MeetingsController {
     public Meeting meeting(@PathVariable(value="ref") String ref) throws Exception {
         return meetingRepository.getByRef(ref);
     }
+
     @JsonView(value = Views.CouncilMember.class)
     @RequestMapping({"/members/{ref}",
                      "/{city}/{institution}/member/{ref}"})
     public CouncilMember member(@PathVariable(value="ref") String ref) throws Exception {
         return councilMemberRepository.findByRef(ref);
+    }
+
+    @JsonView(value = Views.Votes.class)
+    @RequestMapping({"/members/{ref}/votes",
+                     "/{city}/{institution}/member/{ref}/votes"})
+    public List<Vote> memberVotes(@PathVariable(value="ref") String memberRef) throws Exception {
+        return voteRepository.findByCouncilMemberRef(memberRef);
     }
 
     @JsonView(value = Views.Poll.class)
@@ -145,18 +148,17 @@ public class MeetingsController {
         return clubRepository.getByTownAndSeason(city, season);
     }
 
-    @JsonView(value = Views.Club.class)
-    @RequestMapping("/clubs/{ref}")
-    public Collection<Club> club(@PathVariable(value="ref") String ref) throws Exception {
-        return clubRepository.findByRef(ref);
+    @JsonView(value = {Views.CouncilMembers.class, Views.Club.class})
+    @RequestMapping("/{city}/{season}/clubs/free")
+    public Collection<CouncilMember> freeMembers(@PathVariable(value="city") String city,
+                                           @PathVariable(value="season") String season) throws Exception {
+        return councilMemberRepository.getFreeCouncilMembers(city, season);
     }
 
-    @JsonView(value = Views.ClubMembers.class)
-    @RequestMapping("/clubs/{ref}/members")
-    public Collection<ClubMember> clubMembers(@PathVariable(value="city") String city,
-                                              @PathVariable(value="season") String season,
-                                              @PathVariable(value="ref") String ref) throws Exception {
-        return clubRepository.getClubMembersByTownAndSeasonAndRef(city, season, ref);
+    @JsonView(value = Views.Club.class)
+    @RequestMapping("/clubs/{ref}")
+    public Club club(@PathVariable(value="ref") String ref) throws Exception {
+        return clubRepository.findByRef(ref);
     }
 
     @JsonView(value = Views.Parties.class)
@@ -167,7 +169,7 @@ public class MeetingsController {
     }
 
     @JsonView(value = Views.PartyNominees.class)
-    @RequestMapping("/parties/{ref}/members")
+    @RequestMapping("/{city}/{season}/parties/{ref}/members")
     public Collection<PartyNominee> partyNominees(@PathVariable(value="city") String city,
                                                   @PathVariable(value="season") String season,
                                                   @PathVariable(value="ref") String ref) throws Exception {

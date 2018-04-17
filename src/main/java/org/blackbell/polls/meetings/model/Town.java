@@ -36,6 +36,10 @@ public class Town {
     @Temporal(TemporalType.DATE)
     private Date lastSyncDate;
 
+    @JsonView(value = {Views.Towns.class})
+    @OneToMany(mappedBy = "town", cascade = CascadeType.ALL)
+    private Set<Season> seasons;
+
     public Town() {}
 
     public Town(String ref, String name, Source source) {
@@ -84,6 +88,27 @@ public class Town {
         this.lastSyncDate = lastSyncDate;
     }
 
+    public Set<Season> getSeasons() {
+        return seasons;
+    }
+
+    public void setSeasons(Set<Season> seasons) {
+        this.seasons = seasons;
+    }
+
+    public Set<Season> getSeasons(Institution institution) {
+        Set<Season> institutionSeasons = null;
+        if (seasons != null) {
+            institutionSeasons = new HashSet<>();
+            for (Season season : seasons) {
+                if (institution.equals(season.getInstitution())) {
+                    institutionSeasons.add(season);
+                }
+            }
+        }
+        return institutionSeasons;
+    }
+
     @Override
     public String toString() {
         return "Town{" +
@@ -93,6 +118,14 @@ public class Town {
                 ", source=" + source +
                 ", lastSyncDate=" + lastSyncDate +
                 '}';
+    }
+
+    public void addSeasons(Set<Season> seasons) {
+        if (this.seasons == null) {
+            this.seasons = seasons;
+        } else {
+            seasons.addAll(seasons);
+        }
     }
 
     @Override

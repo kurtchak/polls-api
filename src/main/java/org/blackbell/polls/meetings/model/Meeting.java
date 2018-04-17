@@ -22,21 +22,21 @@ public class Meeting {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
 
-    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Meeting.class, Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     private String name;
 
     private String extId;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne @JoinColumn(name = "season_id", insertable = false, updatable = false)
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Votes.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "season_id")
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     @ManyToOne @JoinColumn(name = "town_id", insertable = false, updatable = false)
     private Town town;
 
@@ -51,11 +51,11 @@ public class Meeting {
 
     @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
-    private List<AgendaItem> agendaItems;
+    private Set<AgendaItem> agendaItems;
 
     @JsonView(value = {Views.Meeting.class})
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
-    private List<MeetingAttachment> attachments;
+    private Set<MeetingAttachment> attachments;
 
     public long getId() {
         return id;
@@ -113,19 +113,19 @@ public class Meeting {
         this.date = date;
     }
 
-    public List<AgendaItem> getAgendaItems() {
+    public Set<AgendaItem> getAgendaItems() {
         return agendaItems;
     }
 
-    public void setAgendaItems(List<AgendaItem> agendaItems) {
+    public void setAgendaItems(Set<AgendaItem> agendaItems) {
         this.agendaItems = agendaItems;
     }
 
-    public List<MeetingAttachment> getAttachments() {
+    public Set<MeetingAttachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(List<MeetingAttachment> attachments) {
+    public void setAttachments(Set<MeetingAttachment> attachments) {
         this.attachments = attachments;
     }
 
@@ -139,7 +139,7 @@ public class Meeting {
 
     public void addAgendaItem(AgendaItem agendaItem) {
         if (agendaItems == null) {
-            agendaItems = new ArrayList<>();
+            agendaItems = new HashSet<>();
         }
         agendaItem.setMeeting(this);
         agendaItems.add(agendaItem);
@@ -147,7 +147,7 @@ public class Meeting {
 
     public void addAttachment(MeetingAttachment attachment) {
         if (attachments == null) {
-            attachments = new ArrayList<>();
+            attachments = new HashSet<>();
         }
         attachment.setMeeting(this);
         attachments.add(attachment);
@@ -163,6 +163,26 @@ public class Meeting {
                 ", town=" + town +
                 ", institution=" + institution +
                 ", date=" + date +
+                ", agendaItems=" + agendaItems +
+                ", attachments=" + attachments +
+                ", extId='" + extId + '\'' +
+                ", agendaItems count = '" + (getAgendaItems() != null ? getAgendaItems().size() : 0) + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Meeting)) return false;
+
+        Meeting meeting = (Meeting) o;
+
+        return getId() == meeting.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
     }
 }

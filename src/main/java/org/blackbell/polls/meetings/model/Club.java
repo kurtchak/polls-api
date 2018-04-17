@@ -1,12 +1,17 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.json.serializers.ClubMembersSerializer;
+import org.blackbell.polls.meetings.json.serializers.ClubPartiesSerializer;
+import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
+import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by kurtcha on 11.3.2018.
@@ -25,12 +30,16 @@ public class Club {
     private String name;
 
     @JsonView(value = {Views.Club.class})
-    @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ClubParty> clubParties;
+    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @JsonSerialize(using = ClubPartiesSerializer.class)
+    @JsonProperty("parties")
+    private Set<ClubParty> clubParties;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ClubMember> clubMembers;
+    @JsonView(value = {Views.Club.class})
+    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @JsonSerialize(using = ClubMembersSerializer.class)
+    @JsonProperty("members")
+    private Set<ClubMember> clubMembers;
 
     @JsonView(value = {Views.Club.class})
     @ManyToOne
@@ -50,15 +59,11 @@ public class Club {
         this.id = id;
     }
 
-    public void setParties(List<ClubParty> clubParties) {
-        this.clubParties = clubParties;
-    }
-
-    public List<ClubMember> getClubMembers() {
+    public Set<ClubMember> getClubMembers() {
         return clubMembers;
     }
 
-    public void setClubMembers(List<ClubMember> clubMembers) {
+    public void setClubMembers(Set<ClubMember> clubMembers) {
         this.clubMembers = clubMembers;
     }
 
@@ -78,11 +83,11 @@ public class Club {
         this.name = name;
     }
 
-    public List<ClubParty> getClubParties() {
+    public Set<ClubParty> getClubParties() {
         return clubParties;
     }
 
-    public void setClubParties(List<ClubParty> clubParties) {
+    public void setClubParties(Set<ClubParty> clubParties) {
         this.clubParties = clubParties;
     }
 
@@ -104,9 +109,38 @@ public class Club {
 
     public void addClubMember(ClubMember clubMember) {
         if (clubMembers == null) {
-            clubMembers = new ArrayList<>();
+            clubMembers = new HashSet<>();
         }
         clubMembers.add(clubMember);
         clubMember.setClub(this);
+    }
+
+    @Override
+    public String toString() {
+        return "Club{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                ", name='" + name + '\'' +
+                ", clubParties=" + clubParties +
+                ", clubMembers=" + clubMembers +
+                ", town=" + town +
+                ", season=" + season +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Club)) return false;
+
+        Club club = (Club) o;
+
+        return id == club.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >>> 32));
     }
 }

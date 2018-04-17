@@ -40,6 +40,16 @@ public class SyncAgent {
 
     public SyncAgent() {}
 
+    @Scheduled(fixedRate = 86400000, initialDelay = 86400000)
+    public void syncCouncilMembers() {
+        log.info("syncCouncilMembers...");
+        // AD-HOC
+        Season season = seasonRepository.findByRef("2014-2018");
+        List<Party> parties = partyRepository.findAll();
+        partiesMap = new HashMap<>();
+        for (Party party : parties) {
+            partiesMap.put(party.getName(), party);
+        }
 //    @Scheduled(fixedRate = 86400000, initialDelay = 60000)
 //    public void syncCouncilMembers() {
 //        log.info("syncCouncilMembers...");
@@ -71,19 +81,39 @@ public class SyncAgent {
 //        log.info("Council Members Sync finished");
 //    }
 
-//    @Scheduled(fixedRate = 86400000, initialDelay = 600000)
-//    public void sync() {
-//        towns = townRepository.findAll();
-//        if (towns == null) {
-//            log.info("No town to sync");
-//        } else {
-//            for (Town town : towns) {
-//                syncSeasons(town);
-//                town.setLastSyncDate(new Date());
-//                townRepository.save(town);
-//            }
-//        }
-//    }
+        towns = townRepository.findAll();
+        for (Town town : towns) {
+            Map<String, CouncilMember> councilMembersMap = new HashMap<>();
+            List<CouncilMember> councilMembers = councilMemberRepository.findBySeason(season);
+            for (CouncilMember councilMember : councilMembers) {
+                councilMembersMap.put(councilMember.getName(), councilMember);
+            }
+            if ("presov".equals(town.getRef())) {
+                List<CouncilMember> newCouncilMembers = new PresovCouncilMemberCrawler().getCouncilMembers(season, partiesMap, councilMembersMap);
+                if (councilMembers != null) {
+                    councilMemberRepository.save(newCouncilMembers);
+                    log.info("New CouncilMembers saved");
+                } else {
+                    log.info(String.format("No new CouncilMembers found for town '%s' and season '%s'", town.getName(), season.getName()));
+                }
+            }
+        }
+        log.info("Council Members Sync finished");
+    }
+
+    @Scheduled(fixedRate = 86400000, initialDelay = 600000)
+    public void sync() {
+        towns = townRepository.findAll();
+        if (towns == null) {
+            log.info("No town to sync");
+        } else {
+            for (Town town : towns) {
+                syncSeasons(town);
+                town.setLastSyncDate(new Date());
+                townRepository.save(town);
+            }
+        }
+    }
 
     //TODO: zaciatok a koniec volebneho obdobia nie je jasne definovany
 //    private void syncSeasons(Town town) {
