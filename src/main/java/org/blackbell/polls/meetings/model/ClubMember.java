@@ -2,6 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -9,10 +10,7 @@ import javax.persistence.*;
  * Created by kurtcha on 11.3.2018.
  */
 @Entity
-public class ClubMember {
-
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class ClubMember extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMember.class, Views.Poll.class, Views.CouncilMembers.class})
     @ManyToOne(cascade = CascadeType.ALL)
@@ -27,14 +25,6 @@ public class ClubMember {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.ClubMembers.class, Views.Club.class})
     @Enumerated(EnumType.STRING)
     private ClubFunction clubFunction;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public Club getClub() {
         return club;

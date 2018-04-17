@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
@@ -14,10 +15,7 @@ import java.util.*;
  * email: korcak@esten.sk
  */
 @Entity
-public class Town {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Town extends BaseEntity {
 
     @JsonView(value = {Views.Towns.class, Views.Club.class})
     @Column(unique = true)
@@ -83,6 +81,22 @@ public class Town {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Town)) return false;
+
+        Town town = (Town) o;
+
+        return getId() == town.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
+
+    @Override
     public String toString() {
         return "Town{" +
                 "id=" + id +
@@ -91,21 +105,5 @@ public class Town {
                 ", source=" + source +
                 ", lastSyncDate=" + lastSyncDate +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Town)) return false;
-
-        Town town = (Town) o;
-
-        return ref.equals(town.getRef());
-
-    }
-
-    @Override
-    public int hashCode() {
-        return ref.hashCode();
     }
 }

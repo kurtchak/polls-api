@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -12,10 +13,7 @@ import javax.persistence.*;
  */
 @Entity
 //@JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
-public class PartyNominee {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class PartyNominee extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     @ManyToOne

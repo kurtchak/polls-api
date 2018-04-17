@@ -10,7 +10,8 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
-import org.blackbell.polls.meetings.model.vote.Vote;
+import org.blackbell.polls.meetings.model.Vote;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,14 +131,14 @@ public class MeetingsController {
     @JsonView(value = Views.Agenda.class)
     @RequestMapping({"/meetings/{meeting_ref}/agenda",
                      "/{city}/{institution}/meeting/{meeting_ref}/agenda"})
-    public Collection<AgendaItem> agenda(@PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
+    public Collection<BaseEntity> agenda(@PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
         return agendaRepository.getByMeeting(meetingRef);
     }
 
     @JsonView(value = Views.AgendaItem.class)
     @RequestMapping({"/agenda/{ref}",
                      "/{city}/{institution}/agenda/{ref}"})
-    public AgendaItem agendaItem(@PathVariable(value="ref") String ref) throws Exception {
+    public BaseEntity agendaItem(@PathVariable(value="ref") String ref) throws Exception {
         return agendaRepository.getByRef(ref);
     }
 
@@ -146,6 +147,13 @@ public class MeetingsController {
     public Collection<Club> clubs(@PathVariable(value="city") String city,
                                   @PathVariable(value="season") String season) throws Exception {
         return clubRepository.getByTownAndSeason(city, season);
+    }
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.Club.class})
+    @RequestMapping("/{city}/{season}/clubs/free")
+    public Collection<CouncilMember> freeMembers(@PathVariable(value="city") String city,
+                                           @PathVariable(value="season") String season) throws Exception {
+        return councilMemberRepository.getFreeCouncilMembers(city, season);
     }
 
     @JsonView(value = Views.Club.class)

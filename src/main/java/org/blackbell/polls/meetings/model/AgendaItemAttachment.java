@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -11,41 +12,20 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-public class AgendaItemAttachment {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class AgendaItemAttachment extends BaseEntity {
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     @Column(unique = true)
     private String ref;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String name;
 
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String source;
 
     @ManyToOne @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
-
-    public AgendaItemAttachment() {
-    }
-
-    public AgendaItemAttachment(String name, AgendaItem item, String ref, String source) {
-        this.ref = ref;
-        this.name = name;
-        this.source = source;
-        this.agendaItem = item;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getRef() {
         return ref;
@@ -77,5 +57,21 @@ public class AgendaItemAttachment {
 
     public void setAgendaItem(AgendaItem agendaItem) {
         this.agendaItem = agendaItem;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AgendaItemAttachment)) return false;
+
+        AgendaItemAttachment that = (AgendaItemAttachment) o;
+
+        return id == that.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >>> 32));
     }
 }

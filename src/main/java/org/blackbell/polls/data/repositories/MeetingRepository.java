@@ -18,10 +18,12 @@ import java.util.List;
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     @Query(value = "select m from Meeting m " +
-                        "join fetch m.season s " +
-                        "where m.season.town.ref = :town " +
+                            "join fetch m.season s " +
+                            "join fetch m.town t " +
+                            "join fetch m.institution i " +
+                        "where m.town.ref = :town " +
                             "and m.season.ref = :season " +
-                            "and m.season.institution = :institution " +
+                            "and m.institution.type = :institution " +
                             "and (:dateFrom is null and :dateTo is null " +
                                 "or m.date between :dateFrom and :dateTo)")
     List<Meeting> getByTownAndInstitutionAndSeason(@Param(value = "town") String town,
@@ -32,10 +34,11 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     @Query(value =
             "select m from Meeting m " +
-                    "join fetch m.season s " +
-                    "join fetch s.town t " +
-                    "join fetch m.agendaItems a " +
-                    "join fetch m.attachments at " +
+                    "left join fetch m.season s " +
+                    "left join fetch m.town t " +
+                    "left join fetch m.agendaItems a " +
+                    "left join fetch a.attachments aa " +
+                    "left join fetch m.attachments at " +
                 "where m.ref = :ref")
     Meeting getByRef(@Param(value = "ref") String ref);
 

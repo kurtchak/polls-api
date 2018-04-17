@@ -17,15 +17,15 @@ import java.util.List;
 @Repository
 public interface PollRepository extends JpaRepository<Poll, Long> {
     @Query(value =
-            "select p from Poll p " +
+            "select distinct p from Poll p " +
                     "join fetch p.agendaItem a " +
                     "join fetch a.meeting m " +
                     "join fetch m.season s " +
-                    "join fetch s.town t " +
-                    "join fetch a.attachments at " +
-                "where s.town.ref = :town " +
+                    "join fetch m.town t " +
+                    "left join fetch a.attachments at " +
+                "where t.ref = :town " +
                     "and s.ref = :season " +
-                    "and s.institution = :institution " +
+                    "and m.institution.type = :institution " +
                     "and (:dateFrom is null and :dateTo is null " +
                             "or m.date between :dateFrom and :dateTo)")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
@@ -40,10 +40,11 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                         "join fetch m.season s " +
                         "join fetch p.votes v " +
                         "join fetch v.councilMember cm " +
-                        "join fetch cm.partyNominees pn " +
-                        "join fetch pn.party pt " +
-                        "join fetch cm.clubMembers cbm " +
-                        "join fetch cbm.club c " +
+                        "left join fetch cm.politician pl " +
+                        "left join fetch pl.partyNominees pn " +
+                        "left join fetch pn.party pt " +
+                        "left join fetch cm.clubMembers cbm " +
+                        "left join fetch cbm.club c " +
                     "where p.ref = :ref")
     Poll getByRef(@Param(value = "ref") String pollRef);
 }

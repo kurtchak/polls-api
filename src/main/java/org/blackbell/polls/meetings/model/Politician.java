@@ -5,19 +5,18 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 21.3.2018.
  * email: korcak@esten.sk
  */
 @Entity
-public class Politician {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Politician extends BaseEntity {
 
     @Column(unique = true)
     @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
@@ -44,15 +43,7 @@ public class Politician {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "politician", cascade = CascadeType.ALL)
     @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
-    private List<PartyNominee> partyNominees;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
+    private Set<PartyNominee> partyNominees;
 
     public String getRef() {
         return ref;
@@ -110,11 +101,11 @@ public class Politician {
         this.phone = phone;
     }
 
-    public List<PartyNominee> getPartyNominees() {
+    public Set<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
 
-    public void setPartyNominees(List<PartyNominee> partyNominees) {
+    public void setPartyNominees(Set<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
     }
 

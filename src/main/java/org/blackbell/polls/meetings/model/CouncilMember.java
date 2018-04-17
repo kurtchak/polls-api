@@ -5,22 +5,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
-import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
+import org.blackbell.polls.meetings.json.serializers.CouncilMemberSerializer;
+import org.blackbell.polls.meetings.json.serializers.PoliticianClubSerializer;
+import org.blackbell.polls.meetings.json.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
 @Entity
-//@JsonSerialize(using = CouncilMemberSerializer.class)
-public class CouncilMember {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+@JsonSerialize(using = CouncilMemberSerializer.class)
+public class CouncilMember extends BaseEntity {
 
     @Column(unique = true)
     @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
@@ -29,14 +30,15 @@ public class CouncilMember {
     @JsonIgnore
     private String extId;
 
-    @JsonView(value = {Views.CouncilMember.class, Views.Poll.class})
+//    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
 //    @JsonSerialize(using = PoliticianClubSerializer.class)
     @JsonIgnore
     private Set<ClubMember> clubMembers;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @JsonProperty("memberOf")
+    @JsonProperty("club")
+    @JsonSerialize(using = PoliticianClubSerializer.class)
     public ClubMember getActualClubMember() {
         if (clubMembers != null) {
             Calendar cal = Calendar.getInstance();
@@ -57,14 +59,8 @@ public class CouncilMember {
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id", insertable = false, updatable = false)
-    @JsonSerialize(using = SeasonAsPropertySerializer.class)
+    @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Club.class})
-    @OneToMany(mappedBy = "councilMember", cascade = CascadeType.ALL)
-    @JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
-    @JsonProperty("nominee")
-    private Set<PartyNominee> partyNominees;
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -95,44 +91,12 @@ public class CouncilMember {
 //    @OneToMany(mappedBy = "councilMember")
 //    private List<Vote> votes;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
     public String getRef() {
         return ref;
     }
 
     public void setRef(String ref) {
         this.ref = ref;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getTitles() {
-        return titles;
-    }
-
-    public void setTitles(String titles) {
-        this.titles = titles;
-    }
-
-    public String getPicture() {
-        return picture;
-    }
-
-    public void setPicture(String picture) {
-        this.picture = picture;
     }
 
     public String getExtId() {
@@ -143,7 +107,7 @@ public class CouncilMember {
         this.extId = extId;
     }
 
-    public List<ClubMember> getClubMembers() {
+    public Set<ClubMember> getClubMembers() {
         return clubMembers;
     }
 
@@ -159,14 +123,6 @@ public class CouncilMember {
         this.otherFunctions = otherFunctions;
     }
 
-    public Set<PartyNominee> getPartyNominees() {
-        return partyNominees;
-    }
-
-    public void setPartyNominees(Set<PartyNominee> partyNominees) {
-        this.partyNominees = partyNominees;
-    }
-
     public Season getSeason() {
         return season;
     }
@@ -175,13 +131,6 @@ public class CouncilMember {
         this.season = season;
     }
 
-//    public List<Vote> getVotes() {
-//        return votes;
-//    }
-//
-//    public void setVotes(List<Vote> votes) {
-//        this.votes = votes;
-//    }
     public Town getTown() {
         return town;
     }
@@ -222,17 +171,17 @@ public class CouncilMember {
         this.description = description;
     }
 
-    public List<Vote> getVotes() {
-        return votes;
-    }
-
-    public void setVotes(List<Vote> votes) {
-        this.votes = votes;
-    }
+//    public Set<Vote> getVotes() {
+//        return votes;
+//    }
+//
+//    public void setVotes(Set<Vote> votes) {
+//        this.votes = votes;
+//    }
 
     public void addClubMember(ClubMember clubMember) {
         if (clubMembers == null) {
-            clubMembers = new ArrayList<>();
+            clubMembers = new HashSet<>();
         }
         clubMembers.add(clubMember);
         clubMember.setCouncilMember(this);
@@ -266,22 +215,19 @@ public class CouncilMember {
         return "CouncilMember{" +
                 "id=" + id +
                 ", ref='" + ref + '\'' +
-                ", name='" + name + '\'' +
-                ", titles='" + titles + '\'' +
-                ", picture='" + picture + '\'' +
                 ", extId='" + extId + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
+                ", clubMembers=" + clubMembers +
                 ", otherFunctions='" + otherFunctions + '\'' +
                 ", season=" + season +
+                ", town=" + town +
+                ", institution=" + institution +
+                ", politician=" + politician +
+                ", memberType=" + memberType +
+                ", description='" + description + '\'' +
                 '}';
     }
 
-    public void addClubMember(ClubMember clubMember) {
-        if (clubMembers == null) {
-            clubMembers = new HashSet<>();
-        }
-        clubMembers.add(clubMember);
-        clubMember.setCouncilMember(this);
+    public Set<PartyNominee> getPartyNominees() {
+        return politician.getPartyNominees(); // TODO: create structure/map identified by season
     }
 }

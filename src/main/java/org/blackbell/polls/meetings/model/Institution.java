@@ -2,6 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -10,10 +11,7 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-public class Institution {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+public class Institution extends BaseEntity {
 
     @JsonView(value = {})
     @Column(unique = true)
@@ -29,14 +27,6 @@ public class Institution {
     private String description;
 
     public Institution() {}
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public String getRef() {
         return ref;
@@ -83,7 +73,7 @@ public class Institution {
 
     @Override
     public int hashCode() {
-        return id;
+        return (int) (id ^ (id >>> 32));
     }
 
     @Override

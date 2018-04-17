@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -12,10 +13,7 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class Party {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+public class Party extends BaseEntity {
 
     @JsonView(value = {Views.Parties.class})
     @Column(unique = true)
@@ -38,14 +36,6 @@ public class Party {
 
     public Party(String name) {
         this.name = name;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getRef() {
@@ -102,6 +92,6 @@ public class Party {
 
     @Override
     public int hashCode() {
-        return id;
+        return (int) (id ^ (id >>> 32));
     }
 }
