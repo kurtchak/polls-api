@@ -8,6 +8,7 @@ import org.blackbell.polls.meetings.json.serializers.ClubMembersSerializer;
 import org.blackbell.polls.meetings.json.serializers.ClubPartiesSerializer;
 import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
 import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -17,11 +18,7 @@ import java.util.Set;
  * Created by kurtcha on 11.3.2018.
  */
 @Entity
-public class Club {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Club extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
     private String ref;
@@ -50,14 +47,6 @@ public class Club {
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public Set<ClubMember> getClubMembers() {
         return clubMembers;
@@ -116,9 +105,25 @@ public class Club {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Club)) return false;
+
+        Club club = (Club) o;
+
+        return getId() == club.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
+
+    @Override
     public String toString() {
         return "Club{" +
-                "id=" + id +
+                "id=" + getId() +
                 ", ref='" + ref + '\'' +
                 ", name='" + name + '\'' +
                 ", clubParties=" + clubParties +
@@ -126,21 +131,5 @@ public class Club {
                 ", town=" + town +
                 ", season=" + season +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Club)) return false;
-
-        Club club = (Club) o;
-
-        return id == club.id;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (id ^ (id >>> 32));
     }
 }

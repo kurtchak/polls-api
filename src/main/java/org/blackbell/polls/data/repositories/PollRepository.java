@@ -21,18 +21,13 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                     "join fetch p.agendaItem a " +
                     "join fetch a.meeting m " +
                     "join fetch m.season s " +
-                    "join fetch s.town t " +
+                    "join fetch m.town t " +
                     "left join fetch a.attachments at " +
-                "where s.town.ref = :town " +
+                "where t.ref = :town " +
                     "and s.ref = :season " +
-                    "and s.institution = :institution " +
+                    "and m.institution.type = :institution " +
                     "and (:dateFrom is null and :dateTo is null " +
                             "or m.date between :dateFrom and :dateTo)")
-//            "select p from Poll p " +
-//                "where p.agendaItem.meeting.town.ref = :town " +
-//                    "and p.agendaItem.meeting.season.ref = :season " +
-//                    "and p.agendaItem.meeting.institution.type = :institution " +
-//                    "and p.agendaItem.meeting.date between :dateFrom and :dateTo")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
                                                 @Param(value = "institution") InstitutionType institution,
@@ -45,7 +40,8 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                         "join fetch m.season s " +
                         "join fetch p.votes v " +
                         "join fetch v.councilMember cm " +
-                        "left join fetch cm.partyNominees pn " +
+                        "left join fetch cm.politician pl " +
+                        "left join fetch pl.partyNominees pn " +
                         "left join fetch pn.party pt " +
                         "left join fetch cm.clubMembers cbm " +
                         "left join fetch cbm.club c " +

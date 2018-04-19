@@ -18,8 +18,9 @@ import java.util.List;
 public interface ClubRepository extends JpaRepository<Club, Long> {
     @Query(value =
             "select distinct c from Club c " +
+                    "join fetch c.town t " +
                     "join fetch c.season s " +
-                "where s.town.ref = :town " +
+                "where t.ref = :town " +
                     "and s.ref = :season")
     List<Club> getByTownAndSeason(@Param(value = "town") String town,
                                   @Param(value = "season") String season);
@@ -27,10 +28,11 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
     @Query(value =
             "select c from Club c " +
                     "left join fetch c.season s " +
-                    "left join fetch s.town t " +
+                    "left join fetch c.town t " +
                     "left join fetch c.clubMembers cm " +
                     "left join fetch cm.councilMember cmb " +
-                    "left join fetch cmb.partyNominees pn " +
+                    "left join fetch cmb.politician pl " +
+                    "left join fetch pl.partyNominees pn " +
                     "left join fetch c.clubParties cp " +
                     "left join fetch cp.party p " +
                 "where c.ref = :ref")

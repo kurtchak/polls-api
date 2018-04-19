@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -11,10 +12,7 @@ import javax.persistence.*;
  * email: korcak@esten.sk
  */
 @Entity
-public class MeetingAttachment {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class MeetingAttachment extends BaseEntity {
 
     @JsonView(value = Views.Meeting.class)
     @Column(unique = true)
@@ -27,16 +25,6 @@ public class MeetingAttachment {
     @ManyToOne
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
-
-    public MeetingAttachment() {
-    }
-
-    public MeetingAttachment(String name, Meeting meeting, String ref, String source) {
-        this.ref = ref;
-        this.name = name;
-        this.source = source;
-        this.meeting = meeting;
-    }
 
     public long getId() {
         return id;

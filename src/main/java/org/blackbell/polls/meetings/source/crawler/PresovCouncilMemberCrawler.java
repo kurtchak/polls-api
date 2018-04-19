@@ -1,20 +1,11 @@
 package org.blackbell.polls.meetings.source.crawler;
 
-import org.blackbell.polls.common.PollsUtils;
-import org.blackbell.polls.meetings.model.*;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.blackbell.polls.meetings.model.Club;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**

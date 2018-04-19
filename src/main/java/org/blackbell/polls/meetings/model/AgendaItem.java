@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -14,10 +15,7 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class AgendaItem {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class AgendaItem extends BaseEntity {
 
     @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
     @Column(unique = true)
@@ -42,14 +40,6 @@ public class AgendaItem {
     @JsonView(value = {Views.AgendaItem.class, Views.Poll.class, Views.Meeting.class})
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private Set<AgendaItemAttachment> attachments;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getRef() {
         return ref;
@@ -118,7 +108,7 @@ public class AgendaItem {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof AgendaItem)) return false;
+        if (!(o instanceof BaseEntity)) return false;
 
         AgendaItem that = (AgendaItem) o;
 

@@ -2,9 +2,13 @@ package org.blackbell.polls.meetings.json.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.Club;
 import org.blackbell.polls.meetings.model.CouncilMember;
+import org.blackbell.polls.meetings.model.PartyNominee;
 
 import java.io.IOException;
 
@@ -28,7 +32,18 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
             throws IOException, JsonProcessingException {
 
         jgen.writeStartObject();
-        jgen.writeStringField("season", value.getSeason().getName());
+        jgen.writeStringField("ref", value.getRef());
+        jgen.writeStringField("name", value.getPolitician().getName());
+        jgen.writeStringField("title", value.getPolitician().getTitles());
+        jgen.writeStringField("picture", value.getPolitician().getPicture());
+        jgen.writeStringField("email", value.getPolitician().getEmail());
+        jgen.writeStringField("otherFunctions", value.getOtherFunctions());
+        jgen.writeStringField("position", value.getMemberType().name());
+        //TODO:
+//        if (value.getActualClubMember() != null) {
+//            provider.findValueSerializer(Club.class).serialize(value.getActualClubMember().getClub(), jgen, provider);
+//        }
+//        new PoliticianPartyNomineesSerializer().serialize(value.getPartyNominees(), jgen, provider);
         jgen.writeEndObject();
     }
 }

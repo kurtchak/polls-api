@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.VoteListSerializer;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -15,10 +16,7 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class Poll {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Poll extends BaseEntity {
 
     @JsonView(value = {Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     @Column(unique = true)
@@ -59,14 +57,6 @@ public class Poll {
     @ManyToOne
     @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getRef() {
         return ref;
@@ -148,6 +138,22 @@ public class Poll {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Poll)) return false;
+
+        Poll poll = (Poll) o;
+
+        return getId() == poll.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
+
+    @Override
     public String toString() {
         return "Poll{" +
                 "id=" + id +
@@ -166,19 +172,4 @@ public class Poll {
                 '}';
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Poll)) return false;
-
-        Poll poll = (Poll) o;
-
-        return getId() == poll.getId();
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
-    }
 }
