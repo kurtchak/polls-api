@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.ClubMembersSerializer;
 import org.blackbell.polls.meetings.json.serializers.ClubPartiesSerializer;
-import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
-import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
@@ -34,7 +31,7 @@ public class Club extends BaseEntity {
 
     @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
-    @JsonSerialize(using = ClubMembersSerializer.class)
+//    @JsonSerialize(using = ClubMembersSerializer.class)
     @JsonProperty("members")
     private Set<ClubMember> clubMembers;
 

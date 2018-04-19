@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.CouncilMemberSerializer;
 import org.blackbell.polls.meetings.json.serializers.PoliticianClubSerializer;
-import org.blackbell.polls.meetings.json.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
@@ -59,7 +59,7 @@ public class CouncilMember extends BaseEntity {
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id", insertable = false, updatable = false)
-    @JsonSerialize(using = SeasonPropertySerializer.class)
+    @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
     @JsonView(value = Views.CouncilMember.class)

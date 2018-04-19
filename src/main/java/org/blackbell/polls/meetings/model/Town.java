@@ -1,14 +1,13 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Date;
 
 /**
  * Created by Ján Korčák on 6.3.2017.

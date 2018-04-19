@@ -1,13 +1,15 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.ClubPartySerializer;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 /**
  * Created by kurtcha on 11.3.2018.

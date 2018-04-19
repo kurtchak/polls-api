@@ -7,8 +7,10 @@ import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import java.util.Set;
 
 /**

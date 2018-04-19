@@ -1,14 +1,10 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 
 /**
  * Created by Ján Korčák on 18.2.2017.

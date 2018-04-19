@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.blackbell.polls.meetings.model.ClubMember;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Set;
 
 /**
  * Created by Ján Korčák on 25.3.2018.

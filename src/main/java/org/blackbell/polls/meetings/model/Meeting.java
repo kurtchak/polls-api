@@ -1,15 +1,16 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
@@ -27,9 +28,9 @@ public class Meeting extends BaseEntity {
 
     private String extId;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
     @ManyToOne @JoinColumn(name = "season_id")
-    @JsonSerialize(using = SeasonPropertySerializer.class)
+    @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
