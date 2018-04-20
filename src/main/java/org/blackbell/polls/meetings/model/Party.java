@@ -3,8 +3,12 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
 import java.util.Set;
 
 /**
@@ -12,10 +16,7 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class Party {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+public class Party extends BaseEntity {
 
     @JsonView(value = {Views.Parties.class})
     @Column(unique = true)
@@ -30,10 +31,6 @@ public class Party {
     @JsonView(value = {Views.Parties.class, Views.Party.class})
     private String logo;
 
-    @ManyToOne
-    @JoinColumn(name = "season_id")
-    private Season season;
-
     @JsonIgnore
     @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
     private Set<PartyNominee> partyNominees;
@@ -42,14 +39,6 @@ public class Party {
 
     public Party(String name) {
         this.name = name;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getRef() {
@@ -84,14 +73,6 @@ public class Party {
         this.logo = logo;
     }
 
-    public Season getSeason() {
-        return season;
-    }
-
-    public void setSeason(Season season) {
-        this.season = season;
-    }
-
     public Set<PartyNominee> getPartyNominees() {
         return partyNominees;
     }
@@ -108,15 +89,12 @@ public class Party {
 
         Party party = (Party) o;
 
-        if (!name.equals(party.name)) return false;
-        return season.equals(party.season);
+        return id == party.id;
 
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + season.hashCode();
-        return result;
+        return (int) (id ^ (id >>> 32));
     }
 }

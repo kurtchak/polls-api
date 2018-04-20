@@ -1,24 +1,23 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
  * email: korcak@esten.sk
  */
 @Entity
-public class Meeting {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Meeting extends BaseEntity {
 
     @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     @Column(unique = true)
@@ -29,12 +28,20 @@ public class Meeting {
 
     private String extId;
 
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Votes.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
     @ManyToOne @JoinColumn(name = "season_id")
     @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "town_id", insertable = false, updatable = false)
+    private Town town;
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @ManyToOne @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    private Institution institution;
+
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
     private Date date;
@@ -77,6 +84,22 @@ public class Meeting {
 
     public void setSeason(Season season) {
         this.season = season;
+    }
+
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
+    }
+
+    public Institution getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
     }
 
     public Date getDate() {
@@ -128,12 +151,30 @@ public class Meeting {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Meeting)) return false;
+
+        Meeting meeting = (Meeting) o;
+
+        return getId() == meeting.getId();
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (getId() ^ (getId() >>> 32));
+    }
+
+    @Override
     public String toString() {
         return "Meeting{" +
                 "id=" + id +
                 ", ref='" + ref + '\'' +
                 ", name='" + name + '\'' +
                 ", season=" + season +
+                ", town=" + town +
+                ", institution=" + institution +
                 ", date=" + date +
                 ", agendaItems=" + agendaItems +
                 ", attachments=" + attachments +

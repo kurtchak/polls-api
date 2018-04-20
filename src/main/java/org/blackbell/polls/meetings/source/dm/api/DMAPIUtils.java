@@ -1,7 +1,7 @@
 package org.blackbell.polls.meetings.source.dm.api;
 
 import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.InstitutionType;
 import org.blackbell.polls.meetings.model.Town;
 
 /**
@@ -9,15 +9,15 @@ import org.blackbell.polls.meetings.model.Town;
  * email: korcak@esten.sk
  */
 public class DMAPIUtils {
-    public static String getDMMeetingsRequestUrl(Town city, Institution institution, String season) {
-        if (Institution.KOMISIA.equals(institution)) {
+    public static String getDMMeetingsRequestUrl(Town city, InstitutionType institution, String season) {
+        if (InstitutionType.KOMISIA.equals(institution)) {
             return Constants.DM_COMMISION_MEETINGS_REQUEST_URL
                     .replaceAll("\\{city\\}", city.getRef())
                     .replaceAll("\\{season\\}", season);
         }
         return Constants.DM_MEETINGS_REQUEST_URL
                 .replaceAll("\\{city\\}", city.getRef())
-                .replaceAll("\\{institution\\}", institution.getDMValue())
+                .replaceAll("\\{institution\\}", institution.toDMValue())
                 .replaceAll("\\{season\\}", season);
     }
 

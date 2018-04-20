@@ -1,10 +1,12 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 /**
  * Created by Ján Korčák on 2.4.2017.
@@ -12,10 +14,7 @@ import javax.persistence.*;
  */
 @Entity
 //@JsonSerialize(using = PoliticianPartyNomineesSerializer.class)
-public class PartyNominee {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class PartyNominee extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
     @ManyToOne
@@ -24,21 +23,20 @@ public class PartyNominee {
 
     @JsonView(value = {Views.PartyNominees.class})
     @ManyToOne
-    @JoinColumn(name = "council_member_id")
-    private CouncilMember councilMember;
+    @JoinColumn(name = "politician_id")
+    private Politician politician;
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
 
-    public PartyNominee() {}
+    @JsonView(value = Views.CouncilMember.class)
+    @ManyToOne
+    @JoinColumn(name = "town_id")
+    private Town town;
 
-    public PartyNominee(Party party, CouncilMember member, Season season) {
-        this.party = party;
-        this.councilMember = member;
-        this.season = season;
-    }
+    public PartyNominee() {}
 
     public long getId() {
         return id;
@@ -56,20 +54,28 @@ public class PartyNominee {
         this.party = party;
     }
 
-    public CouncilMember getCouncilMember() {
-        return councilMember;
-    }
-
-    public void setCouncilMember(CouncilMember councilMember) {
-        this.councilMember = councilMember;
-    }
-
     public Season getSeason() {
         return season;
     }
 
     public void setSeason(Season season) {
         this.season = season;
+    }
+
+    public Politician getPolitician() {
+        return politician;
+    }
+
+    public void setPolitician(Politician politician) {
+        this.politician = politician;
+    }
+
+    public Town getTown() {
+        return town;
+    }
+
+    public void setTown(Town town) {
+        this.town = town;
     }
 
     @Override

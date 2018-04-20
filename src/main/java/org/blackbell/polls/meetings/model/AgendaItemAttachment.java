@@ -1,20 +1,20 @@
 package org.blackbell.polls.meetings.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 /**
  * Created by Ján Korčák on 4.3.2017.
  * email: korcak@esten.sk
  */
 @Entity
-public class AgendaItemAttachment {
-    @JsonIgnore
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class AgendaItemAttachment extends BaseEntity {
 
     @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     @Column(unique = true)
@@ -28,24 +28,6 @@ public class AgendaItemAttachment {
 
     @ManyToOne @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
-
-    public AgendaItemAttachment() {
-    }
-
-    public AgendaItemAttachment(String name, AgendaItem item, String ref, String source) {
-        this.ref = ref;
-        this.name = name;
-        this.source = source;
-        this.agendaItem = item;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getRef() {
         return ref;
@@ -86,12 +68,12 @@ public class AgendaItemAttachment {
 
         AgendaItemAttachment that = (AgendaItemAttachment) o;
 
-        return getId() == that.getId();
+        return id == that.id;
 
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        return (int) (id ^ (id >>> 32));
     }
 }

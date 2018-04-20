@@ -1,6 +1,6 @@
 package org.blackbell.polls.data.repositories;
 
-import org.blackbell.polls.meetings.model.Institution;
+import org.blackbell.polls.meetings.model.InstitutionType;
 import org.blackbell.polls.meetings.model.Poll;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,16 +21,16 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                     "join fetch p.agendaItem a " +
                     "join fetch a.meeting m " +
                     "join fetch m.season s " +
-                    "join fetch s.town t " +
+                    "join fetch m.town t " +
                     "left join fetch a.attachments at " +
-                "where s.town.ref = :town " +
+                "where t.ref = :town " +
                     "and s.ref = :season " +
-                    "and s.institution = :institution " +
+                    "and m.institution.type = :institution " +
                     "and (:dateFrom is null and :dateTo is null " +
                             "or m.date between :dateFrom and :dateTo)")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
-                                                @Param(value = "institution") Institution institution,
+                                                @Param(value = "institution") InstitutionType institution,
                                                 @Param(value = "dateFrom") Date dateFrom,
                                                 @Param(value = "dateTo") Date dateTo);
 
@@ -40,7 +40,8 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                         "join fetch m.season s " +
                         "join fetch p.votes v " +
                         "join fetch v.councilMember cm " +
-                        "left join fetch cm.partyNominees pn " +
+                        "left join fetch cm.politician pl " +
+                        "left join fetch pl.partyNominees pn " +
                         "left join fetch pn.party pt " +
                         "left join fetch cm.clubMembers cbm " +
                         "left join fetch cbm.club c " +

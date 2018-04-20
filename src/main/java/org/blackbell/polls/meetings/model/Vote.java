@@ -2,6 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.*;
 
@@ -18,10 +19,10 @@ import javax.persistence.*;
 //        "CASE WHEN voted == VOTED_FOR THEN 'Voted' " +
 //                " WHEN txt_value IS NOT NULL THEN 'TEXT' end"
 //)
-public class Vote {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+public class Vote extends BaseEntity {
+
+    @Column(unique = true)
+    private String ref;
 
     @JsonView(value = Views.Poll.class)
     @ManyToOne
@@ -37,14 +38,6 @@ public class Vote {
     @ManyToOne
     @JoinColumn(name = "poll_id")
     private Poll poll;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public CouncilMember getCouncilMember() {
         return councilMember;
@@ -71,15 +64,6 @@ public class Vote {
     }
 
     @Override
-    public String toString() {
-        return "Vote{" +
-                "id=" + id +
-                ", voted=" + voted +
-                ", councilMember=" + councilMember +
-                '}';
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Vote)) return false;
@@ -93,5 +77,14 @@ public class Vote {
     @Override
     public int hashCode() {
         return (int) (getId() ^ (getId() >>> 32));
+    }
+
+    @Override
+    public String toString() {
+        return "Vote{" +
+                "id=" + id +
+                ", voted=" + voted +
+                ", councilMember=" + councilMember +
+                '}';
     }
 }
