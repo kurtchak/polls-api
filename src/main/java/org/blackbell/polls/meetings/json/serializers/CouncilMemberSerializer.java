@@ -30,6 +30,7 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
             throws IOException, JsonProcessingException {
 
         jgen.writeStartObject();
+        jgen.writeStringField("ref", value.getPolitician().getRef());
         jgen.writeStringField("name", value.getPolitician().getName());
         jgen.writeStringField("title", value.getPolitician().getTitles());
         jgen.writeStringField("picture", value.getPolitician().getPicture());
