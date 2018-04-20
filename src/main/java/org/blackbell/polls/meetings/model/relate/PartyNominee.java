@@ -1,7 +1,11 @@
-package org.blackbell.polls.meetings.model;
+package org.blackbell.polls.meetings.model.relate;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.Party;
+import org.blackbell.polls.meetings.model.Politician;
+import org.blackbell.polls.meetings.model.Season;
+import org.blackbell.polls.meetings.model.Town;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
 
 import javax.persistence.Entity;

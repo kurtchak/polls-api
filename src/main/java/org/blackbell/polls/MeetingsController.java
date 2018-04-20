@@ -11,6 +11,8 @@ import org.blackbell.polls.data.repositories.*;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.enums.InstitutionType;
+import org.blackbell.polls.meetings.model.relate.PartyNominee;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

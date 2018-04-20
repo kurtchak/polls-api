@@ -3,6 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.enums.VoteChoice;
 
 import javax.persistence.*;
 

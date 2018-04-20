@@ -1,7 +1,7 @@
 package org.blackbell.polls.data.repositories;
 
 import org.blackbell.polls.meetings.model.Club;
-import org.blackbell.polls.meetings.model.ClubMember;
+import org.blackbell.polls.meetings.model.relate.ClubMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

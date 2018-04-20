@@ -1,7 +1,8 @@
 package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
+import org.blackbell.polls.meetings.model.enums.InstitutionType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,17 +14,10 @@ import javax.persistence.Enumerated;
  * email: korcak@esten.sk
  */
 @Entity
-public class Institution extends BaseEntity {
-
-    @JsonView(value = {})
-    @Column(unique = true)
-    private String ref;
+public class Institution extends NamedEntity {
 
     @Enumerated(EnumType.STRING)
     private InstitutionType type;
-
-    @JsonView(value = {})
-    private String name;
 
     @JsonView(value = {})
     private String description;
@@ -34,8 +28,8 @@ public class Institution extends BaseEntity {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
+    public String getName() {
+        return name;
     }
 
     public InstitutionType getType() {
@@ -44,14 +38,6 @@ public class Institution extends BaseEntity {
 
     public void setType(InstitutionType type) {
         this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getDescription() {

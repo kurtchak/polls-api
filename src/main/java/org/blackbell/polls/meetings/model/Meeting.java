@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.json.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -17,20 +17,13 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class Meeting extends BaseEntity {
-
-    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
-    @Column(unique = true)
-    private String ref;
-
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
-    private String name;
+public class Meeting extends NamedEntity {
 
     private String extId;
 
     @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
     @ManyToOne @JoinColumn(name = "season_id")
-    @JsonSerialize(using = SeasonAsPropertySerializer.class)
+    @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
@@ -54,28 +47,14 @@ public class Meeting extends BaseEntity {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private Set<MeetingAttachment> attachments;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
+    @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Season getSeason() {

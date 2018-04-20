@@ -1,6 +1,6 @@
 package org.blackbell.polls.meetings.source.dm.api;
 
-import org.blackbell.polls.meetings.model.InstitutionType;
+import org.blackbell.polls.meetings.model.enums.InstitutionType;
 import org.blackbell.polls.meetings.model.Town;
 import org.blackbell.polls.meetings.source.dm.api.response.*;
 import org.springframework.web.client.RestTemplate;

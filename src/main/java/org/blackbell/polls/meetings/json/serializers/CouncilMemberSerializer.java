@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import org.blackbell.polls.meetings.model.ClubMember;
 import org.blackbell.polls.meetings.model.CouncilMember;
-import org.blackbell.polls.meetings.model.PartyNominee;
+import org.blackbell.polls.meetings.model.relate.ClubMember;
+import org.blackbell.polls.meetings.model.relate.PartyNominee;
 
 import java.io.IOException;
 

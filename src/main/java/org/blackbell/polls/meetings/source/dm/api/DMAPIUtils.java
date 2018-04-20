@@ -1,7 +1,7 @@
 package org.blackbell.polls.meetings.source.dm.api;
 
 import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.meetings.model.InstitutionType;
+import org.blackbell.polls.meetings.model.enums.InstitutionType;
 import org.blackbell.polls.meetings.model.Town;
 
 /**

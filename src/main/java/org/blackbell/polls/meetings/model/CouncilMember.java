@@ -7,8 +7,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.CouncilMemberSerializer;
 import org.blackbell.polls.meetings.json.serializers.PoliticianClubSerializer;
-import org.blackbell.polls.meetings.json.serializers.properties.SeasonAsPropertySerializer;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.json.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.meetings.model.common.EntityWithReference;
+import org.blackbell.polls.meetings.model.enums.MemberType;
+import org.blackbell.polls.meetings.model.relate.ClubMember;
+import org.blackbell.polls.meetings.model.relate.PartyNominee;
 
 import javax.persistence.*;
 import java.util.Calendar;
@@ -21,11 +24,7 @@ import java.util.Set;
  */
 @Entity
 @JsonSerialize(using = CouncilMemberSerializer.class)
-public class CouncilMember extends BaseEntity {
-
-    @Column(unique = true)
-    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
-    private String ref;
+public class CouncilMember extends EntityWithReference {
 
     @JsonIgnore
     private String extId;
@@ -59,7 +58,7 @@ public class CouncilMember extends BaseEntity {
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id", insertable = false, updatable = false)
-    @JsonSerialize(using = SeasonAsPropertySerializer.class)
+    @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
 
     @JsonView(value = Views.CouncilMember.class)
@@ -91,12 +90,9 @@ public class CouncilMember extends BaseEntity {
 //    @OneToMany(mappedBy = "councilMember")
 //    private List<Vote> votes;
 
+    @JsonView(value = {Views.CouncilMembers.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
     public String getRef() {
         return ref;
-    }
-
-    public void setRef(String ref) {
-        this.ref = ref;
     }
 
     public String getExtId() {

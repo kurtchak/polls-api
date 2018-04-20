@@ -2,7 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,13 +14,8 @@ import javax.persistence.ManyToOne;
  * email: korcak@esten.sk
  */
 @Entity
-public class MeetingAttachment extends BaseEntity {
+public class MeetingAttachment extends NamedEntity {
 
-    @JsonView(value = Views.Meeting.class)
-    @Column(unique = true)
-    private String ref;
-    @JsonView(value = Views.Meeting.class)
-    private String name;
     @JsonView(value = {Views.Meeting.class, Views.Poll.class})
     private String source;
 
@@ -28,28 +23,14 @@ public class MeetingAttachment extends BaseEntity {
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
+    @JsonView(value = Views.Meeting.class)
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = Views.Meeting.class)
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getSource() {

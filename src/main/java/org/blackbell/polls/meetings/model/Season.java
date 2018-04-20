@@ -2,7 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 
 import javax.persistence.Entity;
 
@@ -11,36 +11,16 @@ import javax.persistence.Entity;
  * email: korcak@esten.sk
  */
 @Entity
-public class Season extends BaseEntity {
+public class Season extends NamedEntity {
 
     @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class, Views.Towns.class, Views.Club.class})
-    private String ref;
-
-    @JsonView(value = {Views.Seasons.class, Views.Towns.class, Views.Club.class})
-    private String name;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = {Views.Seasons.class, Views.Towns.class, Views.Club.class})
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override

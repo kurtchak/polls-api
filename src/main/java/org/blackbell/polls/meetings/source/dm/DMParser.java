@@ -2,6 +2,7 @@ package org.blackbell.polls.meetings.source.dm;
 
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.meetings.model.embeddable.VotesCount;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMPollDetailResponse;

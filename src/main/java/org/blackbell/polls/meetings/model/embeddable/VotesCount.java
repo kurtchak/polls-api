@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.model;
+package org.blackbell.polls.meetings.model.embeddable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;

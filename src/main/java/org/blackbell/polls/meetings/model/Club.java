@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.json.serializers.ClubPartiesSerializer;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
+import org.blackbell.polls.meetings.model.relate.ClubMember;
+import org.blackbell.polls.meetings.model.relate.ClubParty;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -15,13 +17,7 @@ import java.util.Set;
  * Created by kurtcha on 11.3.2018.
  */
 @Entity
-public class Club extends BaseEntity {
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
-    private String ref;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
-    private String name;
+public class Club extends NamedEntity {
 
     @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
@@ -45,28 +41,22 @@ public class Club extends BaseEntity {
     @JoinColumn(name = "season_id")
     private Season season;
 
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
+    public String getRef() {
+        return ref;
+    }
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.Clubs.class, Views.Club.class, Views.ClubMembers.class})
+    public String getName() {
+        return name;
+    }
+
     public Set<ClubMember> getClubMembers() {
         return clubMembers;
     }
 
     public void setClubMembers(Set<ClubMember> clubMembers) {
         this.clubMembers = clubMembers;
-    }
-
-    public String getRef() {
-        return ref;
-    }
-
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Set<ClubParty> getClubParties() {

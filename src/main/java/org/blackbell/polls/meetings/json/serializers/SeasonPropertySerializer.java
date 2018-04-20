@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.json.serializers.properties;
+package org.blackbell.polls.meetings.json.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,12 +12,12 @@ import java.io.IOException;
  * Created by Ján Korčák on 14.4.2017.
  * email: korcak@esten.sk
  */
-public class SeasonAsPropertySerializer extends StdSerializer<Season> {
-    public SeasonAsPropertySerializer() {
+public class SeasonPropertySerializer extends StdSerializer<Season> {
+    public SeasonPropertySerializer() {
         this(null);
     }
 
-    public SeasonAsPropertySerializer(Class<Season> t) {
+    public SeasonPropertySerializer(Class<Season> t) {
         super(t);
     }
 

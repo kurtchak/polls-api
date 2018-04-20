@@ -1,8 +1,12 @@
-package org.blackbell.polls.meetings.model;
+package org.blackbell.polls.meetings.model.relate;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
+import org.blackbell.polls.meetings.model.Club;
+import org.blackbell.polls.meetings.model.CouncilMember;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.EntityWithReference;
+import org.blackbell.polls.meetings.model.enums.ClubFunction;
 
 import javax.persistence.*;
 

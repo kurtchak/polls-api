@@ -1,4 +1,4 @@
-package org.blackbell.polls.meetings.model;
+package org.blackbell.polls.meetings.model.enums;
 
 /**
  * Created by Ján Korčák on 18.3.2017.

@@ -3,7 +3,7 @@ package org.blackbell.polls.meetings.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 import org.blackbell.polls.meetings.source.Source;
 
 import javax.persistence.*;
@@ -14,14 +14,7 @@ import java.util.Date;
  * email: korcak@esten.sk
  */
 @Entity
-public class Town extends BaseEntity {
-
-    @JsonView(value = {Views.Towns.class, Views.Club.class})
-    @Column(unique = true)
-    private String ref;
-
-    @JsonView(value = {Views.Towns.class, Views.Club.class})
-    private String name;
+public class Town extends NamedEntity {
 
     @Enumerated(EnumType.STRING)
     private Source source;
@@ -31,36 +24,14 @@ public class Town extends BaseEntity {
     @Temporal(TemporalType.DATE)
     private Date lastSyncDate;
 
-    public Town() {}
-
-    public Town(String ref, String name, Source source) {
-        this.ref = ref;
-        this.name = name;
-        this.source = source;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
+    @JsonView(value = {Views.Towns.class, Views.Club.class})
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = {Views.Towns.class, Views.Club.class})
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Source getSource() {

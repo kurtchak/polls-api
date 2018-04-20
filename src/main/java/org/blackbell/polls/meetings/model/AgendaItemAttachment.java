@@ -2,7 +2,7 @@ package org.blackbell.polls.meetings.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,14 +14,7 @@ import javax.persistence.ManyToOne;
  * email: korcak@esten.sk
  */
 @Entity
-public class AgendaItemAttachment extends BaseEntity {
-
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
-    @Column(unique = true)
-    private String ref;
-
-    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
-    private String name;
+public class AgendaItemAttachment extends NamedEntity {
 
     @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     private String source;
@@ -29,20 +22,14 @@ public class AgendaItemAttachment extends BaseEntity {
     @ManyToOne @JoinColumn(name = "agenda_item_id")
     private AgendaItem agendaItem;
 
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = {Views.Poll.class, Views.AgendaItem.class, Views.Meeting.class})
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getSource() {

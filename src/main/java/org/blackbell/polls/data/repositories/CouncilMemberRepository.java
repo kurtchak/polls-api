@@ -1,7 +1,7 @@
 package org.blackbell.polls.data.repositories;
 
 import org.blackbell.polls.meetings.model.CouncilMember;
-import org.blackbell.polls.meetings.model.InstitutionType;
+import org.blackbell.polls.meetings.model.enums.InstitutionType;
 import org.blackbell.polls.meetings.model.Season;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

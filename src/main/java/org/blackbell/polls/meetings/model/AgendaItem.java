@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.meetings.json.Views;
 import org.blackbell.polls.meetings.model.common.BaseEntity;
+import org.blackbell.polls.meetings.model.common.NamedEntity;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -15,14 +16,7 @@ import java.util.Set;
  * email: korcak@esten.sk
  */
 @Entity
-public class AgendaItem extends BaseEntity {
-
-    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
-    @Column(unique = true)
-    private String ref;
-
-    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
-    private String name;
+public class AgendaItem extends NamedEntity {
 
     @JsonProperty(value = "idBodProgramu")
     private String extId;
@@ -41,20 +35,14 @@ public class AgendaItem extends BaseEntity {
     @OneToMany(mappedBy = "agendaItem", cascade = CascadeType.ALL)
     private Set<AgendaItemAttachment> attachments;
 
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
     public String getRef() {
         return ref;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
-    }
-
+    @JsonView(value = {Views.Meeting.class, Views.Polls.class, Views.Poll.class, Views.Votes.class, Views.Agenda.class, Views.AgendaItem.class})
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getExtId() {
