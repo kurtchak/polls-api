@@ -182,20 +182,4 @@ public class Meeting extends BaseEntity {
                 ", agendaItems count = '" + (getAgendaItems() != null ? getAgendaItems().size() : 0) + '\'' +
                 '}';
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Meeting)) return false;
-
-        Meeting meeting = (Meeting) o;
-
-        return getId() == meeting.getId();
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
-    }
 }

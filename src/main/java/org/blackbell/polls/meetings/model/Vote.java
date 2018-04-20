@@ -21,9 +21,6 @@ import javax.persistence.*;
 //)
 public class Vote extends BaseEntity {
 
-    @Column(unique = true)
-    private String ref;
-
     @JsonView(value = Views.Poll.class)
     @ManyToOne
     @JoinColumn(name = "council_member_id")
