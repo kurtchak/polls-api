@@ -1,6 +1,6 @@
 package org.blackbell.polls.meetings.source.crawler;
 
-import org.blackbell.polls.meetings.model.Club;
+import org.blackbell.polls.model.Club;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

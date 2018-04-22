@@ -1,8 +1,8 @@
 package org.blackbell.polls.meetings.source.dm;
 
-import org.blackbell.polls.meetings.model.*;
 import org.blackbell.polls.meetings.source.DataImport;
 import org.blackbell.polls.meetings.source.dm.api.DMServiceClient;
+import org.blackbell.polls.model.*;
 
 import java.util.List;
 import java.util.Map;

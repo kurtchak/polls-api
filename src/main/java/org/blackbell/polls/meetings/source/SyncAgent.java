@@ -1,11 +1,11 @@
 package org.blackbell.polls.meetings.source;
 
-import org.blackbell.polls.data.repositories.*;
-import org.blackbell.polls.meetings.model.CouncilMember;
-import org.blackbell.polls.meetings.model.Party;
-import org.blackbell.polls.meetings.model.Season;
-import org.blackbell.polls.meetings.model.Town;
 import org.blackbell.polls.meetings.source.dm.DMImport;
+import org.blackbell.polls.model.CouncilMember;
+import org.blackbell.polls.model.Party;
+import org.blackbell.polls.model.Season;
+import org.blackbell.polls.model.Town;
+import org.blackbell.polls.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

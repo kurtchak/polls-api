@@ -2,6 +2,7 @@ package org.blackbell.polls.common;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.regex.Pattern;
 
 /**
  * Created by Ján Korčák on 1.3.2017.
@@ -27,6 +28,8 @@ public class Constants {
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
 
     public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
+    public static final String TITLE_RE = "(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr";
+    public static final Pattern TITLE_PATTERN = Pattern.compile(Constants.TITLE_RE);
 
     static {
         DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_PATTERN);

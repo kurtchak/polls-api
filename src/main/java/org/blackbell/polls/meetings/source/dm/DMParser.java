@@ -1,13 +1,13 @@
 package org.blackbell.polls.meetings.source.dm;
 
 import org.blackbell.polls.common.PollsUtils;
-import org.blackbell.polls.meetings.model.*;
-import org.blackbell.polls.meetings.model.embeddable.VotesCount;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMMeetingsResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMPollDetailResponse;
 import org.blackbell.polls.meetings.source.dm.api.response.DMSeasonsResponse;
 import org.blackbell.polls.meetings.source.dm.dto.*;
+import org.blackbell.polls.model.*;
+import org.blackbell.polls.model.embeddable.VotesCount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
