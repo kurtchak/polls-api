@@ -1,6 +1,6 @@
 package org.blackbell.polls.meetings.source;
 
-import org.blackbell.polls.meetings.model.*;
+import org.blackbell.polls.model.*;
 
 import java.util.List;
 import java.util.Map;

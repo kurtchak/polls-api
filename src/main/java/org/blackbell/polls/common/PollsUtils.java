@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
  * email: korcak@esten.sk
  */
 public class PollsUtils {
+
     private static String cutDateStringToTFormat(String dateString) {
         return dateString.substring(0,19);
     }
@@ -27,14 +28,11 @@ public class PollsUtils {
 
     public static String getSimpleName(String name) {
         String result = name;
-        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
-        Matcher m = titleRE.matcher(name);
+        Matcher m = Constants.TITLE_PATTERN.matcher(name);
         while (m.find()) {
             result = result.replace(m.group(), "");
         }
-        return result.replaceAll(",", "")
-                .replaceAll("  ", " ")
-                .trim();
+        return result.replaceAll(",", "").replaceAll("  ", " ").trim();
     }
 
     public static String startWithFirstname(String fullname) {
@@ -44,8 +42,7 @@ public class PollsUtils {
 
     public static String getTitles(String name) {
         String result = "";
-        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
-        Matcher m = titleRE.matcher(name);
+        Matcher m = Constants.TITLE_PATTERN.matcher(name);
         while (m.find()) {
             String title = !m.group().endsWith(".") ? m.group() + "." : m.group();
             result += title + ", ";
