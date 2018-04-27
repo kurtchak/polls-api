@@ -6,26 +6,16 @@ package org.blackbell.polls.controllers;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.model.Club;
-import org.blackbell.polls.model.Meeting;
-import org.blackbell.polls.model.common.BaseEntity;
-import org.blackbell.polls.model.enums.InstitutionType;
-import org.blackbell.polls.repositories.AgendaRepository;
-import org.blackbell.polls.repositories.ClubRepository;
-import org.blackbell.polls.repositories.MeetingRepository;
+import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.model.common.BaseEntity;
+import org.blackbell.polls.domain.repositories.AgendaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 
 @RestController
 public class AgendaController {

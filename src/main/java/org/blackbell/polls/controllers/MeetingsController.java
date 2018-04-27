@@ -7,10 +7,10 @@ package org.blackbell.polls.controllers;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.model.Meeting;
-import org.blackbell.polls.model.enums.InstitutionType;
-import org.blackbell.polls.repositories.MeetingRepository;
+import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.model.Meeting;
+import org.blackbell.polls.domain.model.enums.InstitutionType;
+import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;

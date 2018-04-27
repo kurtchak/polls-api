@@ -6,9 +6,9 @@ package org.blackbell.polls.controllers;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.model.Vote;
-import org.blackbell.polls.repositories.VoteRepository;
+import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.model.Vote;
+import org.blackbell.polls.domain.repositories.VoteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
