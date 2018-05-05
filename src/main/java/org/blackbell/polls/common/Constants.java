@@ -22,7 +22,7 @@ public class Constants {
     public static final String DM_ORGANIZATIONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/organizacie/{dm_city_id}";
     public static final String DM_CITY_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetOrganizaciaInfoFromHash/{dm_city_id}";
     public static final String DM_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}?VolebneObdobie={season}";
-    public static final String DM_COMMISION_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZKomisie/mesto-{city}";
+    public static final String DM_COMMISION_MEETINGS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZKomisie/mesto-{city}?VolebneObdobie={season}";
     public static final String DM_MEETING_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZZaKoDet/{dm_meeting_id}";
     public static final String DM_POLL_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZHlas/{dm_agenda_item_id}/{dm_poll_route}";
     public static final String DM_SEASONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}";
@@ -36,5 +36,13 @@ public class Constants {
         FULLDATE_FORMAT = new SimpleDateFormat(FULLDATE_FORMAT_PATTERN);
         FULLDATE_WITH_T_FORMAT = new SimpleDateFormat(FULLDATE_WITH_T_FORMAT_PATTERN);
     }
+
+    public static final String ZASTUPITELSTVO = "zastupitelstvo";
+    public static final String RADA = "rada";
+    public static final String KOMISIA = "komisia";
+
+    public static final String DM_ZASTUPITELSTVO = "mz";
+    public static final String DM_RADA = "mr";
+    public static final String DM_KOMISIA = "k";
 
 }

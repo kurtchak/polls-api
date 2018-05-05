@@ -1,11 +1,21 @@
 package org.blackbell.polls.source.crawler;
 
+import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.Club;
+import org.blackbell.polls.domain.model.CouncilMember;
+import org.blackbell.polls.domain.model.Party;
+import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.relate.ClubParty;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -31,11 +41,11 @@ public class PresovCouncilMemberCrawler {
 
     private Map<String, Club> clubsMap = new HashMap<>();
 
-//    public List<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
+//    public Set<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
 //        if (partiesMap == null) {
 //            partiesMap = new HashMap<>();
 //        }
-//        List<CouncilMember> members = new ArrayList<>();
+//        Set<CouncilMember> members = new HashSet<>();
 //        try {
 //            Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
 //            Elements linksOnPage = document.select("a[href^=javascript:osoba_podrobnosti]");
@@ -205,7 +215,7 @@ public class PresovCouncilMemberCrawler {
 //        return clubParty;
 //    }
 
-    //    public static void main(String[] args) {
+//    public static void main(String[] args) {
 //    	new PresovCouncilMemberCrawler().getCouncilMembers();
 //    }
 }

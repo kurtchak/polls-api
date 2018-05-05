@@ -17,15 +17,15 @@ public class BaseEntity {
     @JsonIgnore
     @Id
     @GenericGenerator(
-            name = "wikiSequenceGenerator",
+            name = "hibernateSequenceGenerator",
             strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
             parameters = {
-                    @Parameter(name = "sequence_name", value = "WIKI_SEQUENCE"),
+                    @Parameter(name = "sequence_name", value = "hibernate_sequence"),
                     @Parameter(name = "initial_value", value = "1000"),
                     @Parameter(name = "increment_size", value = "1")
             }
     )
-    @GeneratedValue(generator = "wikiSequenceGenerator")
+    @GeneratedValue(generator = "hibernateSequenceGenerator")
     protected long id;
 
     public long getId() {

@@ -1,17 +1,15 @@
 package org.blackbell.polls.domain.model.enums;
 
+import org.blackbell.polls.common.Constants;
+
 /**
  * Created by Ján Korčák on 2.4.2017.
  * email: korcak@esten.sk
  */
 public enum InstitutionType {
-    ZASTUPITELSTVO("mz"),
-    RADA("rada"),
-    KOMISIA("komisia");
-
-    public static final String DM_MZ = "mz";
-    public static final String DM_MR = "mr";
-    public static final String DM_K = "k";
+    ZASTUPITELSTVO(Constants.ZASTUPITELSTVO),
+    RADA(Constants.RADA),
+    KOMISIA(Constants.KOMISIA);
 
     private String ref;
 
@@ -21,27 +19,27 @@ public enum InstitutionType {
 
     public static InstitutionType valueOfDM(String institution) {
         switch(institution) {
-            case DM_MZ: return ZASTUPITELSTVO;
-            case DM_MR: return RADA;
-            case DM_K: return KOMISIA;
+            case Constants.DM_ZASTUPITELSTVO: return ZASTUPITELSTVO;
+            case Constants.DM_RADA: return RADA;
+            case Constants.DM_KOMISIA: return KOMISIA;
             default:return ZASTUPITELSTVO;
         }
     }
 
     public String toDMValue() {
         switch(this) {
-            case ZASTUPITELSTVO: return DM_MZ;
-            case RADA: return DM_MR;
-            case KOMISIA: return DM_K;
-            default:return DM_MZ;
+            case ZASTUPITELSTVO: return Constants.DM_ZASTUPITELSTVO;
+            case RADA: return Constants.DM_RADA;
+            case KOMISIA: return Constants.DM_KOMISIA;
+            default:return Constants.DM_ZASTUPITELSTVO;
         }
     }
 
     public static InstitutionType fromRef(String ref) {
         switch (ref) {
-            case "mz": return ZASTUPITELSTVO;
-            case "rada": return RADA;
-            case "komisia": return KOMISIA;
+            case Constants.ZASTUPITELSTVO: return ZASTUPITELSTVO;
+            case Constants.RADA: return RADA;
+            case Constants.KOMISIA: return KOMISIA;
             default:return ZASTUPITELSTVO;
         }
     }

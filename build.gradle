@@ -1,8 +1,9 @@
 ext {
     junitVersion = '4.12'
-    springVersion = '5.0.5.RELEASE'
-    restAssuredVersion = '3.0.7'
-    jacksonVersion = '2.9.5'
+    springBootVersion = '1.5.2.RELEASE'
+    springVersion = '4.3.7.RELEASE'
+    restAssuredVersion = '3.0.3'
+    jacksonVersion = '2.8.7'
     postgresqlVersion = '9.4.1212'
     jsoupVersion = '1.10.3'
     mchangeVersion = '0.9.5.2'
@@ -33,10 +34,10 @@ repositories {
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.boot:spring-boot-starter-data-jpa")
-    compile("org.springframework.boot:spring-boot-starter")
-    compile("org.springframework:spring-web")
+    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter:${springBootVersion}")
+    compile("org.springframework:spring-web:${springVersion}")
     compile("org.postgresql:postgresql:${postgresqlVersion}")
     compile("com.mchange:c3p0:${mchangeVersion}")
     compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
@@ -44,6 +45,6 @@ dependencies {
     compile("io.rest-assured:json-schema-validator:${restAssuredVersion}")
     compile("org.jsoup:jsoup:${jsoupVersion}")
     testCompile("junit:junit:${junitVersion}")
-    testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
 }
 
