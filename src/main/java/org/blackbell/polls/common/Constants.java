@@ -1,5 +1,8 @@
 package org.blackbell.polls.common;
 
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
@@ -30,6 +33,8 @@ public class Constants {
     public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
     public static final String TITLE_RE = "(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr";
     public static final Pattern TITLE_PATTERN = Pattern.compile(Constants.TITLE_RE);
+
+    public static final Marker MarkerSync = MarkerFactory.getMarker("SYNC");
 
     static {
         DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_PATTERN);

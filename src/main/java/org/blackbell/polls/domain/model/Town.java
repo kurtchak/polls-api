@@ -57,7 +57,7 @@ public class Town extends NamedEntity {
 
         Town town = (Town) o;
 
-        return getId() == town.getId();
+        return getRef() == town.getRef();
 
     }
 

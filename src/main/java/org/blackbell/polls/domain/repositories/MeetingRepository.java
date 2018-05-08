@@ -23,11 +23,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
                             "join fetch m.institution i " +
                         "where m.town.ref = :town " +
                             "and m.season.ref = :season " +
-                            "and m.institution.type = :institution " +
+                            "and m.institution.type = :institutionType " +
                             "and (:dateFrom is null and :dateTo is null " +
-                                "or m.date between :dateFrom and :dateTo)")
+                                "or m.date between :dateFrom and :dateTo) " +
+                        "order by m.date")
     List<Meeting> getByTownAndInstitutionAndSeason(@Param(value = "town") String town,
-                                                   @Param(value = "institution") InstitutionType institution,
+                                                   @Param(value = "institutionType") InstitutionType institutionType,
                                                    @Param(value = "season") String season,
                                                    @Param(value = "dateFrom") Date dateFrom,
                                                    @Param(value = "dateTo") Date dateTo);
@@ -39,17 +40,21 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
                     "left join fetch m.agendaItems a " +
                     "left join fetch a.attachments aa " +
                     "left join fetch m.attachments at " +
-                "where m.ref = :ref")
+                "where m.ref = :ref " +
+                "order by m.date")
     Meeting getByRef(@Param(value = "ref") String ref);
 
     @Query(value = "select max(m.date) from Meeting m " +
                         "where m.town = :town " +
                             "and m.season.ref = :season " +
-                            "and m.institution.type = :institution")
+                            "and m.institution.type = :institutionType")
     Date getLatestMeetingDate(@Param(value = "town") Town town,
-                              @Param(value = "institution") InstitutionType institution,
+                              @Param(value = "institutionType") InstitutionType institutionType,
                               @Param(value = "season") String season);
 
-    @Query(value = "select distinct m.season from Meeting m where m.town = :town")
+    @Query(value =
+            "select distinct m.season from Meeting m " +
+                "where m.town = :town " +
+                "order by m.date")
     Date getSeasonsWithMeetingsForTown(@Param(value = "town") Town town);
 }

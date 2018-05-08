@@ -27,7 +27,8 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                     "and s.ref = :season " +
                     "and m.institution.type = :institution " +
                     "and (:dateFrom is null and :dateTo is null " +
-                            "or m.date between :dateFrom and :dateTo)")
+                            "or m.date between :dateFrom and :dateTo) " +
+                "order by m.date")
     List<Poll> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                 @Param(value = "season") String season,
                                                 @Param(value = "institution") InstitutionType institution,

@@ -1,5 +1,9 @@
 package org.blackbell.polls.common;
 
+import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.Town;
+import org.blackbell.polls.domain.model.enums.InstitutionType;
+
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
@@ -31,7 +35,7 @@ public class PollsUtils {
         while (m.find()) {
             result = result.replace(m.group(), "");
         }
-        return result.replaceAll(",", "").replaceAll("  ", " ").trim();
+        return result.replaceAll(",", "").replaceAll("\\s+", " ").trim();
     }
 
     public static String startWithFirstname(String fullname) {
@@ -63,5 +67,9 @@ public class PollsUtils {
 
     public static String cleanAndTrim(String item) {
         return item.replaceAll("\\s*-\\s*", "-").replaceAll("\\s*–\\s*", "-");
+    }
+
+    public static String generateMemberKey(Town town, Season season, InstitutionType type) {
+        return town.getRef() + ":" + season.getRef() + ":" + type.name();
     }
 }

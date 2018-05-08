@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.api.serializers.InstitutionPropertySerializer;
 import org.blackbell.polls.domain.api.serializers.SeasonPropertySerializer;
+import org.blackbell.polls.domain.api.serializers.TownPropertySerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
 import javax.persistence.*;
@@ -27,11 +29,13 @@ public class Meeting extends NamedEntity {
     private Season season;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
-    @ManyToOne @JoinColumn(name = "town_id", insertable = false, updatable = false)
+    @ManyToOne @JoinColumn(name = "town_id")
+    @JsonSerialize(using = TownPropertySerializer.class)
     private Town town;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    @ManyToOne @JoinColumn(name = "institution_id")
+    @JsonSerialize(using = InstitutionPropertySerializer.class)
     private Institution institution;
 
     @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
@@ -136,13 +140,20 @@ public class Meeting extends NamedEntity {
 
         Meeting meeting = (Meeting) o;
 
-        return getId() == meeting.getId();
+        if (!getSeason().equals(meeting.getSeason())) return false;
+        if (!getTown().equals(meeting.getTown())) return false;
+        if (!getInstitution().equals(meeting.getInstitution())) return false;
+        return getDate().equals(meeting.getDate());
 
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        int result = getSeason().hashCode();
+        result = 31 * result + getTown().hashCode();
+        result = 31 * result + getInstitution().hashCode();
+        result = 31 * result + getDate().hashCode();
+        return result;
     }
 
     @Override

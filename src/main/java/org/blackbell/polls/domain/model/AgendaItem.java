@@ -81,31 +81,34 @@ public class AgendaItem extends NamedEntity {
         if (polls == null) {
             polls = new HashSet<>();
         }
-        polls.add(poll);
         poll.setAgendaItem(this);
+        polls.add(poll);
     }
 
     public void addAgendaItemAttachment(AgendaItemAttachment attachment) {
         if (attachments == null) {
             attachments = new HashSet<>();
         }
-        attachments.add(attachment);
         attachment.setAgendaItem(this);
+        attachments.add(attachment);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BaseEntity)) return false;
+        if (!(o instanceof AgendaItem)) return false;
 
         AgendaItem that = (AgendaItem) o;
 
-        return getId() == that.getId();
+        if (!getName().equals(that.getName())) return false;
+        return getMeeting().equals(that.getMeeting());
 
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        int result = getName().hashCode();
+        result = 31 * result + getMeeting().hashCode();
+        return result;
     }
 }

@@ -132,13 +132,16 @@ public class Poll extends NamedEntity {
 
         Poll poll = (Poll) o;
 
-        return getId() == poll.getId();
+        if (!getName().equals(poll.getName())) return false;
+        return getAgendaItem().equals(poll.getAgendaItem());
 
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        int result = getName().hashCode();
+        result = 31 * result + getAgendaItem().hashCode();
+        return result;
     }
 
     @Override

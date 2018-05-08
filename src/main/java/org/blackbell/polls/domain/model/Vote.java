@@ -29,7 +29,7 @@ public class Vote extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMember.class, Views.Votes.class})
     @Enumerated(EnumType.STRING)
-    @Column(name = "voted", insertable = false, updatable = false)
+    @Column(name = "voted")
     private VoteChoice voted;
 
     @JsonView(value = {Views.CouncilMember.class, Views.Votes.class})
@@ -68,7 +68,9 @@ public class Vote extends BaseEntity {
 
         Vote vote = (Vote) o;
 
-        return getId() == vote.getId();
+        if (!getCouncilMember().equals(vote.getCouncilMember())) return false;
+        if (getVoted() != vote.getVoted()) return false;
+        return getPoll().equals(vote.getPoll());
 
     }
 

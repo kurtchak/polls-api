@@ -19,6 +19,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
             "join fetch p.agendaItem a " +
             "join fetch a.meeting m " +
             "join fetch v.councilMember cm " +
-            "where cm.ref = :memberRef")
+            "where cm.ref = :memberRef " +
+            "order by m.date")
     List<Vote> findByCouncilMemberRef(@Param(value = "memberRef") String memberRef);
 }

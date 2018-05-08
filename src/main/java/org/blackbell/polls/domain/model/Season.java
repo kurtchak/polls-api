@@ -30,13 +30,13 @@ public class Season extends NamedEntity {
 
         Season season = (Season) o;
 
-        return id == season.id;
+        return ref == season.ref;
 
     }
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        return ref.hashCode();
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.blackbell.polls.source.dm;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
+import org.blackbell.polls.domain.model.enums.VoteChoice;
 import org.blackbell.polls.source.dm.api.response.DMMeetingResponse;
 import org.blackbell.polls.source.dm.api.response.DMMeetingsResponse;
 import org.blackbell.polls.source.dm.api.response.DMPollDetailResponse;
@@ -12,9 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Ján Korčák on 1.4.2017.
@@ -24,13 +23,10 @@ public class DMParser {
 
     private static final Logger log = LoggerFactory.getLogger(DMParser.class);
 
-    private static Season parseSeason(Town town, Institution institution, SeasonDTO seasonDTO) {
+    private static Season parseSeason(SeasonDTO seasonDTO) {
         Season season = new Season();
-//        season.setTown(town);
         season.setName(seasonDTO.getName());
         season.setRef(seasonDTO.getName());
-        //season.setRef(town.getName() + "_" + institution + "_" + seasonDTO.getName());
-//        season.setInstitution(institution);
         return season;
     }
 
@@ -59,6 +55,7 @@ public class DMParser {
             AgendaItem item = new AgendaItem();
             item.setName(agendaItemDTO.getName());
             item.setRef(PollsUtils.generateUniqueKeyReference());
+            meeting.addAgendaItem(item);
             if (agendaItemDTO != null && agendaItemDTO.getChildren() != null
                     && !agendaItemDTO.getChildren().isEmpty()) {
                 PollsDTO pollsDTO = PollsDTO.class.equals(agendaItemDTO.getChildren().get(0).getClass())
@@ -71,7 +68,6 @@ public class DMParser {
                         : (ProspectsDTO) agendaItemDTO.getChildren().get(1);
                 loadAgendaItemAttachments(item, prospectsDTO);
             }
-            meeting.addAgendaItem(item);
         }
     }
 
@@ -83,6 +79,7 @@ public class DMParser {
             log.info(">> pollsDTO: " + pollsDTO.toString());
             item.setExtId(pollsDTO.getPollDTOs().get(0).getAgendaItemId());
             for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
+                log.info("-- pollDTO: " + pollDTO.toString());
                 Poll poll = new Poll();
                 poll.setRef(PollsUtils.generateUniqueKeyReference());
                 poll.setName(pollDTO.getName());
@@ -130,25 +127,30 @@ public class DMParser {
 
     public static Poll parsePollDetail(Poll poll, Map<String, CouncilMember> membersMap, DMPollDetailResponse pollDetailResponse) {
         if (pollDetailResponse.getChildren() != null) {
+            Set<Vote> votes = new HashSet<>();
             for (VoterDTO voterDTO : pollDetailResponse.getChildren()) {
                 String name = PollsUtils.startWithFirstname(PollsUtils.getSimpleName(voterDTO.getName()));
 //                log.info("Voter: " + voterDTO.getName() + "\t => \t" + "Simple name: " + name);
-                CouncilMember member = membersMap.get(name);
-                //TODO: prerobit
-//                Votes votes = new Votes();
-//                if (voterDTO.isVotedFor()) {
-//                    votes.addVoteFor(member);
-//                } else if (voterDTO.isVotedAgainst()) {
-//                    votes.addVoteAgainst(member);
-//                } else if (voterDTO.isNotVoted()) {
-//                    votes.addNoVote(member);
-//                } else if (voterDTO.isAbstain()) {
-//                    votes.addAbstain(member);
-//                } else if (voterDTO.isAbsent()) {
-//                    votes.addAbsent(member);
-//                }
-//                poll.setVotesMap(votes);
+                Vote vote = new Vote();
+                vote.setCouncilMember(membersMap.get(name));
+                vote.setPoll(poll);
+                if (voterDTO.isVotedFor()) {
+                    vote.setVoted(VoteChoice.VOTED_FOR);
+                } else if (voterDTO.isVotedAgainst()) {
+                    vote.setVoted(VoteChoice.VOTED_AGAINST);
+                } else if (voterDTO.isNotVoted()) {
+                    vote.setVoted(VoteChoice.NOT_VOTED);
+                } else if (voterDTO.isAbstain()) {
+                    vote.setVoted(VoteChoice.ABSTAIN);
+                } else if (voterDTO.isAbsent()) {
+                    vote.setVoted(VoteChoice.ABSENT);
+                } else {
+                    log.error("Unknown VoteChoice for " + voterDTO);
+                }
+//                log.info("Vote: " + vote);
+                votes.add(vote);
             }
+            poll.setVotes(votes);
         }
         return poll;
     }
@@ -157,16 +159,14 @@ public class DMParser {
         List<Season> seasons = new ArrayList<>();
         if (seasonsResponse.getSeasonDTOs() != null) {
             for (SeasonDTO seasonDTO : seasonsResponse.getSeasonDTOs()) {
-//                log.info("seasonDTO: " + seasonDTO);
-//TODO:odkomentovat                for (InstitutionType institution : InstitutionType.values()) {
-//                    seasons.add(parseSeason(town, InstitutionType.ZASTUPITELSTVO, seasonDTO));
-//                }
+                log.info("seasonDTO: " + seasonDTO);
+                seasons.add(parseSeason(seasonDTO));
             }
         }
         return seasons;
     }
 
-    public static List<Meeting> parseMeetingsResponse(Season season, DMMeetingsResponse meetingsResponse) throws ParseException {
+    public static List<Meeting> parseMeetingsResponse(Town town, Season season, Institution institution, DMMeetingsResponse meetingsResponse) throws ParseException {
         List<Meeting> meetings = new ArrayList<>();
         for (SeasonMeetingDTO seasonMeetingDTO : meetingsResponse.getSeasonMeetingsDTOs().get(0).getSeasonMeetingDTOs()) {
             Meeting meeting = new Meeting();
@@ -174,7 +174,9 @@ public class DMParser {
             meeting.setExtId(seasonMeetingDTO.getId());
             meeting.setDate(PollsUtils.parseDMDate(seasonMeetingDTO.getDate()));
             meeting.setRef(PollsUtils.generateUniqueKeyReference()); // TODO:
+            meeting.setTown(town);
             meeting.setSeason(season);
+            meeting.setInstitution(institution);
             meetings.add(meeting);
         }
         return meetings;

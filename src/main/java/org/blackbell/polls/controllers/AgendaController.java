@@ -7,7 +7,7 @@ package org.blackbell.polls.controllers;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
-import org.blackbell.polls.domain.model.common.BaseEntity;
+import org.blackbell.polls.domain.model.AgendaItem;
 import org.blackbell.polls.domain.repositories.AgendaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,14 +30,14 @@ public class AgendaController {
     @JsonView(value = Views.Agenda.class)
     @RequestMapping({"/meetings/{meeting_ref}/agenda",
                      "/{city}/{institution}/meeting/{meeting_ref}/agenda"})
-    public Collection<BaseEntity> agenda(@PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
+    public Collection<AgendaItem> agenda(@PathVariable(value = "meeting_ref") String meetingRef) throws Exception {
         return agendaRepository.getByMeeting(meetingRef);
     }
 
     @JsonView(value = Views.AgendaItem.class)
     @RequestMapping({"/agenda/{ref}",
                      "/{city}/{institution}/agenda/{ref}"})
-    public BaseEntity agendaItem(@PathVariable(value="ref") String ref) throws Exception {
+    public AgendaItem agendaItem(@PathVariable(value="ref") String ref) throws Exception {
         return agendaRepository.getByRef(ref);
     }
 }

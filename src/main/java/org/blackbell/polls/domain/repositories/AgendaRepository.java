@@ -1,6 +1,6 @@
 package org.blackbell.polls.domain.repositories;
 
-import org.blackbell.polls.domain.model.common.BaseEntity;
+import org.blackbell.polls.domain.model.AgendaItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,18 +13,19 @@ import java.util.List;
  * email: korcak@esten.sk
  */
 @Repository
-public interface AgendaRepository extends JpaRepository<BaseEntity, Long> {
+public interface AgendaRepository extends JpaRepository<AgendaItem, Long> {
     @Query(value =
             "select a from AgendaItem a " +
                     "join fetch a.meeting m " +
                     "join fetch a.polls p " +
-                    "where a.meeting.ref = :meetingRef")
-    List<BaseEntity> getByMeeting(@Param(value = "meetingRef") String meetingRef);
+                    "where a.meeting.ref = :meetingRef " +
+                    "order by m.date")
+    List<AgendaItem> getByMeeting(@Param(value = "meetingRef") String meetingRef);
 
     @Query(value =
             "select a from AgendaItem a " +
                     "join fetch a.meeting m " +
                     "join fetch a.polls p " +
                     "where m.ref = :ref")
-    BaseEntity getByRef(@Param(value = "ref") String ref);
+    AgendaItem getByRef(@Param(value = "ref") String ref);
 }

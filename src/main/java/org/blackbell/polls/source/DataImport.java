@@ -12,7 +12,7 @@ public interface DataImport {
 
     List<Season> loadSeasons(Town town) throws Exception;
 
-    List<Meeting> loadMeetings(Season season) throws Exception;
+    List<Meeting> loadMeetings(Town town, Season season, Institution institution) throws Exception;
 
     void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception;
 

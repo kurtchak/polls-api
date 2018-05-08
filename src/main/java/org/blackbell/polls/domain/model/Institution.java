@@ -54,7 +54,7 @@ public class Institution extends NamedEntity {
 
         Institution that = (Institution) o;
 
-        return id == that.id;
+        return type == that.type;
 
     }
 

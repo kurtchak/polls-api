@@ -5,7 +5,10 @@ import org.blackbell.polls.domain.model.Club;
 import org.blackbell.polls.domain.model.CouncilMember;
 import org.blackbell.polls.domain.model.Party;
 import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.enums.ClubFunction;
+import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.ClubParty;
+import org.blackbell.polls.domain.model.relate.PartyNominee;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -41,179 +44,187 @@ public class PresovCouncilMemberCrawler {
 
     private Map<String, Club> clubsMap = new HashMap<>();
 
-//    public Set<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
-//        if (partiesMap == null) {
-//            partiesMap = new HashMap<>();
-//        }
-//        Set<CouncilMember> members = new HashSet<>();
-//        try {
-//            Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
-//            Elements linksOnPage = document.select("a[href^=javascript:osoba_podrobnosti]");
-//
-//            Pattern memberPattern = Pattern.compile(MEMBER_LINK_RE);
-//            for (Element page : linksOnPage) {
-//                log.info(page.toString());
-//                Matcher matcher = memberPattern.matcher(page.toString());
-//                if (matcher.find()) {
-//                    String id = matcher.group("id");
-//                    String image = matcher.group("image");
-//                    String name = matcher.group("name");
-//
-//                    // Check if not exists already
-//                    String simpleName = PollsUtils.getSimpleName(name);
-//                    if (councilMembersMap.containsKey(simpleName)) {
-//                        log.info("Council member '" + simpleName + "' already known.");
-//                        continue;
-//                    }
-//
-//                    CouncilMember member = new CouncilMember();
+    public Set<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
+        if (partiesMap == null) {
+            partiesMap = new HashMap<>();
+        }
+        Set<CouncilMember> members = new HashSet<>();
+        try {
+            Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
+            Elements linksOnPage = document.select("a[href^=javascript:osoba_podrobnosti]");
+
+            Pattern memberPattern = Pattern.compile(MEMBER_LINK_RE);
+            for (Element page : linksOnPage) {
+                log.info(page.toString());
+                Matcher matcher = memberPattern.matcher(page.toString());
+                if (matcher.find()) {
+                    String id = matcher.group("id");
+                    String image = matcher.group("image");
+                    String name = matcher.group("name");
+
+                    // Check if not exists already
+                    String simpleName = PollsUtils.getSimpleName(name);
+                    if (councilMembersMap.containsKey(simpleName)) {
+                        log.info("Council member '" + simpleName + "' already known.");
+                        continue;
+                    }
+
+                    CouncilMember member = new CouncilMember();
+                    //TODO: Politician<->CouncilMember
 //                    member.setName(PollsUtils.getSimpleName(name));
 //                    member.setTitles(PollsUtils.getTitles(name));
 //                    member.setPicture(PORTAL_BASE_URL + image);
-//                    member.setExtId(id);
-//                    member.setRef(PollsUtils.generateUniqueKeyReference());
-//                    member.setSeason(season);
-//
-//                    loadCouncilMemberDetails(member, member.getExtId(), partiesMap);
-//
-//                    members.add(member);
-//                } else {
-//                    log.info("No match");
-//                }
-////                break;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return members;
-//    }
-//
-//    private void loadCouncilMemberDetails(CouncilMember m, String id, Map<String, Party> partiesMap) {
-//        try {
-//            log.info(m.getName() + " :: DETAILS: ");
-//            Document document = Jsoup.connect(String.format(MEMBER_DETAIL_URL, id)).get();
-//            Element detail = document.select("div[class=\"float_left\"]").first();
-//            log.info(detail.toString());
-//            Matcher matcher = MEMBER_DETAIL_PATTERN.matcher(detail.toString());
-////            log.info("Groups found: " + matcher.groupCount());
-//            if (matcher.find()) {
-//                //log.info("Phone: " + matcher.group("phone"));
-//                //log.info("Phone number: " + matcher.group("phonenumber"));
-//                String emails = "";
-//                if (matcher.group("email") != null && !matcher.group("email").isEmpty()) {
-//                    emails = matcher.group("email");
-//                }
-//                if (matcher.group("email2") != null && !matcher.group("email2").isEmpty()) {
-//                    emails += ", " + matcher.group("email2");
-//                }
+                    member.setExtId(id);
+                    member.setRef(PollsUtils.generateUniqueKeyReference());
+                    member.setSeason(season);
+
+                    loadCouncilMemberDetails(member, member.getExtId(), partiesMap);
+
+                    members.add(member);
+                } else {
+                    log.info("No match");
+                }
+//                break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return members;
+    }
+
+    //TODO: update from CouncilMember to Politician
+    private void loadCouncilMemberDetails(CouncilMember m, String id, Map<String, Party> partiesMap) {
+        try {
+            log.info(m.getPolitician().getName() + " :: DETAILS: ");
+            Document document = Jsoup.connect(String.format(MEMBER_DETAIL_URL, id)).get();
+            Element detail = document.select("div[class=\"float_left\"]").first();
+            log.info(detail.toString());
+            Matcher matcher = MEMBER_DETAIL_PATTERN.matcher(detail.toString());
+//            log.info("Groups found: " + matcher.groupCount());
+            if (matcher.find()) {
+                //log.info("Phone: " + matcher.group("phone"));
+                //log.info("Phone number: " + matcher.group("phonenumber"));
+                String emails = "";
+                if (matcher.group("email") != null && !matcher.group("email").isEmpty()) {
+                    emails = matcher.group("email");
+                }
+                if (matcher.group("email2") != null && !matcher.group("email2").isEmpty()) {
+                    emails += ", " + matcher.group("email2");
+                }
+                //TODO: commented out before update
 //                m.setEmail(emails);
 //                m.setPhone(matcher.group("phonenumber"));
-//                String partyCandidate = matcher.group("candidateparty");
-//                if (partyCandidate != null && !partyCandidate.isEmpty()) {
-//                    List<PartyNominee> partyNominees = new ArrayList<>();
-//                    PartyNominee nominee = new PartyNominee();
-//                    String partyName = PollsUtils.cleanAndTrim(partyCandidate);
-//                    if (!partiesMap.containsKey(partyName)) {
-//                        partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
-//                    }
+                String partyCandidate = matcher.group("candidateparty");
+                if (partyCandidate != null && !partyCandidate.isEmpty()) {
+                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    PartyNominee nominee = new PartyNominee();
+                    String partyName = PollsUtils.cleanAndTrim(partyCandidate);
+                    if (!partiesMap.containsKey(partyName)) {
+                        partiesMap.put(partyName, introduceParty(partyName));
+                    }
+                    //TODO: comented out before update
 //                    nominee.setCouncilMember(m);
-//                    nominee.setParty(partiesMap.get(partyName));
-//                    nominee.setSeason(m.getSeason());
-//                    partyNominees.add(nominee);
+                    nominee.setParty(partiesMap.get(partyName));
+                    nominee.setSeason(m.getSeason());
+                    partyNominees.add(nominee);
+                    //TODO: commented out before update
 //                    m.setPartyNominees(partyNominees);
-//                }
-//                String partiesCandidate = matcher.group("candidateparties");
-//                if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
-//                    List<PartyNominee> partyNominees = new ArrayList<>();
-//                    List<String> partyList = PollsUtils.splitCleanAndTrim(partiesCandidate);
-//                    for (String partyName : partyList) {
-//                        if (!partiesMap.containsKey(partyName)) {
-//                            partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
-//                        }
-//                        PartyNominee nominee = new PartyNominee();
+                }
+                String partiesCandidate = matcher.group("candidateparties");
+                if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
+                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    List<String> partyList = PollsUtils.splitCleanAndTrim(partiesCandidate);
+                    for (String partyName : partyList) {
+                        if (!partiesMap.containsKey(partyName)) {
+                            partiesMap.put(partyName, introduceParty(partyName));
+                        }
+                        PartyNominee nominee = new PartyNominee();
+                        //TODO: commented out before update
 //                        nominee.setCouncilMember(m);
-//                        nominee.setParty(partiesMap.get(partyName));
-//                        nominee.setSeason(m.getSeason());
-//                        partyNominees.add(nominee);
-//                    }
+                        nominee.setParty(partiesMap.get(partyName));
+                        nominee.setSeason(m.getSeason());
+                        partyNominees.add(nominee);
+                    }
+                    //TODO: commented out before update
 //                    m.setPartyNominees(partyNominees);
-//                }
-//
-//                String clubMemberString = matcher.group("clubmember");
-//                if (clubMemberString != null && !clubMemberString.isEmpty()) {
-//                    ClubFunction clubFunction;
-//                    if (CHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
-//                        clubFunction = ClubFunction.CHAIRMAN;
-//                    } else if (VICECHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
-//                        clubFunction = ClubFunction.VICECHAIRMAN;
-//                    } else {
-//                        clubFunction = ClubFunction.MEMBER;
-//                    }
-//
-//                    String clubPartiesString = matcher.group("clubparties");
-//                    if (clubPartiesString != null && !clubPartiesString.isEmpty()) {
-//                        List<String> partyList = PollsUtils.splitCleanAndTrim(clubPartiesString);
-//                        String clubName = PollsUtils.generateClubName(partyList);
-//                        if (!clubsMap.containsKey(clubName)) {
-//                            log.info(":NEW CLUB: " + clubName);
-//                            Club club = new Club();
+                }
+
+                String clubMemberString = matcher.group("clubmember");
+                if (clubMemberString != null && !clubMemberString.isEmpty()) {
+                    ClubFunction clubFunction;
+                    if (CHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
+                        clubFunction = ClubFunction.CHAIRMAN;
+                    } else if (VICECHAIRMAN_PATTERN.matcher(clubMemberString).find()) {
+                        clubFunction = ClubFunction.VICECHAIRMAN;
+                    } else {
+                        clubFunction = ClubFunction.MEMBER;
+                    }
+
+                    String clubPartiesString = matcher.group("clubparties");
+                    if (clubPartiesString != null && !clubPartiesString.isEmpty()) {
+                        List<String> partyList = PollsUtils.splitCleanAndTrim(clubPartiesString);
+                        String clubName = PollsUtils.generateClubName(partyList);
+                        if (!clubsMap.containsKey(clubName)) {
+                            log.info(":NEW CLUB: " + clubName);
+                            Club club = new Club();
+                            //TODO: commented out before update
 //                            club.setTown(m.getSeason().getTown()); //TODO: proxy
-//                            club.setSeason(m.getSeason());
-//                            club.setRef(PollsUtils.generateUniqueKeyReference());
-//                            club.setName(clubName);
-//                            List<ClubParty> clubParties1 = new ArrayList<>();
-//                            for (String partyName : partyList) {
-//                                log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
-//                                if (!partiesMap.containsKey(partyName)) {
-//                                    partiesMap.put(partyName, introduceParty(m.getSeason(), partyName));
-//                                }
-//                                clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
-//                            }
+                            club.setSeason(m.getSeason());
+                            club.setRef(PollsUtils.generateUniqueKeyReference());
+                            club.setName(clubName);
+                            List<ClubParty> clubParties1 = new ArrayList<>();
+                            for (String partyName : partyList) {
+                                log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
+                                if (!partiesMap.containsKey(partyName)) {
+                                    partiesMap.put(partyName, introduceParty(partyName));
+                                }
+                                clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
+                            }
+                            //TODO: commented out before update
 //                            club.setParties(clubParties1);
-//                            clubsMap.put(club.getName(), club);
-//                        }
-//                        Club club = clubsMap.get(clubName);
-//                        log.info("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
-//                        ClubMember clubMember = new ClubMember();
-//                        clubMember.setCouncilMember(m);
-//                        clubMember.setClubFunction(clubFunction);
-//                        m.addClubMember(clubMember);
-//                        club.addClubMember(clubMember);
-//                    }
-//                }
-//
-//                String functionsString = matcher.group("functions");
-//                if (functionsString != null && !functionsString.isEmpty()) {
-//                    String[] functions = functionsString.split("\\s*(<br(\\s*\\/)?>|<\\/p>)\\s*");
-//                    functionsString = String.join(", ", functions);
-//                    m.setOtherFunctions(functionsString);
-//                }
-//            } else {
-//                log.info("No match");
-//            }
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public static Party introduceParty(Season season, String partyName) {
-//        log.info(":NEW PARTY: " + partyName);
-//        Party party = new Party();
-//        party.setRef(partyName);
-//        party.setName(partyName);
-//        party.setSeason(season);
-//        return party;
-//    }
-//
-//    private static ClubParty introduceClubParty(Season season, Club club, Party party) {
-//        ClubParty clubParty = new ClubParty();
-//        log.info("CLUB["+club.getRef()+"]: NEW CLUB PARTY: " + party.getName());
-//        clubParty.setParty(party);
-//        clubParty.setSeason(season);
-//        clubParty.setClub(club);
-//        return clubParty;
-//    }
+                            clubsMap.put(club.getName(), club);
+                        }
+                        Club club = clubsMap.get(clubName);
+                        log.info("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
+                        ClubMember clubMember = new ClubMember();
+                        clubMember.setCouncilMember(m);
+                        clubMember.setClubFunction(clubFunction);
+                        m.addClubMember(clubMember);
+                        club.addClubMember(clubMember);
+                    }
+                }
+
+                String functionsString = matcher.group("functions");
+                if (functionsString != null && !functionsString.isEmpty()) {
+                    String[] functions = functionsString.split("\\s*(<br(\\s*\\/)?>|<\\/p>)\\s*");
+                    functionsString = String.join(", ", functions);
+                    m.setOtherFunctions(functionsString);
+                }
+            } else {
+                log.info("No match");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Party introduceParty(String partyName) {
+        log.info(":NEW PARTY: " + partyName);
+        Party party = new Party();
+        party.setRef(partyName);
+        party.setName(partyName);
+        return party;
+    }
+
+    private static ClubParty introduceClubParty(Season season, Club club, Party party) {
+        ClubParty clubParty = new ClubParty();
+        log.info("CLUB["+club.getRef()+"]: NEW CLUB PARTY: " + party.getName());
+        clubParty.setParty(party);
+        clubParty.setSeason(season);
+        clubParty.setClub(club);
+        return clubParty;
+    }
 
 //    public static void main(String[] args) {
 //    	new PresovCouncilMemberCrawler().getCouncilMembers();

@@ -132,4 +132,21 @@ public class PollDTO {
     public void setPollChoiceDTOs(List<PollChoiceDTO> pollChoiceDTOs) {
         this.pollChoiceDTOs = pollChoiceDTOs;
     }
+
+    @Override
+    public String toString() {
+        return "PollDTO{" +
+                "name='" + name + '\'' +
+                ", agendaItemId='" + agendaItemId + '\'' +
+                ", pollRoute='" + pollRoute + '\'' +
+                ", note='" + note + '\'' +
+                ", voters=" + voters +
+                ", absent=" + absent +
+                ", votedFor=" + votedFor +
+                ", votedAgainst=" + votedAgainst +
+                ", abstain=" + abstain +
+                ", notVoted=" + notVoted +
+                ", pollChoiceDTOs=" + pollChoiceDTOs +
+                '}';
+    }
 }
