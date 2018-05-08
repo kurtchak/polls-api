@@ -1,38 +1,50 @@
+ext {
+    junitVersion = '4.12'
+    springBootVersion = '1.5.2.RELEASE'
+    springVersion = '4.3.7.RELEASE'
+    restAssuredVersion = '3.0.3'
+    jacksonVersion = '2.8.7'
+    postgresqlVersion = '9.4.1212'
+    jsoupVersion = '1.10.3'
+    mchangeVersion = '0.9.5.2'
+}
+
 buildscript {
+    ext {
+        springBootVersion = '1.5.2.RELEASE'
+    }
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
     }
 }
 
+apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
-jar {
-    baseName = 'polls'
-    version =  '0.1.0'
-}
+group = 'org.blackbell'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web:1.5.2.RELEASE")
-    compile("org.springframework.boot:spring-boot-starter-data-jpa:1.5.2.RELEASE")
-    compile("org.springframework.boot:spring-boot-starter:1.5.2.RELEASE")
-    compile("org.springframework:spring-web:4.3.7.RELEASE")
-    compile("org.postgresql:postgresql:9.4.1212")
-    compile("com.mchange:c3p0:0.9.5.2")
-    compile("com.fasterxml.jackson.core:jackson-databind:2.8.7")
-    compile group: 'io.rest-assured', name: 'rest-assured', version: '3.0.7'
-    compile group: 'io.rest-assured', name: 'json-schema-validator', version: '3.0.7'
-    compile group: 'org.jsoup', name: 'jsoup', version: '1.10.3'
-    testCompile group: 'junit', name: 'junit'
-    testCompile('org.springframework.boot:spring-boot-starter-test:1.5.2.RELEASE')
+    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter:${springBootVersion}")
+    compile("org.springframework:spring-web:${springVersion}")
+    compile("org.postgresql:postgresql:${postgresqlVersion}")
+    compile("com.mchange:c3p0:${mchangeVersion}")
+    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("io.rest-assured:rest-assured:${restAssuredVersion}")
+    compile("io.rest-assured:json-schema-validator:${restAssuredVersion}")
+    compile("org.jsoup:jsoup:${jsoupVersion}")
+    testCompile("junit:junit:${junitVersion}")
+    testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
 }
 
