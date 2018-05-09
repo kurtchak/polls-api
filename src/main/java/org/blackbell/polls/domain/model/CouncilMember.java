@@ -72,7 +72,7 @@ public class CouncilMember extends EntityWithReference {
     private Institution institution;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "politician_id")
     private Politician politician;
 

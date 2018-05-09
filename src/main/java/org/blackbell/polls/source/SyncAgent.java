@@ -52,7 +52,7 @@ public class SyncAgent {
     public void syncCouncilMembers() {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         // AD-HOC
-        Season season = seasonRepository.findByRef("2014-2018");
+        Season season = seasonRepository.findByRef("2014-2018"); //TODO: all seasons
         List<Party> parties = partyRepository.findAll();
         partiesMap = new HashMap<>();
         for (Party party : parties) {

@@ -1,16 +1,21 @@
 package org.blackbell.polls.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.api.serializers.ActualCouncilMemberSerializer;
+import org.blackbell.polls.domain.api.serializers.PoliticianClubSerializer;
 import org.blackbell.polls.domain.api.serializers.PoliticianPartyNomineesSerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
+import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
+import java.util.Calendar;
 import java.util.Set;
 
 /**
@@ -48,6 +53,29 @@ public class Politician extends NamedEntity {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class, Views.PartyNominees.class, Views.ClubMembers.class})
     public String getName() {
         return name;
+    }
+
+    //    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @OneToMany(mappedBy = "politician", cascade = CascadeType.ALL)
+//    @JsonSerialize(using = PoliticianClubSerializer.class)
+    @JsonIgnore
+    private Set<CouncilMember> councilMembers;
+
+    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
+    @JsonProperty("club")
+    @JsonSerialize(using = ActualCouncilMemberSerializer.class)
+    public CouncilMember getActualCouncilMember() {
+        if (councilMembers != null) {
+            Calendar cal = Calendar.getInstance();
+            for (CouncilMember cm : councilMembers) {
+                String[] range = cm.getSeason().getName().split("-");
+                if (Integer.valueOf(range[0]) <= cal.get(Calendar.YEAR)
+                        && Integer.valueOf(range[1]) >= cal.get(Calendar.YEAR)) {
+                    return cm;
+                }
+            }
+        }
+        return null;
     }
 
     public String getTitles() {
@@ -96,6 +124,14 @@ public class Politician extends NamedEntity {
 
     public void setPartyNominees(Set<PartyNominee> partyNominees) {
         this.partyNominees = partyNominees;
+    }
+
+    public Set<CouncilMember> getCouncilMembers() {
+        return councilMembers;
+    }
+
+    public void setCouncilMembers(Set<CouncilMember> clubMembers) {
+        this.councilMembers = clubMembers;
     }
 
     @Override
