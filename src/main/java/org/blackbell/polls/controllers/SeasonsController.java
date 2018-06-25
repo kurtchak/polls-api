@@ -6,22 +6,15 @@ package org.blackbell.polls.controllers;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.blackbell.polls.common.Constants;
-import org.blackbell.polls.meetings.json.Views;
-import org.blackbell.polls.model.*;
-import org.blackbell.polls.model.common.BaseEntity;
-import org.blackbell.polls.model.enums.InstitutionType;
-import org.blackbell.polls.repositories.*;
+import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.repositories.SeasonRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @RestController
