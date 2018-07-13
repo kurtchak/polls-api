@@ -35,6 +35,7 @@ public class Poll extends NamedEntity {
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @JsonProperty(value = "markedAsIrrelevant")
+    @Transient
     private boolean markedAsIrrelevant;
 
     @JsonView(value = {Views.Polls.class, Views.AgendaItem.class})

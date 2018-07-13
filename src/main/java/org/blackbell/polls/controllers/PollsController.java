@@ -6,6 +6,8 @@ package org.blackbell.polls.controllers;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.Poll;
@@ -40,7 +42,13 @@ public class PollsController {
                                   @PathVariable(value = "season") String season,
                                   @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
-        return pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
+        List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
+        return polls.stream().map(poll -> markIrrellevant(poll)).filter(poll -> !poll.isMarkedAsIrrelevant()).collect(Collectors.toList());
+    }
+
+    private Poll markIrrellevant(Poll poll) {
+        poll.setMarkedAsIrrelevant(false);
+        return poll;
     }
 
     @JsonView(value = Views.Poll.class)
