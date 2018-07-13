@@ -175,8 +175,16 @@ public class MeetingsController {
     @JsonView(value = Views.PartyNominees.class)
     @RequestMapping("/{city}/{season}/parties/{ref}/members")
     public Collection<PartyNominee> partyNominees(@PathVariable(value="city") String city,
-                                                  @PathVariable(value="season") String season,
-                                                  @PathVariable(value="ref") String ref) throws Exception {
+        @PathVariable(value="season") String season,
+        @PathVariable(value="ref") String ref) throws Exception {
         return partyRepository.getPartyNomineesByTownAndSeason(city, season, ref);
+    }
+
+    @RequestMapping("/{city}/{season}/polls/{ref}/markAsIrrelevant")
+    public void markAsIrrelevant(@PathVariable(value="city") String city,
+                                 @PathVariable(value="season") String season,
+                                 @PathVariable(value="ref") String ref) throws Exception {
+        Poll poll = pollRepository.getByRef(ref);
+        poll.setMarkedAsIrrelevant(true);
     }
 }

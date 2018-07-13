@@ -33,6 +33,10 @@ public class Poll extends NamedEntity {
     @JsonProperty(value = "voters")
     private int voters;
 
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @JsonProperty(value = "markedAsIrrelevant")
+    private boolean markedAsIrrelevant;
+
     @JsonView(value = {Views.Polls.class, Views.AgendaItem.class})
     @Embedded
     private VotesCount votesCount;
@@ -114,6 +118,14 @@ public class Poll extends NamedEntity {
         return votesCount;
     }
 
+    public boolean isMarkedAsIrrelevant() {
+        return markedAsIrrelevant;
+    }
+
+    public void setMarkedAsIrrelevant(boolean markedAsIrrelevant) {
+        this.markedAsIrrelevant = markedAsIrrelevant;
+    }
+
     public void setVotesCount(VotesCount votesCount) {
         this.votesCount = votesCount;
     }
@@ -151,6 +163,7 @@ public class Poll extends NamedEntity {
                 ", extPollRouteId='" + extPollRouteId + '\'' +
                 ", note='" + note + '\'' +
                 ", voters=" + voters +
+                ", markedAsIrrelevant=" + markedAsIrrelevant +
                 ", absent=" + votesCount.getAbsent() +
                 ", votedFor=" + votesCount.getVotedFor() +
                 ", votedAgainst=" + votesCount.getVotedAgainst() +

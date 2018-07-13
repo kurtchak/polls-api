@@ -153,7 +153,7 @@ public class DMParser {
         return poll;
     }
 
-    public static List<Season> parseSeasonsResponse(Town town, DMSeasonsResponse seasonsResponse) {
+    public static List<Season> parseSeasonsResponse(DMSeasonsResponse seasonsResponse) {
         List<Season> seasons = new ArrayList<>();
         if (seasonsResponse.getSeasonDTOs() != null) {
             for (SeasonDTO seasonDTO : seasonsResponse.getSeasonDTOs()) {

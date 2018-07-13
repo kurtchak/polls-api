@@ -14,7 +14,7 @@ public class DMImport implements DataImport {
 
     @Override
     public List<Season> loadSeasons(Town town) throws Exception {
-        return DMParser.parseSeasonsResponse(town, DMServiceClient.checkoutSeasonsData(town));
+        return DMParser.parseSeasonsResponse(DMServiceClient.checkoutSeasonsData(town));
     }
 
     @Override
