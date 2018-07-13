@@ -1,11 +1,14 @@
 package org.blackbell.polls.common;
 
+import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.Town;
+import org.blackbell.polls.domain.model.enums.InstitutionType;
+
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -13,6 +16,7 @@ import java.util.stream.Collectors;
  * email: korcak@esten.sk
  */
 public class PollsUtils {
+
     private static String cutDateStringToTFormat(String dateString) {
         return dateString.substring(0,19);
     }
@@ -27,14 +31,11 @@ public class PollsUtils {
 
     public static String getSimpleName(String name) {
         String result = name;
-        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
-        Matcher m = titleRE.matcher(name);
+        Matcher m = Constants.TITLE_PATTERN.matcher(name);
         while (m.find()) {
             result = result.replace(m.group(), "");
         }
-        return result.replaceAll(",", "")
-                .replaceAll("  ", " ")
-                .trim();
+        return result.replaceAll(",", "").replaceAll("\\s+", " ").trim();
     }
 
     public static String startWithFirstname(String fullname) {
@@ -44,8 +45,7 @@ public class PollsUtils {
 
     public static String getTitles(String name) {
         String result = "";
-        Pattern titleRE = Pattern.compile("(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr");
-        Matcher m = titleRE.matcher(name);
+        Matcher m = Constants.TITLE_PATTERN.matcher(name);
         while (m.find()) {
             String title = !m.group().endsWith(".") ? m.group() + "." : m.group();
             result += title + ", ";
@@ -67,5 +67,9 @@ public class PollsUtils {
 
     public static String cleanAndTrim(String item) {
         return item.replaceAll("\\s*-\\s*", "-").replaceAll("\\s*–\\s*", "-");
+    }
+
+    public static String generateMemberKey(Town town, Season season, InstitutionType type) {
+        return town.getRef() + ":" + season.getRef() + ":" + type.name();
     }
 }
