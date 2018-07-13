@@ -46,7 +46,7 @@ public class PollsController {
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
         return polls.stream()
-            .filter(poll -> IRRELEVANT_AGENDA_PATTERN.matcher(poll.getName()).find())
+            .filter(poll -> !IRRELEVANT_AGENDA_PATTERN.matcher(poll.getName()).find())
             .collect(Collectors.toList());
     }
 
@@ -62,4 +62,21 @@ public class PollsController {
         Poll poll = pollRepository.getByRef(ref);
         poll.setMarkedAsIrrelevant(true);
     }
+
+    @JsonView(value = Views.Polls.class)
+    @RequestMapping({"/{city}/{institution}/{season}/polls/irrelevant",
+                    "/{city}/{institution}/{season}/polls/irrelevant/{dateFrom}/{dateTo}",
+                    "/{city}/{institution}/polls/irrelevant/{season}/{dateFrom}/{dateTo}"})
+    public Collection<Poll> irrelevant(@PathVariable(value = "city") String city,
+        @PathVariable(value = "institution") String institution,
+        @PathVariable(value = "season") String season,
+        @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
+        @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
+        List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
+        return polls.stream()
+            .filter(poll -> IRRELEVANT_AGENDA_PATTERN.matcher(poll.getName()).find())
+            .collect(Collectors.toList());
+    }
+
+
 }
