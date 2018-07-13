@@ -6,7 +6,10 @@ package org.blackbell.polls.controllers;
  */
 
 import com.fasterxml.jackson.annotation.JsonView;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.domain.api.Views;
@@ -20,12 +23,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
-import java.util.Date;
-
 @RestController
 public class PollsController {
     private static final Logger log = LoggerFactory.getLogger(PollsController.class);
+
+    private static final Pattern IRRELEVANT_AGENDA_PATTERN = Pattern.compile("((O|o)tvorenie)|((U|u)rčenie\\s*zapisovateľ(.){0,2})|(overovateľ(.){0,2}\\szápisnice)|((S|s)chválenie\\s*(návrhu)?\\s*programu)");
 
     private PollRepository pollRepository;
 
@@ -43,12 +45,9 @@ public class PollsController {
                                   @PathVariable(value = "dateFrom", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateFrom,
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
-        return polls.stream().map(poll -> markIrrellevant(poll)).filter(poll -> !poll.isMarkedAsIrrelevant()).collect(Collectors.toList());
-    }
-
-    private Poll markIrrellevant(Poll poll) {
-        poll.setMarkedAsIrrelevant(false);
-        return poll;
+        return polls.stream()
+            .filter(poll -> IRRELEVANT_AGENDA_PATTERN.matcher(poll.getName()).find())
+            .collect(Collectors.toList());
     }
 
     @JsonView(value = Views.Poll.class)
