@@ -49,4 +49,12 @@ public class PollsController {
     public Poll poll(@PathVariable(value="ref") String ref) throws Exception {
         return pollRepository.getByRef(ref);
     }
+
+    @RequestMapping("/{city}/{season}/polls/{ref}/markAsIrrelevant")
+    public void markAsIrrelevant(@PathVariable(value="city") String city,
+        @PathVariable(value="season") String season,
+        @PathVariable(value="ref") String ref) throws Exception {
+        Poll poll = pollRepository.getByRef(ref);
+        poll.setMarkedAsIrrelevant(true);
+    }
 }
