@@ -7,6 +7,7 @@ ext {
     postgresqlVersion = '9.4.1212'
     jsoupVersion = '1.10.3'
     mchangeVersion = '0.9.5.2'
+    mysqlConnectorVersion = '5.1.46'
 }
 
 buildscript {
@@ -38,7 +39,9 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter:${springBootVersion}")
     compile("org.springframework:spring-web:${springVersion}")
-    compile("org.postgresql:postgresql:${postgresqlVersion}")
+//    compile("org.postgresql:postgresql:${postgresqlVersion}")
+    // DB Driver
+    compile("mysql:mysql-connector-java:${mysqlConnectorVersion}")
     compile("com.mchange:c3p0:${mchangeVersion}")
     compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile("io.rest-assured:rest-assured:${restAssuredVersion}")
