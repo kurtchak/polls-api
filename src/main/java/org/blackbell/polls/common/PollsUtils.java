@@ -4,11 +4,13 @@ import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 
+import java.text.Normalizer;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +37,9 @@ public class PollsUtils {
         while (m.find()) {
             result = result.replace(m.group(), "");
         }
-        return result.replaceAll(",", "").replaceAll("\\s+", " ").trim();
+        return deAccent(result.replaceAll(",", "")
+                .replaceAll("\\s+", " ")
+                .trim());
     }
 
     public static String startWithFirstname(String fullname) {
@@ -71,5 +75,17 @@ public class PollsUtils {
 
     public static String generateMemberKey(Town town, Season season, InstitutionType type) {
         return town.getRef() + ":" + season.getRef() + ":" + type.name();
+    }
+
+    /**
+     * Convert accented letters to ascii form.
+     *
+     * @param str .
+     * @return .
+     */
+    public static String deAccent(String str) {
+        String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(nfdNormalizedString).replaceAll("");
     }
 }

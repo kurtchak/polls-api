@@ -39,7 +39,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter:${springBootVersion}")
     compile("org.springframework:spring-web:${springVersion}")
-//    compile("org.postgresql:postgresql:${postgresqlVersion}")
+    compile("org.postgresql:postgresql:${postgresqlVersion}")
     // DB Driver
     compile("com.microsoft.sqlserver:mssql-jdbc:${mssqlConnectorVersion}")
     compile("com.mchange:c3p0:${mchangeVersion}")

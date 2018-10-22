@@ -1,10 +1,7 @@
 package org.blackbell.polls.source.crawler;
 
 import org.blackbell.polls.common.PollsUtils;
-import org.blackbell.polls.domain.model.Club;
-import org.blackbell.polls.domain.model.CouncilMember;
-import org.blackbell.polls.domain.model.Party;
-import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.ClubFunction;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.ClubParty;
@@ -44,7 +41,7 @@ public class PresovCouncilMemberCrawler {
 
     private Map<String, Club> clubsMap = new HashMap<>();
 
-    public Set<CouncilMember> getCouncilMembers(Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
+    public Set<CouncilMember> getCouncilMembers(Town town, Institution institution, Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
         if (partiesMap == null) {
             partiesMap = new HashMap<>();
         }
@@ -71,16 +68,23 @@ public class PresovCouncilMemberCrawler {
 
                     CouncilMember member = new CouncilMember();
                     //TODO: Politician<->CouncilMember
-//                    member.setName(PollsUtils.getSimpleName(name));
-//                    member.setTitles(PollsUtils.getTitles(name));
-//                    member.setPicture(PORTAL_BASE_URL + image);
-                    member.setExtId(id);
+                    Politician politician = new Politician();
+                    politician.setRef(PollsUtils.generateUniqueKeyReference());
+                    politician.setName(simpleName);
+                    politician.setTitles(PollsUtils.getTitles(name));
+                    politician.setPicture(PORTAL_BASE_URL + image);
+                    politician.setExtId(id);
                     member.setRef(PollsUtils.generateUniqueKeyReference());
+                    member.setPolitician(politician);
                     member.setSeason(season);
+                    member.setExtId(id);
+                    member.setTown(town);
+                    member.setInstitution(institution);
 
                     loadCouncilMemberDetails(member, member.getExtId(), partiesMap);
 
                     members.add(member);
+                    councilMembersMap.put(PollsUtils.getSimpleName(member.getPolitician().getName()), member);
                 } else {
                     log.info("No match");
                 }
@@ -112,27 +116,27 @@ public class PresovCouncilMemberCrawler {
                     emails += ", " + matcher.group("email2");
                 }
                 //TODO: commented out before update
-//                m.setEmail(emails);
-//                m.setPhone(matcher.group("phonenumber"));
+                m.getPolitician().setEmail(emails);
+                m.getPolitician().setPhone(matcher.group("phonenumber"));
                 String partyCandidate = matcher.group("candidateparty");
                 if (partyCandidate != null && !partyCandidate.isEmpty()) {
-                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    Set<PartyNominee> partyNominees = new HashSet<>();
                     PartyNominee nominee = new PartyNominee();
                     String partyName = PollsUtils.cleanAndTrim(partyCandidate);
                     if (!partiesMap.containsKey(partyName)) {
                         partiesMap.put(partyName, introduceParty(partyName));
                     }
                     //TODO: comented out before update
-//                    nominee.setCouncilMember(m);
+                    nominee.setPolitician(m.getPolitician());
                     nominee.setParty(partiesMap.get(partyName));
                     nominee.setSeason(m.getSeason());
                     partyNominees.add(nominee);
                     //TODO: commented out before update
-//                    m.setPartyNominees(partyNominees);
+                    m.getPolitician().setPartyNominees(partyNominees);
                 }
                 String partiesCandidate = matcher.group("candidateparties");
                 if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
-                    List<PartyNominee> partyNominees = new ArrayList<>();
+                    Set<PartyNominee> partyNominees = new HashSet<>();
                     List<String> partyList = PollsUtils.splitCleanAndTrim(partiesCandidate);
                     for (String partyName : partyList) {
                         if (!partiesMap.containsKey(partyName)) {
@@ -140,13 +144,13 @@ public class PresovCouncilMemberCrawler {
                         }
                         PartyNominee nominee = new PartyNominee();
                         //TODO: commented out before update
-//                        nominee.setCouncilMember(m);
+                        nominee.setPolitician(m.getPolitician());
                         nominee.setParty(partiesMap.get(partyName));
                         nominee.setSeason(m.getSeason());
                         partyNominees.add(nominee);
                     }
                     //TODO: commented out before update
-//                    m.setPartyNominees(partyNominees);
+                    m.getPolitician().setPartyNominees(partyNominees);
                 }
 
                 String clubMemberString = matcher.group("clubmember");
@@ -168,11 +172,11 @@ public class PresovCouncilMemberCrawler {
                             log.info(":NEW CLUB: " + clubName);
                             Club club = new Club();
                             //TODO: commented out before update
-//                            club.setTown(m.getSeason().getTown()); //TODO: proxy
+                            club.setTown(m.getTown()); //TODO: proxy
                             club.setSeason(m.getSeason());
                             club.setRef(PollsUtils.generateUniqueKeyReference());
                             club.setName(clubName);
-                            List<ClubParty> clubParties1 = new ArrayList<>();
+                            Set<ClubParty> clubParties1 = new HashSet<>();
                             for (String partyName : partyList) {
                                 log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
                                 if (!partiesMap.containsKey(partyName)) {
@@ -181,7 +185,7 @@ public class PresovCouncilMemberCrawler {
                                 clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
                             }
                             //TODO: commented out before update
-//                            club.setParties(clubParties1);
+                            club.setClubParties(clubParties1);
                             clubsMap.put(club.getName(), club);
                         }
                         Club club = clubsMap.get(clubName);

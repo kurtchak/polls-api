@@ -6,6 +6,7 @@ import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
 import org.blackbell.polls.source.base.BaseImport;
+import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
 import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class SyncAgent {
     public void syncCouncilMembers() {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         // AD-HOC
+        Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
         Season season = seasonRepository.findByRef("2014-2018"); //TODO: all seasons
         List<Party> parties = partyRepository.findAll();
         partiesMap = new HashMap<>();
@@ -61,27 +63,37 @@ public class SyncAgent {
 
         towns = townRepository.findAll();
         for (Town town : towns) {
-            Map<String, CouncilMember> councilMembersMap = new HashMap<>();
-            Set<CouncilMember> councilMembers = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), InstitutionType.ZASTUPITELSTVO);
-            for (CouncilMember councilMember : councilMembers) {
-                councilMembersMap.put(councilMember.getPolitician().getName(), councilMember);
+            if ("presov".equals(town.getRef())) {
+                Map<String, CouncilMember> councilMembersMap = new HashMap<>();
+                Set<CouncilMember> councilMembers = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), InstitutionType.ZASTUPITELSTVO);
+                for (CouncilMember councilMember : councilMembers) {
+                    log.info("LOAD MEMBER: {}", councilMember.getPolitician().getName());
+                    councilMembersMap.put(PollsUtils.getSimpleName(councilMember.getPolitician().getName()), councilMember);
+                }
+                Set<CouncilMember> newCouncilMembers =
+                        new PresovCouncilMemberCrawler()
+                                .getCouncilMembers(town, townCouncil, season, partiesMap, councilMembersMap);
+                if (newCouncilMembers != null) {
+                    log.info("NEW COUNCIL MEMBERS COUNT: {}", newCouncilMembers != null ? newCouncilMembers.size() : 0) ;
+                    for (CouncilMember cm : newCouncilMembers) {
+                        log.info("NEW COUNCIL MEMBER: {}", cm.getPolitician().getName());
+                        councilMemberRepository.save(cm);
+                        councilMemberRepository.flush();
+                    }
+                    log.info("New CouncilMembers saved");
+                } else {
+                    log.info(String.format("No new CouncilMembers found for town '%s' and season '%s'", town.getName(), season.getName()));
+                }
             }
-//            if ("presov".equals(town.getRef())) {
-//                Set<CouncilMember> newCouncilMembers = new PresovCouncilMemberCrawler().getCouncilMembers(season, partiesMap, councilMembersMap);
-//                if (councilMembers != null) {
-//                    councilMemberRepository.save(newCouncilMembers);
-//                    log.info("New CouncilMembers saved");
-//                } else {
-//                    log.info(String.format("No new CouncilMembers found for town '%s' and season '%s'", town.getName(), season.getName()));
-//                }
-//            }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 10000)
-    @Transactional
+//    @Transactional
     public void sync() {
+        syncCouncilMembers();
+
         log.info(Constants.MarkerSync, "Synchronization started");
         towns = townRepository.findAll();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
@@ -90,8 +102,8 @@ public class SyncAgent {
         } else {
             for (Town town : towns) {
                 syncSeasonMeetings(town);
-//                town.setLastSyncDate(new Date());
-//                townRepository.save(town);
+                town.setLastSyncDate(new Date());
+                townRepository.save(town);
             }
         }
     }
@@ -108,27 +120,26 @@ public class SyncAgent {
     private void syncSeasonMeetings(Town town) {
         log.info(Constants.MarkerSync, town.getName() + ": syncSeasonMeetings");
         try {
-//            Date syncDate = new Date();
+            Date syncDate = new Date();
             DataImport dataImport = getDataImport(town);
-//            List<Season> retrievedSeasons = dataImport.loadSeasons(town);
-//            for (Season retrievedSeason : retrievedSeasons) {
-//                log.info("NEW SEASON: " + retrievedSeason);
-//            }
-//            log.info("Rertieved seasons: " + (retrievedSeasons != null ? retrievedSeasons.size() : 0));
+            List<Season> retrievedSeasons = dataImport.loadSeasons(town);
+            if (retrievedSeasons != null) {
+                for (Season retrievedSeason : retrievedSeasons) {
+                    log.info("NEW SEASON: " + retrievedSeason);
+                }
+                log.info("Rertieved seasons: " + (retrievedSeasons != null ? retrievedSeasons.size() : 0));
+            }
             List<Season> formerSeasons = seasonRepository.findAll();
             log.info(Constants.MarkerSync, "FormerSeasons: " + formerSeasons);
-            for (Season season : formerSeasons) {
-//                if (!InstitutionType.ZASTUPITELSTVO.equals(retrievedSeason.getInstitution())) {
-//                    continue;
-//                }
-//                log.info("retrievedSeason: " + retrievedSeason.hashCode());
-//                log.info("formerSeasons: " + formerSeasons.get(0).hashCode());
-//                if (!formerSeasons.contains(retrievedSeason)) {
-//                    log.info(String.format("Adding new season for town %s",town.getName()));
-//                    seasonRepository.save(retrievedSeason);
-//                }
+            for (Season retrievedSeason : formerSeasons) {
+                log.info("retrievedSeason: " + retrievedSeason.hashCode());
+                log.info("formerSeasons: " + formerSeasons.get(0).hashCode());
+                if (!formerSeasons.contains(retrievedSeason)) {
+                    log.info(String.format("Adding new season for town %s",town.getName()));
+                    seasonRepository.save(retrievedSeason);
+                }
                 // load saved instance
-//                Season season = formerSeasons.get(formerSeasons.indexOf(retrievedSeason));
+                Season season = formerSeasons.get(formerSeasons.indexOf(retrievedSeason));
                 log.info(Constants.MarkerSync, "Loaded Season to sync: " + season.getName());
                 for (InstitutionType institutionType : InstitutionType.values()) {
                     syncSeasonMeetings(town, season, institutionsMap.get(institutionType));
@@ -225,11 +236,11 @@ public class SyncAgent {
             throw new Exception(String.format("No CouncilMembers loaded for the town %s, season %s and institution %s.", town.getRef(), season.getRef(), institution));
         }
         for (CouncilMember councilMember : members) {
-            log.info(Constants.MarkerSync, "New Council Member > " + councilMember.getPolitician().getName());
-            membersMap.put(councilMember.getPolitician().getName(), councilMember);
+            log.info(Constants.MarkerSync, "Loaded Council Member > " + councilMember.getPolitician().getName());
+            membersMap.put(PollsUtils.getSimpleName(councilMember.getPolitician().getName()), councilMember);
         }
         String membersKey = PollsUtils.generateMemberKey(town, season, institution.getType());
-        log.info(Constants.MarkerSync, "New Council Member Group > " + membersKey);
+        log.info(Constants.MarkerSync, "Loaded Council Member Group > " + membersKey);
         allMembersMap.put(membersKey, membersMap);
     }
 
