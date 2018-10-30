@@ -27,7 +27,7 @@ public class ClubParty extends BaseEntity {
     private Club club;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Club.class})
-    @ManyToOne(cascade = CascadeType.MERGE)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "party_id")
     private Party party;
 

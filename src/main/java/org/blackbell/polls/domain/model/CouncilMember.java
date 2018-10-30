@@ -57,30 +57,24 @@ public class CouncilMember extends EntityWithReference {
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "season_id", insertable = false, updatable = false)
+    @JoinColumn(name = "season_id", insertable = true, updatable = false)
     @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
 
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "town_id", insertable = false, updatable = false)
+    @JoinColumn(name = "town_id", insertable = true, updatable = false)
 //    @JsonSerialize(using = SeasonAsPropertySerializer.class)
     private Town town;
 
     @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @ManyToOne @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    @ManyToOne @JoinColumn(name = "institution_id", insertable = true, updatable = false)
     private Institution institution;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "politician_id")
     private Politician politician;
-
-    @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
-    @JsonProperty("position")
-    @JoinColumn(name = "member_type")
-    @Enumerated(EnumType.STRING)
-    private MemberType memberType;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.PartyNominees.class})
     private String description;
@@ -151,14 +145,6 @@ public class CouncilMember extends EntityWithReference {
         this.politician = politician;
     }
 
-    public MemberType getMemberType() {
-        return memberType;
-    }
-
-    public void setMemberType(MemberType memberType) {
-        this.memberType = memberType;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -218,7 +204,6 @@ public class CouncilMember extends EntityWithReference {
                 ", town=" + town +
                 ", institution=" + institution +
                 ", politician=" + politician +
-                ", memberType=" + memberType +
                 ", description='" + description + '\'' +
                 '}';
     }

@@ -1,14 +1,22 @@
 package org.blackbell.polls.common;
 
+import org.apache.commons.io.FileUtils;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
+import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.Normalizer;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -16,6 +24,7 @@ import java.util.stream.Collectors;
  * email: korcak@esten.sk
  */
 public class PollsUtils {
+    private static final Logger log = LoggerFactory.getLogger(PresovCouncilMemberCrawler.class);
 
     private static String cutDateStringToTFormat(String dateString) {
         return dateString.substring(0,19);
@@ -29,13 +38,23 @@ public class PollsUtils {
         return Constants.DATE_FORMAT.parse(dmDate);
     }
 
-    public static String getSimpleName(String name) {
+    public static String toFilenameForm(String name) {
+        return toSimpleName(name).toLowerCase().replaceAll(" ", "_");
+    }
+
+    public static String toSimpleName(String name) {
         String result = name;
         Matcher m = Constants.TITLE_PATTERN.matcher(name);
         while (m.find()) {
             result = result.replace(m.group(), "");
         }
-        return result.replaceAll(",", "").replaceAll("\\s+", " ").trim();
+        return result.replaceAll(",", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    public static String toSimpleNameWithoutAccents(String name) {
+        return deAccent(toSimpleName(name).replaceAll(",", ""));
     }
 
     public static String startWithFirstname(String fullname) {
@@ -71,5 +90,28 @@ public class PollsUtils {
 
     public static String generateMemberKey(Town town, Season season, InstitutionType type) {
         return town.getRef() + ":" + season.getRef() + ":" + type.name();
+    }
+
+    /**
+     * Convert accented letters to ascii form.
+     *
+     * @param str .
+     * @return .
+     */
+    public static String deAccent(String str) {
+        String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(nfdNormalizedString).replaceAll("");
+    }
+
+    public static void saveToFile(String filename, String content) {
+        try {
+            File file = new File("samples/" + filename);
+            FileUtils.writeStringToFile(file, content);
+            log.info("Saved file {}", filename);
+        } catch (IOException e) {
+            log.error("Unable to save file {}", filename);
+            e.printStackTrace();
+        }
     }
 }

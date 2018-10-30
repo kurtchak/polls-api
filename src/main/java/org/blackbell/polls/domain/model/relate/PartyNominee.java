@@ -8,6 +8,7 @@ import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.common.BaseEntity;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -21,7 +22,7 @@ import javax.persistence.ManyToOne;
 public class PartyNominee extends BaseEntity {
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class})
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "party_id")
     private Party party;
 
