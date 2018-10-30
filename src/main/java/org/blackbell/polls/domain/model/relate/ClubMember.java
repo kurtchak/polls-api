@@ -60,12 +60,14 @@ public class ClubMember extends BaseEntity {
 
         ClubMember that = (ClubMember) o;
 
-        return id == that.id;
-
+        if (!getClub().equals(that.getClub())) return false;
+        return getCouncilMember().equals(that.getCouncilMember());
     }
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        int result = getClub().hashCode();
+        result = 31 * result + getCouncilMember().hashCode();
+        return result;
     }
 }

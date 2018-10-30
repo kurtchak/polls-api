@@ -62,20 +62,4 @@ public class Party extends NamedEntity {
         this.partyNominees = partyNominees;
     }
 
-    // TODO: is it right
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Party)) return false;
-
-        Party party = (Party) o;
-
-        return id == party.id;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (id ^ (id >>> 32));
-    }
 }

@@ -132,17 +132,23 @@ public class SyncAgent {
         log.info(Constants.MarkerSync, town.getName() + ": syncSeasonMeetings");
         try {
             // Load New Seasons
-            getDataImport(town).loadSeasons(town).stream()
-                    .forEach(season -> log.info("NEW SEASON: {}", season));
+            List<Season> retrievedSeasons =
+                    getDataImport(town)
+                            .loadSeasons(town).stream().collect(Collectors.toList());
+
+            retrievedSeasons.stream().forEach(season -> log.info("NEW SEASON: {}", season));
+
+            // Load Former Seasons
+            List<Season> formerSeasons = seasonRepository.findAll();
+            log.info(Constants.MarkerSync, "FormerSeasons: " + formerSeasons);
+
+            // Save New Seasons
+            formerSeasons.stream()
+                    .filter(retrievedSeason -> formerSeasons.contains(retrievedSeason))
+                    .forEach(retrievedSeason -> saveNewSeason(retrievedSeason));
 
             // Reload again all Seasons
             List<Season> seasons = seasonRepository.findAll();
-            log.info(Constants.MarkerSync, "FormerSeasons: " + seasons);
-
-            seasons.stream()
-                    .filter(retrievedSeason -> seasons.contains(retrievedSeason))
-                    .forEach(retrievedSeason -> saveNewSeason(retrievedSeason));
-
             for (Season season : seasons) {
 
                 // load saved instance
