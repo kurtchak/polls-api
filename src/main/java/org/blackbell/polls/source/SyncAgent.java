@@ -66,9 +66,10 @@ public class SyncAgent {
             if ("presov".equals(town.getRef())) {
                 Map<String, CouncilMember> councilMembersMap = new HashMap<>();
                 Set<CouncilMember> councilMembers = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), InstitutionType.ZASTUPITELSTVO);
+                log.info("COUNCIL MEMBERS: {}", councilMembers != null ? councilMembers.size() : 0);
                 for (CouncilMember councilMember : councilMembers) {
                     log.info("LOAD MEMBER: {}", councilMember.getPolitician().getName());
-                    councilMembersMap.put(PollsUtils.getSimpleName(councilMember.getPolitician().getName()), councilMember);
+                    councilMembersMap.put(PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName()), councilMember);
                 }
                 Set<CouncilMember> newCouncilMembers =
                         new PresovCouncilMemberCrawler()
@@ -77,9 +78,8 @@ public class SyncAgent {
                     log.info("NEW COUNCIL MEMBERS COUNT: {}", newCouncilMembers != null ? newCouncilMembers.size() : 0) ;
                     for (CouncilMember cm : newCouncilMembers) {
                         log.info("NEW COUNCIL MEMBER: {}", cm.getPolitician().getName());
-                        councilMemberRepository.save(cm);
-                        councilMemberRepository.flush();
                     }
+                    councilMemberRepository.save(newCouncilMembers);
                     log.info("New CouncilMembers saved");
                 } else {
                     log.info(String.format("No new CouncilMembers found for town '%s' and season '%s'", town.getName(), season.getName()));
@@ -87,10 +87,11 @@ public class SyncAgent {
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
+        councilMemberRepository.flush();
     }
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 10000)
-//    @Transactional
+    @Scheduled(fixedRate = 86400000, initialDelay = 500)
+    @Transactional
     public void sync() {
         syncCouncilMembers();
 
@@ -120,7 +121,6 @@ public class SyncAgent {
     private void syncSeasonMeetings(Town town) {
         log.info(Constants.MarkerSync, town.getName() + ": syncSeasonMeetings");
         try {
-            Date syncDate = new Date();
             DataImport dataImport = getDataImport(town);
             List<Season> retrievedSeasons = dataImport.loadSeasons(town);
             if (retrievedSeasons != null) {
@@ -141,6 +141,7 @@ public class SyncAgent {
                 // load saved instance
                 Season season = formerSeasons.get(formerSeasons.indexOf(retrievedSeason));
                 log.info(Constants.MarkerSync, "Loaded Season to sync: " + season.getName());
+//                Arrays.stream(InstitutionType.values()).filter(institutionType -> institutionsMap.containsKey(institutionsMap)).forEach(institutionType -> syncSeasonMeetings(town, season, institutionsMap.get(institutionType)));
                 for (InstitutionType institutionType : InstitutionType.values()) {
                     syncSeasonMeetings(town, season, institutionsMap.get(institutionType));
                 }
@@ -153,6 +154,7 @@ public class SyncAgent {
     }
 
     private void syncSeasonMeetings(Town town, Season season, Institution institution) {
+        log.info("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
         if (InstitutionType.KOMISIA.equals(institution.getType())) {
             //TODO:
             return;
@@ -237,7 +239,7 @@ public class SyncAgent {
         }
         for (CouncilMember councilMember : members) {
             log.info(Constants.MarkerSync, "Loaded Council Member > " + councilMember.getPolitician().getName());
-            membersMap.put(PollsUtils.getSimpleName(councilMember.getPolitician().getName()), councilMember);
+            membersMap.put(PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName()), councilMember);
         }
         String membersKey = PollsUtils.generateMemberKey(town, season, institution.getType());
         log.info(Constants.MarkerSync, "Loaded Council Member Group > " + membersKey);

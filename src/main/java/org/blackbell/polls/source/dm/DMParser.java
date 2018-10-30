@@ -129,16 +129,16 @@ public class DMParser {
         if (pollDetailResponse.getChildren() != null) {
             Set<Vote> votes = new HashSet<>();
             for (VoterDTO voterDTO : pollDetailResponse.getChildren()) {
-                String name = PollsUtils.startWithFirstname(PollsUtils.getSimpleName(voterDTO.getName()));
+                String name = PollsUtils.startWithFirstname(PollsUtils.toSimpleNameWithoutAccents(voterDTO.getName()));
                 log.info("Voter: " + voterDTO.getName() + "\t => \t" + "Simple name: " + name);
                 Vote vote = new Vote();
-                for (String key : membersMap.keySet()) {
-                    if (key.equals(name)) {
-                        log.info(">> KEY: {} -> {}", key, membersMap.get(key));
-                    } else {
-                        log.info("KEY: {} -> {}", key, membersMap.get(key));
-                    }
-                }
+//                for (String key : membersMap.keySet()) {
+//                    if (key.equals(name)) {
+//                        log.info(">> KEY: {} -> {}", key, membersMap.get(key));
+//                    } else {
+//                        log.info("KEY: {} -> {}", key, membersMap.get(key));
+//                    }
+//                }
                 vote.setCouncilMember(membersMap.get(name));
                 vote.setPoll(poll);
                 if (voterDTO.isVotedFor()) {

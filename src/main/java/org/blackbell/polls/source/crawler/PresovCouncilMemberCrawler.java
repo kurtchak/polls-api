@@ -48,43 +48,39 @@ public class PresovCouncilMemberCrawler {
         Set<CouncilMember> members = new HashSet<>();
         try {
             Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
+            PollsUtils.saveToFile("presov_msz_members.html", document.outerHtml());
+
             Elements linksOnPage = document.select("a[href^=javascript:osoba_podrobnosti]");
 
             Pattern memberPattern = Pattern.compile(MEMBER_LINK_RE);
             for (Element page : linksOnPage) {
-                log.info(page.toString());
-                Matcher matcher = memberPattern.matcher(page.toString());
+                String pageContent = page.toString();
+                log.info(pageContent);
+                Matcher matcher = memberPattern.matcher(pageContent);
                 if (matcher.find()) {
                     String id = matcher.group("id");
                     String image = matcher.group("image");
                     String name = matcher.group("name");
 
+                    PollsUtils.saveToFile("presov_msz_member_" + PollsUtils.toFilenameForm(name) + "_brief.html", pageContent);
+
                     // Check if not exists already
-                    String simpleName = PollsUtils.getSimpleName(name);
-                    if (councilMembersMap.containsKey(simpleName)) {
+                    String simpleName = PollsUtils.toSimpleName(name);
+                    if (councilMembersMap.containsKey(PollsUtils.toSimpleNameWithoutAccents(name))) {
                         log.info("Council member '" + simpleName + "' already known.");
                         continue;
+                    } else {
+                        log.info("Council member '{}' not known yet. ASCII form: {}", simpleName, PollsUtils.toSimpleNameWithoutAccents(name));
                     }
 
-                    CouncilMember member = new CouncilMember();
                     //TODO: Politician<->CouncilMember
-                    Politician politician = new Politician();
-                    politician.setRef(PollsUtils.generateUniqueKeyReference());
-                    politician.setName(simpleName);
-                    politician.setTitles(PollsUtils.getTitles(name));
-                    politician.setPicture(PORTAL_BASE_URL + image);
-                    politician.setExtId(id);
-                    member.setRef(PollsUtils.generateUniqueKeyReference());
-                    member.setPolitician(politician);
-                    member.setSeason(season);
-                    member.setExtId(id);
-                    member.setTown(town);
-                    member.setInstitution(institution);
+                    Politician politician = introducePolitician(id, image, name);
+                    CouncilMember member = introduceCouncilMember(town, institution, season, id, politician);
 
                     loadCouncilMemberDetails(member, member.getExtId(), partiesMap);
 
                     members.add(member);
-                    councilMembersMap.put(PollsUtils.getSimpleName(member.getPolitician().getName()), member);
+                    councilMembersMap.put(PollsUtils.toSimpleNameWithoutAccents(member.getPolitician().getName()), member);
                 } else {
                     log.info("No match");
                 }
@@ -96,16 +92,43 @@ public class PresovCouncilMemberCrawler {
         return members;
     }
 
+    private static CouncilMember introduceCouncilMember(Town town, Institution institution, Season season, String extId, Politician politician) {
+        CouncilMember member = new CouncilMember();
+        member.setRef(PollsUtils.generateUniqueKeyReference());
+        member.setPolitician(politician);
+        member.setSeason(season);
+        member.setTown(town);
+        member.setInstitution(institution);
+        member.setExtId(extId);
+
+        return member;
+    }
+
+    private static Politician introducePolitician(String extId,
+                                            String image,
+                                            String name) {
+        Politician politician = new Politician();
+        politician.setRef(PollsUtils.generateUniqueKeyReference());
+        politician.setName(PollsUtils.toSimpleName(name));
+        politician.setTitles(PollsUtils.getTitles(name));
+        politician.setPicture(PORTAL_BASE_URL + image);
+        politician.setExtId(extId);
+
+        return politician;
+    }
+
     //TODO: update from CouncilMember to Politician
-    private void loadCouncilMemberDetails(CouncilMember m, String id, Map<String, Party> partiesMap) {
+    private void loadCouncilMemberDetails(CouncilMember councilMember, String id, Map<String, Party> partiesMap) {
         try {
-            log.info(m.getPolitician().getName() + " :: DETAILS: ");
+            log.info(councilMember.getPolitician().getName() + " :: DETAILS: ");
             Document document = Jsoup.connect(String.format(MEMBER_DETAIL_URL, id)).get();
             Element detail = document.select("div[class=\"float_left\"]").first();
-            log.info(detail.toString());
-            Matcher matcher = MEMBER_DETAIL_PATTERN.matcher(detail.toString());
+            String content = detail.toString();
+            log.info(content);
+            Matcher matcher = MEMBER_DETAIL_PATTERN.matcher(content);
 //            log.info("Groups found: " + matcher.groupCount());
             if (matcher.find()) {
+                PollsUtils.saveToFile("presov_msz_member_" + PollsUtils.toFilenameForm(councilMember.getPolitician().getName()) + "_detail.html", content);
                 //log.info("Phone: " + matcher.group("phone"));
                 //log.info("Phone number: " + matcher.group("phonenumber"));
                 String emails = "";
@@ -116,23 +139,20 @@ public class PresovCouncilMemberCrawler {
                     emails += ", " + matcher.group("email2");
                 }
                 //TODO: commented out before update
-                m.getPolitician().setEmail(emails);
-                m.getPolitician().setPhone(matcher.group("phonenumber"));
+                councilMember.getPolitician().setEmail(emails);
+                councilMember.getPolitician().setPhone(matcher.group("phonenumber"));
                 String partyCandidate = matcher.group("candidateparty");
                 if (partyCandidate != null && !partyCandidate.isEmpty()) {
                     Set<PartyNominee> partyNominees = new HashSet<>();
-                    PartyNominee nominee = new PartyNominee();
                     String partyName = PollsUtils.cleanAndTrim(partyCandidate);
                     if (!partiesMap.containsKey(partyName)) {
                         partiesMap.put(partyName, introduceParty(partyName));
                     }
                     //TODO: comented out before update
-                    nominee.setPolitician(m.getPolitician());
-                    nominee.setParty(partiesMap.get(partyName));
-                    nominee.setSeason(m.getSeason());
+                    PartyNominee nominee = introducePartyNominee(councilMember, partiesMap, partyName);
                     partyNominees.add(nominee);
                     //TODO: commented out before update
-                    m.getPolitician().setPartyNominees(partyNominees);
+                    councilMember.getPolitician().setPartyNominees(partyNominees);
                 }
                 String partiesCandidate = matcher.group("candidateparties");
                 if (partiesCandidate != null && !partiesCandidate.isEmpty()) {
@@ -142,15 +162,10 @@ public class PresovCouncilMemberCrawler {
                         if (!partiesMap.containsKey(partyName)) {
                             partiesMap.put(partyName, introduceParty(partyName));
                         }
-                        PartyNominee nominee = new PartyNominee();
-                        //TODO: commented out before update
-                        nominee.setPolitician(m.getPolitician());
-                        nominee.setParty(partiesMap.get(partyName));
-                        nominee.setSeason(m.getSeason());
-                        partyNominees.add(nominee);
+                        partyNominees.add(introducePartyNominee(councilMember, partiesMap, partyName));
                     }
                     //TODO: commented out before update
-                    m.getPolitician().setPartyNominees(partyNominees);
+                    councilMember.getPolitician().setPartyNominees(partyNominees);
                 }
 
                 String clubMemberString = matcher.group("clubmember");
@@ -170,19 +185,15 @@ public class PresovCouncilMemberCrawler {
                         String clubName = PollsUtils.generateClubName(partyList);
                         if (!clubsMap.containsKey(clubName)) {
                             log.info(":NEW CLUB: " + clubName);
-                            Club club = new Club();
                             //TODO: commented out before update
-                            club.setTown(m.getTown()); //TODO: proxy
-                            club.setSeason(m.getSeason());
-                            club.setRef(PollsUtils.generateUniqueKeyReference());
-                            club.setName(clubName);
+                            Club club = introduceClub(councilMember.getTown(), councilMember.getSeason(), clubName);
                             Set<ClubParty> clubParties1 = new HashSet<>();
                             for (String partyName : partyList) {
                                 log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
                                 if (!partiesMap.containsKey(partyName)) {
                                     partiesMap.put(partyName, introduceParty(partyName));
                                 }
-                                clubParties1.add(introduceClubParty(m.getSeason(), club, partiesMap.get(partyName)));
+                                clubParties1.add(introduceClubParty(councilMember.getSeason(), club, partiesMap.get(partyName)));
                             }
                             //TODO: commented out before update
                             club.setClubParties(clubParties1);
@@ -190,10 +201,8 @@ public class PresovCouncilMemberCrawler {
                         }
                         Club club = clubsMap.get(clubName);
                         log.info("CLUB["+clubName+"]: NEW CLUB MEMBER: " + clubName);
-                        ClubMember clubMember = new ClubMember();
-                        clubMember.setCouncilMember(m);
-                        clubMember.setClubFunction(clubFunction);
-                        m.addClubMember(clubMember);
+                        ClubMember clubMember = introduceClubMember(councilMember, clubFunction);
+                        councilMember.addClubMember(clubMember);
                         club.addClubMember(clubMember);
                     }
                 }
@@ -202,7 +211,7 @@ public class PresovCouncilMemberCrawler {
                 if (functionsString != null && !functionsString.isEmpty()) {
                     String[] functions = functionsString.split("\\s*(<br(\\s*\\/)?>|<\\/p>)\\s*");
                     functionsString = String.join(", ", functions);
-                    m.setOtherFunctions(functionsString);
+                    councilMember.setOtherFunctions(functionsString);
                 }
             } else {
                 log.info("No match");
@@ -211,6 +220,32 @@ public class PresovCouncilMemberCrawler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static PartyNominee introducePartyNominee(CouncilMember councilMember, Map<String, Party> partiesMap, String partyName) {
+        PartyNominee nominee = new PartyNominee();
+        //TODO: commented out before update
+        nominee.setPolitician(councilMember.getPolitician());
+        nominee.setParty(partiesMap.get(partyName));
+        nominee.setSeason(councilMember.getSeason());
+        nominee.setTown(councilMember.getTown());
+        return nominee;
+    }
+
+    private static ClubMember introduceClubMember(CouncilMember councilMember, ClubFunction clubFunction) {
+        ClubMember clubMember = new ClubMember();
+        clubMember.setCouncilMember(councilMember);
+        clubMember.setClubFunction(clubFunction);
+        return clubMember;
+    }
+
+    private static Club introduceClub(Town town, Season season, String clubName) {
+        Club club = new Club();
+        club.setName(clubName);
+        club.setTown(town); //TODO: proxy
+        club.setSeason(season);
+        club.setRef(PollsUtils.generateUniqueKeyReference());
+        return club;
     }
 
     public static Party introduceParty(String partyName) {

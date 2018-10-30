@@ -47,6 +47,7 @@ dependencies {
     compile("io.rest-assured:rest-assured:${restAssuredVersion}")
     compile("io.rest-assured:json-schema-validator:${restAssuredVersion}")
     compile("org.jsoup:jsoup:${jsoupVersion}")
+    compile("commons-io:commons-io:2.4")
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
 }

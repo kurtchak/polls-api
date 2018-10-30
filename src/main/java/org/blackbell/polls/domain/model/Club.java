@@ -26,7 +26,7 @@ public class Club extends NamedEntity {
     private Set<ClubParty> clubParties;
 
     @JsonView(value = {Views.Club.class})
-    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "club")
 //    @JsonSerialize(using = ClubMembersSerializer.class)
     @JsonProperty("members")
     private Set<ClubMember> clubMembers;

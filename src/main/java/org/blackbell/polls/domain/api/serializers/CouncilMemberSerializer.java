@@ -37,7 +37,6 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
         jgen.writeStringField("email", value.getPolitician().getEmail());
         jgen.writeStringField("phone", value.getPolitician().getPhone());
         jgen.writeStringField("otherFunctions", value.getOtherFunctions());
-        jgen.writeStringField("position", value.getMemberType().name());
 
         jgen.writeFieldName("nominee");
         jgen.writeStartArray();
