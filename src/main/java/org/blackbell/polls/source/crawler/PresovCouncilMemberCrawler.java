@@ -189,7 +189,7 @@ public class PresovCouncilMemberCrawler {
                             Club club = introduceClub(councilMember.getTown(), councilMember.getSeason(), clubName);
                             Set<ClubParty> clubParties1 = new HashSet<>();
                             for (String partyName : partyList) {
-                                log.info(":PARTY NAME: |" + partyName + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
+                                log.info(":PARTY NAME: |" + PollsUtils.deAccent(partyName) + "| => partiesMap.containsKey(partyName): " + partiesMap.containsKey(partyName));
                                 if (!partiesMap.containsKey(partyName)) {
                                     partiesMap.put(partyName, introduceParty(partyName));
                                 }
@@ -249,10 +249,10 @@ public class PresovCouncilMemberCrawler {
     }
 
     public static Party introduceParty(String partyName) {
-        log.info(":NEW PARTY: " + partyName);
         Party party = new Party();
         party.setRef(partyName);
         party.setName(partyName);
+        log.info(":NEW PARTY: " + party);
         return party;
     }
 

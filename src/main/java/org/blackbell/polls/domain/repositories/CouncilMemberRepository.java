@@ -20,8 +20,15 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
     @Query(value =
             "select distinct m from CouncilMember m " +
                     "left join fetch m.clubMembers cm " +
+                    "left join fetch m.institution i " +
+                    "left join fetch m.season s " +
+                    "left join fetch m.town t " +
+                    "left join fetch cm.club c " +
+                    "left join fetch c.clubParties cp " +
+                    "left join fetch cp.party cpp " +
                     "left join fetch m.politician pl " +
                     "left join fetch pl.partyNominees pn " +
+                    "left join fetch pn.party p " +
                 "where m.town.ref = :town " +
                     "and m.season.ref = :season " +
                     "and m.institution.type = :institution")
@@ -33,11 +40,12 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
             "select m from CouncilMember m " +
                     "left join fetch m.clubMembers cm " +
                     "left join fetch cm.club c " +
-                    "left join fetch c.season s " +
+                    "left join fetch m.season s " +
                     "left join fetch c.clubParties cp " +
                     "left join fetch cp.party p " +
                     "left join fetch m.politician pl " +
                     "left join fetch pl.partyNominees pn " +
+                    "left join fetch pn.party p " +
                 "where m.ref = :ref")
     CouncilMember findByRef(@Param(value = "ref") String memberRef);
 
