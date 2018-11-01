@@ -129,7 +129,7 @@ public class SyncAgent {
 
     //TODO: zaciatok a koniec volebneho obdobia nie je jasne definovany
     private void syncSeasonMeetings(Town town) {
-        log.info(Constants.MarkerSync, town.getName() + ": syncSeasonMeetings");
+        log.info(Constants.MarkerSync, "{}: syncSeasonMeetings", town.getName());
         try {
             // Load New Seasons
             List<Season> retrievedSeasons =
@@ -140,7 +140,7 @@ public class SyncAgent {
 
             // Load Former Seasons
             List<Season> formerSeasons = seasonRepository.findAll();
-            log.info(Constants.MarkerSync, "FormerSeasons: " + formerSeasons);
+            log.info(Constants.MarkerSync, "FormerSeasons: {}", formerSeasons);
 
             // Save New Seasons
             formerSeasons.stream()
@@ -158,14 +158,14 @@ public class SyncAgent {
                         .forEach(type -> syncSeasonMeetings(town, season, institutionsMap.get(type)));
             }
         } catch (Exception e) {
-            log.error(Constants.MarkerSync, String.format("An error occured during the %ss seasons synchronization.", town.getName()));
+            log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName());
             e.printStackTrace();
         }
 
     }
 
     private void saveNewSeason(Season season) {
-        log.info(String.format("Adding new season: {}",season));
+        log.info(String.format("Adding new season: {}", season));
         seasonRepository.save(season);
     }
 
@@ -175,7 +175,7 @@ public class SyncAgent {
             //TODO:
             return;
         }
-        log.info(Constants.MarkerSync, town.getName() + ":" + season.getName() + ":" + institution.getName() + ": syncSeasonMeetings");
+        log.info(Constants.MarkerSync, "{}:{}:{}: syncSeasonMeetings", town.getName(), season.getName(), institution.getName());
         try {
             DataImport dataImport = getDataImport(town);
             Date latestMeetingDate = meetingRepository.getLatestMeetingDate(town, institution.getType(), season.getName());
@@ -187,7 +187,7 @@ public class SyncAgent {
                         loadMeeting(meeting, dataImport);
                         meetingRepository.save(meeting);// TODO: check synchronization with other meetings and its retention
                     } else {
-                        log.info(Constants.MarkerSync, ": meeting details already loaded: " + meeting.getDate());
+                        log.info(Constants.MarkerSync, ": meeting details already loaded: {}", meeting.getDate());
                     }
                 }
             }
@@ -199,22 +199,19 @@ public class SyncAgent {
     }
 
     private Meeting loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {
-        log.info(Constants.MarkerSync, "loadMeeting: " + meeting);
+        log.info(Constants.MarkerSync, "loadMeeting: {}", meeting);
         dataImport.loadMeetingDetails(meeting, meeting.getExtId());
         if (meeting.getAgendaItems() != null) {
             for (AgendaItem item : meeting.getAgendaItems()) {
                 if (item.getPolls() != null) {
                     for (Poll poll : item.getPolls()) {
-                        log.info(Constants.MarkerSync, ">> poll: " + poll);
+                        log.info(Constants.MarkerSync, ">> poll: {}", poll);
                         dataImport.loadPollDetails(poll, getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution()));
-//                        for (Vote vote : poll.getVotes()) {
-//                            log.info(Constants.MarkerSync, ">> vote: " + vote);
-//                        }
                     }
                 }
             }
         }
-        log.info(Constants.MarkerSync, "NEW MEETING: " + meeting);
+        log.info(Constants.MarkerSync, "NEW MEETING: {}", meeting);
         return meeting;
     }
 
@@ -229,7 +226,7 @@ public class SyncAgent {
 
     // MEMBERS
     public Map<String, CouncilMember> getMembersMap(Town town, Season season, Institution institution) throws Exception {
-        log.info(Constants.MarkerSync, "Get membersMap for " + town.getName() + ":" + season.getName() + ":" + institution.getName());
+        log.info(Constants.MarkerSync, "Get membersMap for {}:{}:", town.getName(), institution.getName());
         if (allMembersMap == null) {
             allMembersMap = new HashMap<>();
         }
@@ -241,24 +238,24 @@ public class SyncAgent {
     }
 
     private void loadCouncilMembers(Town town, Season season, Institution institution) throws Exception {
-        log.info(Constants.MarkerSync, " -- loadCouncilMembers for season: " + season);
+        log.info(Constants.MarkerSync, " -- loadCouncilMembers for season: {}", season);
         Map<String, CouncilMember> membersMap = new HashMap<>();
         Set<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
-        log.info(Constants.MarkerSync, " -- members: " + (members != null ? members.size() : 0));
+        log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         if (members == null || members.isEmpty()) { // TODO: preco vracia empty set?
             syncCouncilMembers();
             members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
-            log.info(Constants.MarkerSync, " -- members: " + (members != null ? members.size() : 0));
+            log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         }
         if (members == null || members.isEmpty()) {
             throw new Exception(String.format("No CouncilMembers loaded for the town %s, season %s and institution %s.", town.getRef(), season.getRef(), institution));
         }
         for (CouncilMember councilMember : members) {
-            log.info(Constants.MarkerSync, "Loaded Council Member > " + councilMember.getPolitician().getName());
+            log.info(Constants.MarkerSync, "Loaded Council Member > {}", councilMember.getPolitician().getName());
             membersMap.put(PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName()), councilMember);
         }
         String membersKey = PollsUtils.generateMemberKey(town, season, institution.getType());
-        log.info(Constants.MarkerSync, "Loaded Council Member Group > " + membersKey);
+        log.info(Constants.MarkerSync, "Loaded Council Member Group > {}", membersKey);
         allMembersMap.put(membersKey, membersMap);
     }
 

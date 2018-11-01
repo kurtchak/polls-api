@@ -42,7 +42,13 @@ public class PresovCouncilMemberCrawler {
 
     private Map<String, Club> clubsMap = new HashMap<>();
 
-    public Set<CouncilMember> getCouncilMembers(Town town, Institution institution, Season season, Map<String, Party> partiesMap, Map<String, CouncilMember> councilMembersMap) {
+    public Set<CouncilMember> getCouncilMembers(
+            Town town,
+            Institution institution,
+            Season season,
+            Map<String, Party> partiesMap,
+            Map<String, CouncilMember> councilMembersMap) {
+
         Set<CouncilMember> members = new HashSet<>();
         try {
             Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
@@ -84,9 +90,13 @@ public class PresovCouncilMemberCrawler {
                                 politician.getPartyNominees().stream()
                                         .map(partyNominee -> partyNominee.getParty().getName()).collect(Collectors.joining(",")));
                     }
-                    log.info("COUNCIL MEMBER: {} -> CLUB MEMBER OF: {}", PollsUtils.deAccent(member.getPolitician().getName()), member.getActualClubMember());
-                    if (member.getClubMembers() != null) {
-                        log.info("\t{} ->> {}", member.getClubMembers() != null ? member.getClubMembers().size() : 0,
+                    log.info("COUNCIL MEMBER: {} -> CLUB MEMBER OF: {}",
+                            PollsUtils.deAccent(member.getPolitician().getName()),
+                            member.getActualClubMember() != null ? member.getActualClubMember().getClub().getName() : null);
+                    if (member.getActualClubMember() != null) {
+                        log.info("\t{} ->> {}",
+                                member.getActualClubMember().getClub().getClubParties() != null
+                                        ? member.getActualClubMember().getClub().getClubParties().size() : 0,
                                 member.getActualClubMember().getClub().getClubParties().stream()
                                         .map(clubParty -> clubParty.getParty().getName()).collect(Collectors.joining(",")));
                     }
@@ -125,7 +135,8 @@ public class PresovCouncilMemberCrawler {
                 String partiesCandidates = PresovCouncilMemberRegexpMatcher.loadValue(matcher,"candidateparties");
                 if (partiesCandidates != null && !partiesCandidates.isEmpty()) {
 
-                    Map<String, Party> newParties = PollsUtils.splitCleanAndTrim(partiesCandidates).stream()
+                    List<String> partyNames = PollsUtils.splitCleanAndTrim(partiesCandidates);
+                    Map<String, Party> newParties = partyNames.stream()
                             .filter(partyName -> !partiesMap.containsKey(partyName))
                             .collect(Collectors.toMap(
                                     partyName -> partyName,
@@ -135,7 +146,7 @@ public class PresovCouncilMemberCrawler {
                     partiesMap.keySet().stream().forEach(partyName -> log.info("---> PARTY: {} -> {}", partyName, partiesMap.get(partyName)));
 
                     Set<PartyNominee> partyNominees =
-                            newParties.keySet().stream()
+                            partyNames.stream()
                                     .map(partyName -> introducePartyNominee(councilMember, partiesMap, partyName))
                                     .collect(Collectors.toSet());
                     partyNominees.stream().forEach(partyNominee -> log.info("--> partyNominee: {}", partyNominee));
@@ -161,13 +172,16 @@ public class PresovCouncilMemberCrawler {
                                             .collect(Collectors.toMap(
                                                     partyName -> partyName,
                                                     partyName -> introduceParty(partyName)));
+                            log.info("NEW PARTIES: {}", newParties != null ? newParties.keySet().stream().collect(Collectors.joining(", ")) : null);
                             partiesMap.putAll(newParties);
+                            log.info("ALL PARTIES: {}", partiesMap != null ? partiesMap.keySet().stream().collect(Collectors.joining(", ")) : null);
 
                             club.setClubParties(
-                                    newParties.keySet().stream()
+                                    partyList.stream()
                                             .map(partyName -> introduceClubParty(councilMember.getSeason(), club, partiesMap.get(partyName)))
                                             .collect(Collectors.toSet()));
 
+                            log.info("CLUB PARTIES: {}", club.getClubParties() != null ? club.getClubParties().size() : 0);
                             clubsMap.put(club.getName(), club);
                         }
                         Club club = clubsMap.get(clubName);

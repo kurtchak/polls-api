@@ -1,4 +1,4 @@
-package org.blackbell.polls.container.filters;
+package org.blackbell.polls.container;
 
 /**
  * Created by Ján Korčák on 24.4.2017.
