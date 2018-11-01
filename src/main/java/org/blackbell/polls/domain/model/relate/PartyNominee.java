@@ -90,12 +90,18 @@ public class PartyNominee extends BaseEntity {
 
         PartyNominee that = (PartyNominee) o;
 
-        return id == that.id;
-
+        if (!getParty().equals(that.getParty())) return false;
+        if (!getPolitician().equals(that.getPolitician())) return false;
+        if (!getSeason().equals(that.getSeason())) return false;
+        return getTown().equals(that.getTown());
     }
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        int result = getParty().hashCode();
+        result = 31 * result + getPolitician().hashCode();
+        result = 31 * result + getSeason().hashCode();
+        result = 31 * result + getTown().hashCode();
+        return result;
     }
 }

@@ -67,12 +67,16 @@ public class ClubParty extends BaseEntity {
 
         ClubParty clubParty = (ClubParty) o;
 
-        return id == clubParty.id;
-
+        if (!getClub().equals(clubParty.getClub())) return false;
+        if (!getParty().equals(clubParty.getParty())) return false;
+        return getSeason().equals(clubParty.getSeason());
     }
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        int result = getClub().hashCode();
+        result = 31 * result + getParty().hashCode();
+        result = 31 * result + getSeason().hashCode();
+        return result;
     }
 }
