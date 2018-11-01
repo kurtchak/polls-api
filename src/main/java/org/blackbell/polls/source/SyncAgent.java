@@ -113,8 +113,8 @@ public class SyncAgent {
             log.info(Constants.MarkerSync, "No town to sync");
         } else {
             for (Town town : towns) {
-//                syncSeasonMeetings(town);
-//                town.setLastSyncDate(new Date());
+                syncSeasonMeetings(town);
+                town.setLastSyncDate(new Date());
                 townRepository.save(town);
             }
         }
