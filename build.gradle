@@ -27,8 +27,14 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 group = 'org.blackbell'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 sourceCompatibility = 1.8
+
+processResources {
+    filesMatching('application.properties') {
+        expand(project.properties)
+    }
+}
 
 repositories {
     mavenCentral()
