@@ -36,6 +36,7 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     @Query(value =
             "select m from Meeting m " +
                     "left join fetch m.season s " +
+                    "left join fetch m.institution i " +
                     "left join fetch m.town t " +
                     "left join fetch m.agendaItems a " +
                     "left join fetch a.attachments aa " +

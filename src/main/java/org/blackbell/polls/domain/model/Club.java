@@ -88,23 +88,35 @@ public class Club extends NamedEntity {
             clubMembers = new HashSet<>();
         }
         clubMembers.add(clubMember);
-        clubMember.setClub(this);
+    }
+
+    public void addClubParty(ClubParty clubParty) {
+        if (clubParties == null) {
+            clubParties = new HashSet<>();
+        }
+        clubParties.add(clubParty);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Club)) return false;
+        if (!super.equals(o)) return false;
 
         Club club = (Club) o;
 
-        return getId() == club.getId();
-
+        if (!getName().equals(club.getName())) return false;
+        if (!getTown().equals(club.getTown())) return false;
+        return getSeason().equals(club.getSeason());
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        int result = super.hashCode();
+        result = 31 * result + getName().hashCode();
+        result = 31 * result + getTown().hashCode();
+        result = 31 * result + getSeason().hashCode();
+        return result;
     }
 
     @Override

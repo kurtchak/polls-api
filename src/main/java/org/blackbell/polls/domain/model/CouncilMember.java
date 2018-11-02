@@ -166,7 +166,6 @@ public class CouncilMember extends EntityWithReference {
             clubMembers = new HashSet<>();
         }
         clubMembers.add(clubMember);
-        clubMember.setCouncilMember(this);
     }
 
     @Override
@@ -174,21 +173,20 @@ public class CouncilMember extends EntityWithReference {
         if (this == o) return true;
         if (!(o instanceof CouncilMember)) return false;
 
-        CouncilMember that = (CouncilMember) o;
+        CouncilMember member = (CouncilMember) o;
 
-        if (!season.equals(that.season)) return false;
-        if (!town.equals(that.town)) return false;
-        if (institution != that.institution) return false;
-        return politician.equals(that.politician);
-
+        if (!getSeason().equals(member.getSeason())) return false;
+        if (!getTown().equals(member.getTown())) return false;
+        if (!getInstitution().equals(member.getInstitution())) return false;
+        return getPolitician().equals(member.getPolitician());
     }
 
     @Override
     public int hashCode() {
-        int result = season.hashCode();
-        result = 31 * result + town.hashCode();
-        result = 31 * result + institution.hashCode();
-        result = 31 * result + politician.hashCode();
+        int result = getSeason().hashCode();
+        result = 31 * result + getTown().hashCode();
+        result = 31 * result + getInstitution().hashCode();
+        result = 31 * result + getPolitician().hashCode();
         return result;
     }
 

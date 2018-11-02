@@ -6,6 +6,7 @@ import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
@@ -25,7 +26,7 @@ public class Party extends NamedEntity {
     private String logo;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "party", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PartyNominee> partyNominees;
 
     @JsonView(value = {Views.Parties.class})
@@ -62,20 +63,4 @@ public class Party extends NamedEntity {
         this.partyNominees = partyNominees;
     }
 
-    // TODO: is it right
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Party)) return false;
-
-        Party party = (Party) o;
-
-        return id == party.id;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (id ^ (id >>> 32));
-    }
 }

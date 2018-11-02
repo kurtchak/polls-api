@@ -16,6 +16,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -126,6 +127,14 @@ public class Politician extends NamedEntity {
         this.partyNominees = partyNominees;
     }
 
+    public void addPartyNominee(PartyNominee partyNominee) {
+        if (partyNominees == null) {
+            partyNominees = new HashSet<PartyNominee>();
+        }
+        partyNominee.setPolitician(this);
+        partyNominees.add(partyNominee);
+    }
+
     public Set<CouncilMember> getCouncilMembers() {
         return councilMembers;
     }
@@ -162,6 +171,7 @@ public class Politician extends NamedEntity {
                 ", picture='" + picture + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
+                ", partyNominees='" + partyNominees + '\'' +
                 '}';
     }
 }
