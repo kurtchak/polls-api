@@ -30,7 +30,7 @@ public class Season extends NamedEntity {
 
         Season season = (Season) o;
 
-        return ref == season.ref;
+        return ref.equals(season.ref);
 
     }
 
