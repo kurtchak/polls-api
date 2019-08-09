@@ -10,7 +10,6 @@ import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
 import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,77 +23,67 @@ import java.util.stream.Collectors;
 @Component
 public class SyncAgent {
     private static final Logger log = LoggerFactory.getLogger(SyncAgent.class);
-    public static final String PRESOV_REF = "presov";
 
-    @Autowired
-    private MeetingRepository meetingRepository;
+    private static final String PRESOV_REF = "presov";
 
-    @Autowired
-    private SeasonRepository seasonRepository;
+    private final MeetingRepository meetingRepository;
+    private final SeasonRepository seasonRepository;
+    private final TownRepository townRepository;
+    private final PartyRepository partyRepository;
+    private final CouncilMemberRepository councilMemberRepository;
+    private final InstitutionRepository institutionRepository;
 
-    @Autowired
-    private TownRepository townRepository;
-
-    @Autowired
-    private PartyRepository partyRepository;
-
-    @Autowired
-    private CouncilMemberRepository councilMemberRepository;
-
-    @Autowired
-    private InstitutionRepository institutionRepository;
-
-    private List<Town> towns;
+    private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
     private Map<String, Party> partiesMap;
     private Map<InstitutionType, List<Institution>> institutionsMap;
+    private Map<String, Season> seasonsMap;
 
-    public SyncAgent() {}
+    public SyncAgent(MeetingRepository meetingRepository, SeasonRepository seasonRepository, TownRepository townRepository, PartyRepository partyRepository, CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository) {
+        this.meetingRepository = meetingRepository;
+        this.seasonRepository = seasonRepository;
+        this.townRepository = townRepository;
+        this.partyRepository = partyRepository;
+        this.councilMemberRepository = councilMemberRepository;
+        this.institutionRepository = institutionRepository;
+    }
 
 //    @Scheduled(fixedRate = 86400000, initialDelay = 60000)
-    public void syncCouncilMembers() {
+    public void syncCouncilMembers(Town town) {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         // AD-HOC
         Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
-        List<Season> seasons = seasonRepository.findAll();
+        for (String seasonRef : getSeasonsRefs()) {
+            if (PRESOV_REF.equals(town.getRef())) {
+                Set<CouncilMember> councilMembers = councilMemberRepository
+                        .getByTownAndSeasonAndInstitution(
+                                town.getRef(),
+                                seasonRef,
+                                InstitutionType.ZASTUPITELSTVO);
 
-        for (Season season : seasons) {
-            partiesMap = partyRepository.findAll()
-                    .stream().collect(Collectors.toMap(Party::getName, p -> p));
+                Map<String, CouncilMember> councilMembersMap = councilMembers
+                        .stream().collect(
+                                Collectors.toMap(
+                                        cm -> PollsUtils
+                                                .toSimpleNameWithoutAccents(
+                                                        cm.getPolitician().getName()),
+                                        cm -> cm));
 
-            for (Town town : getTowns()) {
-                if (PRESOV_REF.equals(town.getRef())) {
+                log.info("COUNCIL MEMBERS: {}", councilMembers.size());
 
-                    Set<CouncilMember> councilMembers = councilMemberRepository
-                            .getByTownAndSeasonAndInstitution(
-                                    town.getRef(),
-                                    season.getRef(),
-                                    InstitutionType.ZASTUPITELSTVO);
+                Set<CouncilMember> newCouncilMembers =
+                        new PresovCouncilMemberCrawler()
+                                .getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
 
-                    Map<String, CouncilMember> councilMembersMap = councilMembers
-                            .stream().collect(
-                                    Collectors.toMap(
-                                            cm -> PollsUtils
-                                                    .toSimpleNameWithoutAccents(
-                                                            cm.getPolitician().getName()),
-                                            cm -> cm));
+                if (newCouncilMembers != null) {
+                    // log
+                    newCouncilMembers.forEach(
+                            cm -> log.info("NEW COUNCIL MEMBER: {}",
+                                    PollsUtils.deAccent(cm.getPolitician().getName())));
 
-                    log.info("COUNCIL MEMBERS: {}", councilMembers.size());
-
-                    Set<CouncilMember> newCouncilMembers =
-                            new PresovCouncilMemberCrawler()
-                                    .getCouncilMembers(town, townCouncil, season, partiesMap, councilMembersMap);
-
-                    if (newCouncilMembers != null) {
-                        // log
-                        newCouncilMembers.stream().forEach(
-                                cm -> log.info("NEW COUNCIL MEMBER: {}",
-                                        PollsUtils.deAccent(cm.getPolitician().getName())));
-
-                        councilMemberRepository.save(newCouncilMembers);
-                    } else {
-                        log.info("No new CouncilMembers found for town {} and season {}", town.getName(), season.getName());
-                    }
+                    councilMemberRepository.save(newCouncilMembers);
+                } else {
+                    log.info("No new CouncilMembers found for town {} and season {}", town.getName(), getSeason(seasonRef));
                 }
             }
         }
@@ -102,37 +91,77 @@ public class SyncAgent {
 //        councilMemberRepository.flush();
     }
 
-    private List<Town> getTowns() {
-        if (towns == null) {
-            towns = Collections.singletonList(townRepository.findByRef(PRESOV_REF));
+    private Map<String, Party> getPartiesMap() {
+        if (partiesMap == null) {
+            loadPartiesMap();
         }
-        return towns;
+        return partiesMap;
+    }
+
+    private Town getTown(String ref) {
+        if (townsMap == null) {
+            loadTownsMap();
+        }
+        return townsMap.get(ref);
+    }
+
+    private Set<String> getTownsRefs() {
+        if (townsMap == null) {
+            loadTownsMap();
+        }
+        return townsMap.keySet();
+    }
+
+    private Season getSeason(String ref) {
+        if (seasonsMap == null) {
+            loadSeasonsMap();
+        }
+        return seasonsMap.get(ref);
+    }
+
+    private Set<String> getSeasonsRefs() {
+        if (seasonsMap == null) {
+            loadSeasonsMap();
+        }
+        return seasonsMap.keySet();
+    }
+
+    private void loadSeasonsMap() {
+        seasonsMap = seasonRepository.findAll()
+                .stream().collect(Collectors.toMap(Season::getRef, p -> p));
+    }
+
+    private void loadPartiesMap() {
+        partiesMap = partyRepository.findAll()
+                .stream().collect(Collectors.toMap(Party::getName, p -> p));
+    }
+
+    private void loadTownsMap() {
+        townsMap = townRepository.findAll()
+                .stream().collect(Collectors.toMap(Town::getRef, t -> t));
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 500)
     @Transactional
     public void sync() {
-        List<Town> towns = getTowns();
+        Set<String> townsRefs = getTownsRefs();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
         log.info(Constants.MarkerSync, "Synchronization started");
 
-        towns.forEach(this::syncSeasons);
-
-        syncCouncilMembers();
-
-        if (towns.isEmpty()) {
+        if (townsRefs.isEmpty()) {
             log.info(Constants.MarkerSync, "No town to sync");
-        } else {
-            for (Town town : towns) {
-                log.info("town: {}", town);
-                List<Season> seasons = seasonRepository.findAll();
-                for (Season season : seasons) {
-                    syncSeasonMeetings(town, season);
-                }
-                town.setLastSyncDate(new Date());
-                townRepository.save(town);
-            }
         }
+
+        townsRefs.forEach(townRef -> {
+            log.info("town: {}", townRef);
+            syncSeasons(getTown(townRef));
+            syncCouncilMembers(getTown(townRef));
+
+            Town town = getTown(townRef);
+            getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
+            town.setLastSyncDate(new Date());
+            townRepository.save(town);
+        });
     }
 
     private void syncSeasons(Town town) {
@@ -147,14 +176,7 @@ public class SyncAgent {
             log.info(Constants.MarkerSync, "FORMER SEASONS: {}", formerSeasons);
 
             // Save New Seasons
-            for (Season season : retrievedSeasons) {
-                if (!formerSeasons.contains(season)) {
-                    log.info("== Season: {}", season);
-                    saveNewSeason(season);
-                } else {
-                    log.info("<> Season: {}", season);
-                }
-            }
+            retrievedSeasons.stream().filter(season -> !formerSeasons.contains(season)).forEach(this::saveNewSeason);
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName());
             e.printStackTrace();
@@ -257,7 +279,7 @@ public class SyncAgent {
         Set<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
         log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         if (members == null || members.isEmpty()) { // TODO: preco vracia empty set?
-            syncCouncilMembers();
+            syncCouncilMembers(town);
             members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
             log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         }
