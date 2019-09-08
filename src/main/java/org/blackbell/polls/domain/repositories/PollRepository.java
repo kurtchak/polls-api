@@ -38,7 +38,7 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
 
     @Query(value = "select p from Poll p " +
                         "join fetch p.agendaItem a " +
-                        "join fetch a.attachments at " +
+                        "left join fetch a.attachments at " +
                         "join fetch a.meeting m " +
                         "join fetch m.season s " +
                         "join fetch m.institution i " +

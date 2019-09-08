@@ -9,12 +9,10 @@ import org.blackbell.polls.domain.api.serializers.CouncilMemberSerializer;
 import org.blackbell.polls.domain.api.serializers.PoliticianClubSerializer;
 import org.blackbell.polls.domain.api.serializers.SeasonPropertySerializer;
 import org.blackbell.polls.domain.model.common.EntityWithReference;
-import org.blackbell.polls.domain.model.enums.MemberType;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
 import javax.persistence.*;
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,18 +36,8 @@ public class CouncilMember extends EntityWithReference {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @JsonProperty("club")
     @JsonSerialize(using = PoliticianClubSerializer.class)
-    public ClubMember getActualClubMember() {
-        if (clubMembers != null) {
-            Calendar cal = Calendar.getInstance();
-            for (ClubMember cm : clubMembers) {
-                String[] range = cm.getClub().getSeason().getName().split("-");
-                if (Integer.valueOf(range[0]) <= cal.get(Calendar.YEAR)
-                        && Integer.valueOf(range[1]) >= cal.get(Calendar.YEAR)) {
-                    return cm;
-                }
-            }
-        }
-        return null;
+    public ClubMember getClubMember() {
+        return clubMembers.stream().findFirst().orElseGet(null);
     }
 
     @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
@@ -196,7 +184,6 @@ public class CouncilMember extends EntityWithReference {
                 "id=" + id +
                 ", ref='" + ref + '\'' +
                 ", extId='" + extId + '\'' +
-                ", clubMembers=" + clubMembers +
                 ", otherFunctions='" + otherFunctions + '\'' +
                 ", season=" + season +
                 ", town=" + town +

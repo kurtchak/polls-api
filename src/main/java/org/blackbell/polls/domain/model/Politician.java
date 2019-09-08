@@ -171,7 +171,6 @@ public class Politician extends NamedEntity {
                 ", picture='" + picture + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
-                ", partyNominees='" + partyNominees + '\'' +
                 '}';
     }
 }

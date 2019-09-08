@@ -104,4 +104,14 @@ public class PartyNominee extends BaseEntity {
         result = 31 * result + getTown().hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "PartyNominee{" +
+                "party=" + party +
+                ", politician=" + politician +
+                ", season=" + season +
+                ", town=" + town +
+                '}';
+    }
 }

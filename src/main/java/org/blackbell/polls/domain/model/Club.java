@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.domain.api.Views;
+import org.blackbell.polls.domain.api.serializers.ClubMembersSerializer;
 import org.blackbell.polls.domain.api.serializers.ClubPartiesSerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.relate.ClubMember;
@@ -27,7 +28,7 @@ public class Club extends NamedEntity {
 
     @JsonView(value = {Views.Club.class})
     @OneToMany(mappedBy = "club")
-//    @JsonSerialize(using = ClubMembersSerializer.class)
+    @JsonSerialize(using = ClubMembersSerializer.class)
     @JsonProperty("members")
     private Set<ClubMember> clubMembers;
 
@@ -125,8 +126,6 @@ public class Club extends NamedEntity {
                 "id=" + id +
                 ", ref='" + ref + '\'' +
                 ", name='" + name + '\'' +
-                ", clubParties=" + clubParties +
-                ", clubMembers=" + clubMembers +
                 ", town=" + town +
                 ", season=" + season +
                 '}';

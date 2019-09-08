@@ -70,4 +70,13 @@ public class ClubMember extends BaseEntity {
         result = 31 * result + getCouncilMember().hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ClubMember{" +
+                "club=" + club +
+                ", councilMember=" + councilMember +
+                ", clubFunction=" + clubFunction +
+                '}';
+    }
 }

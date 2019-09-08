@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.blackbell.polls.domain.model.Club;
 import org.blackbell.polls.domain.model.CouncilMember;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
@@ -30,7 +31,7 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
             throws IOException, JsonProcessingException {
 
         jgen.writeStartObject();
-        jgen.writeStringField("ref", value.getPolitician().getRef());
+        jgen.writeStringField("ref", value.getRef());
         jgen.writeStringField("name", value.getPolitician().getName());
         jgen.writeStringField("title", value.getPolitician().getTitles());
         jgen.writeStringField("picture", value.getPolitician().getPicture());
@@ -38,23 +39,26 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
         jgen.writeStringField("phone", value.getPolitician().getPhone());
         jgen.writeStringField("otherFunctions", value.getOtherFunctions());
 
-        jgen.writeFieldName("nominee");
-        jgen.writeStartArray();
         if (value.getPartyNominees() != null) {
+            jgen.writeFieldName("nominee");
+            jgen.writeStartArray();
             for (PartyNominee nominee : value.getPartyNominees()) {
                 jgen.writeString(nominee.getParty().getName());
             }
+            jgen.writeEndArray();
         }
-        jgen.writeEndArray();
 
-        if (value.getActualClubMember() != null) {
-            ClubMember clubMember = value.getActualClubMember();
+        ClubMember clubMember = value.getClubMember();
+        if (clubMember != null) {
+            System.out.println(clubMember.getCouncilMember().getPolitician().getName() + " -> " + clubMember);
             jgen.writeFieldName("club");
             jgen.writeStartObject();
+    //        jgen.writeStringField("club", clubMember.toString());
             jgen.writeStringField("ref", clubMember.getClub().getRef());
             jgen.writeStringField("name", clubMember.getClub().getName());
+            jgen.writeStringField("season", clubMember.getClub().getSeason().getName());
             jgen.writeStringField("position", clubMember.getClubFunction().name());
-//            provider.findValueSerializer(Club.class).serialize(value.getActualClubMember().getClub(), jgen, provider);
+    //            provider.findValueSerializer(Club.class).serialize(value.getClubMember().getClub(), jgen, provider);
             jgen.writeEndObject();
         }
         jgen.writeEndObject();
