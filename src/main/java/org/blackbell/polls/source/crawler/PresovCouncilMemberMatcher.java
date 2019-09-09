@@ -29,8 +29,8 @@ public class PresovCouncilMemberMatcher {
                     result = readGroup(matcher, "candidateparties");
 //                } else if (matcher.group("candidateparty") != null && !matcher.group("candidateparty").isEmpty()) {
 //                    result = readGroup(matcher, "candidateparty");
-                } else {
-                    log.info("CANDIDATEPARTIES NOT FOUND IN: " + matcher.group());
+//                } else {
+//                    log.info("CANDIDATEPARTIES NOT FOUND IN: " + matcher.group());
                 }
                 break;
             default:

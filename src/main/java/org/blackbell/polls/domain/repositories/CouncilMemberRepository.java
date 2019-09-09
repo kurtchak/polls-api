@@ -1,7 +1,6 @@
 package org.blackbell.polls.domain.repositories;
 
 import org.blackbell.polls.domain.model.CouncilMember;
-import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -48,9 +47,6 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
     Set<CouncilMember> getByTownAndSeasonAndInstitution(@Param(value = "town") String town,
                                                          @Param(value = "season") String season,
                                                          @Param(value = "institution") InstitutionType institution);
-
-    @Query(value = "select m from CouncilMember m where m.season = :season")
-    Set<CouncilMember> findBySeason(@Param(value = "season") Season season);
 
     @Query(value =
             "select distinct m from CouncilMember m " +

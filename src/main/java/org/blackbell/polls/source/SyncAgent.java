@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.singletonMap;
+
 /**
  * Created by kurtcha on 25.2.2018.
  */
@@ -138,8 +140,9 @@ public class SyncAgent {
     }
 
     private void loadTownsMap() {
-        townsMap = townRepository.findAll()
-                .stream().collect(Collectors.toMap(Town::getRef, t -> t));
+        townsMap = singletonMap("presov", townRepository.findByRef("presov"));
+//        townsMap = townRepository.findAll()
+//                .stream().collect(Collectors.toMap(Town::getRef, t -> t));
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 500)
