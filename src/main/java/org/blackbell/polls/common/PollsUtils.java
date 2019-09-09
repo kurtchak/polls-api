@@ -77,7 +77,7 @@ public class PollsUtils {
     }
 
     public static List<String> splitCleanAndTrim(String value) {
-        return Arrays.asList(value.split("\\s*,\\s*|\\s+a\\s+")).stream().map(item -> cleanAndTrim(item)).collect(Collectors.toList());
+        return Arrays.stream(value.split("\\s*,\\s*|\\s+a\\s+")).map(PollsUtils::cleanAndTrim).collect(Collectors.toList());
     }
 
     public static String generateClubName(List<String> partyList) {

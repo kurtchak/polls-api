@@ -32,8 +32,11 @@ public class PresovCouncilMemberCrawler {
 
     private static final String MEMBER_LINK_RE = "<a href=\"javascript:osoba_podrobnosti\\((?<id>\\d+),1\\)\" title=\"[^\"]+\"> <img src=\"(?<image>\\/portals_pictures\\/i_\\d+\\/i_\\d+.jpg)\" width=\"\\d+\" height=\"\\d+\" title=\"(?<name>[^\"]+)\" alt=\"[^\"]+\"><\\/a>";
     private static final String MEMBER_DETAIL_URL = "http://www.presov.sk/admin_new/modules/osoba_v_novom_okne.php?id_osoba=%s&all_data=1";
-    private static final String MEMBER_DETAIL_RE = "<div class=\"float_left\\\">\\s*<p>(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*(<a href=\"mailto:(?<email2>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*)?(<\\/p>)?\\s*<p>(?<address>[^<]+)(\\s*<br(\\s*\\/)?>\\s*)*(?<partycandidate>Kandidát(ka)? politickej strany (?<candidateparty>[^<]+))?\\s*(?<partiescandidate>((Kandidát(ka)? koalície politických strán|Kandidát(ka)? politickej koalície)\\s*(?<candidateparties>[^<]+))|Nezávislá kandidátka|Nezávislý kandidát)?(\\s*<br(\\s*\\/)?>\\s*)?<\\/p>\\s*<p>((?<clubmember>((Člen(ka)?|P(odp)?redseda|P(odp)?redsedníčka) Poslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)\\s*<br(\\s*\\/)?>)?\\s*((?<functions>.*(<br(\\s*\\/)?>|<\\/p>)\\s*)+)\\s*<\\/div>";
-    private static final Pattern MEMBER_DETAIL_PATTERN = Pattern.compile(MEMBER_DETAIL_RE);
+//    private static final String MEMBER_DETAIL_RE = "<div class=\"float_left\\\">\\s*<p>(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*(<a href=\"mailto:(?<email2>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*)?(<\\/p>)?\\s*<p>(?<address>[^<]+)(\\s*<br(\\s*\\/)?>\\s*)*(?<partycandidate>Kandidát(ka)? politickej strany (?<candidateparty>[^<]+))?\\s*(?<partiescandidate>((Kandidát(ka)? koalície politických strán|Kandidát(ka)? politickej koalície)\\s*(?<candidateparties>[^<]+))|Nezávislá kandidátka|Nezávislý kandidát)?(\\s*<br(\\s*\\/)?>\\s*)?<\\/p>\\s*<p>((?<clubmember>((Člen(ka)?|P(odp)?redseda|P(odp)?redsedníčka) Poslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)\\s*<br(\\s*\\/)?>)?\\s*((?<functions>.*(<br(\\s*\\/)?>|<\\/p>)\\s*)+)\\s*<\\/div>";
+    // adapted to 2018-2022
+//    private static final String MEMBER_DETAIL_RE = "<div class=\"float_left\\\">\\s*<p>(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*<p>E-mail: <a href=\"mailto:(?<email>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*(<a href=\"mailto:(?<email2>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*)?(<\\/p>)?\\s*<p>\\s*(?<partiescandidate>((K|k)andidát(ka)?:?\\s*(?<candidateparties>.*?))|Nezávislá kandidátka|Nezávislý kandidát)\\s*<\\/p>\\s*<p>(?<district>.*?)(\\s*<br>)+\\s*((?<clubmember>(((Č|č)len(ka)?|(P|p)(odp)?redseda|(P|p)(odp)?redsedníčka) (P|p)oslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)(\\s*<br>)+)?\\s*(?<functions>.*)(\\s*<br>)+\\s*adresa na doručovanie písomností:\\s*(?<correspondence>.*)(\\s*<br>)+\\s*<\\/p>\\s*<\\/div>";
+    static final String MEMBER_DETAIL_RE = "<div class=\"float_left\\\">\\s*(<p>\\s*(?<phone>[^:]+:\\s*(?<phonenumber>[^<]+))<\\/p>\\s*)?(<p>\\s*E-mail: <a href=\"mailto:(?<email>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>\\s*)?(\\s*(<a href=\"mailto:(?<email2>[^\\\"]+)\" title=\"Odoslať mail\">[^<]+<\\/a>)\\s*)?(<\\/p>\\s*)?(<p>\\s*(?<partiescandidate>((K|k)andidát(ka)?\\s*:?\\s*(?<candidateparties>.*?))|(N|n)ezávislá kandidátka|(N|n)ezávislý kandidát))?(\\s*<\\/p>\\s*)?(<p>\\s*(?<district>.*?)(\\s*<br>)+)?\\s*((?<clubmember>(((Č|č)len(ka)?|(P|p)(odp)?redseda|(P|p)(odp)?redsedníčka) (P|p)oslaneckého klubu (?<clubparties>.*?))|Nezaradená poslankyňa|Nezaradený poslanec)(\\s*<br>)+)?(\\s*(?<functions>.*)(\\s*<br>)+)?\\s*adresa na doručovanie písomností:\\s*(?<correspondence>.*)(\\s*<br>)+\\s*<\\/p>\\s*<\\/div>";
+    static final Pattern MEMBER_DETAIL_PATTERN = Pattern.compile(MEMBER_DETAIL_RE);
 
     private static final Pattern CHAIRMAN_PATTERN = Pattern.compile("Predseda|Predsedkyňa");
     private static final Pattern VICECHAIRMAN_PATTERN = Pattern.compile("Podpredseda|Podpredsedkyňa");
@@ -53,7 +56,7 @@ public class PresovCouncilMemberCrawler {
         Set<CouncilMember> members = new HashSet<>();
         try {
             Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_ROOT).get();
-            PollsUtils.saveToFile("presov_msz_members.html", document.outerHtml());
+            PollsUtils.saveToFile("presov_msz_" + season.getName() + "_members.html", document.outerHtml());
 
             Elements linksOnPage = document.select("a[href^=javascript:osoba_podrobnosti]");
 
@@ -67,7 +70,7 @@ public class PresovCouncilMemberCrawler {
                     String image = matcher.group("image");
                     String name = matcher.group("name");
 
-                    PollsUtils.saveToFile("presov_msz_member_" + PollsUtils.toFilenameForm(name) + "_brief.html", pageContent);
+                    PollsUtils.saveToFile("presov_msz_" + season.getName() + "_member_" + PollsUtils.toFilenameForm(name) + "_brief.html", pageContent);
 
                     // Check if not exists already
                     String keyName = PollsUtils.toSimpleNameWithoutAccents(name);
@@ -75,7 +78,7 @@ public class PresovCouncilMemberCrawler {
                         log.info("Council member '{}' already known.", keyName);
                         continue;
                     } else {
-                        log.info("Council member '{}' not known yet. ASCII form: {}", keyName);
+                        log.info("Council member '{}' not known yet. ASCII form: {}", name, keyName);
                     }
 
                     //TODO: Politician<->CouncilMember
@@ -129,11 +132,11 @@ public class PresovCouncilMemberCrawler {
             if (matcher.find()) {
                 PollsUtils.saveToFile("presov_msz_member_" + PollsUtils.toFilenameForm(councilMember.getPolitician().getName()) + "_detail.html", content);
 
-                councilMember.getPolitician().setEmail(PresovCouncilMemberRegexpMatcher.loadValue(matcher,"email"));
-                councilMember.getPolitician().setPhone(PresovCouncilMemberRegexpMatcher.loadValue(matcher,"phonenumber"));
+                councilMember.getPolitician().setEmail(PresovCouncilMemberMatcher.loadValue(matcher,"email"));
+                councilMember.getPolitician().setPhone(PresovCouncilMemberMatcher.loadValue(matcher,"phonenumber"));
 
                 // Party Nominees
-                String partiesCandidates = PresovCouncilMemberRegexpMatcher.loadValue(matcher,"candidateparties");
+                String partiesCandidates = PresovCouncilMemberMatcher.loadValue(matcher,"candidateparties");
                 if (!isNullOrEmpty(partiesCandidates)) {
 
                     List<String> partyNames = splitCleanAndTrim(partiesCandidates);
@@ -155,12 +158,12 @@ public class PresovCouncilMemberCrawler {
                 }
 
                 // Club Members
-                String clubMemberString = PresovCouncilMemberRegexpMatcher.loadValue(matcher,"clubmember");
+                String clubMemberString = PresovCouncilMemberMatcher.loadValue(matcher,"clubmember");
                 if (clubMemberString != null && !clubMemberString.isEmpty()) {
 
                     ClubFunction clubFunction = recognizeClubFunction(clubMemberString);
 
-                    String clubPartiesString = PresovCouncilMemberRegexpMatcher.loadValue(matcher,"clubparties");
+                    String clubPartiesString = PresovCouncilMemberMatcher.loadValue(matcher,"clubparties");
                     if (!isNullOrEmpty(clubPartiesString)) {
                         List<String> partyList = splitCleanAndTrim(clubPartiesString);
                         String clubName = generateClubName(partyList);
@@ -191,7 +194,7 @@ public class PresovCouncilMemberCrawler {
                     }
                 }
 
-                String functionsString = PresovCouncilMemberRegexpMatcher.loadValue(matcher,"functions");
+                String functionsString = PresovCouncilMemberMatcher.loadValue(matcher,"functions");
                 if (!isNullOrEmpty(functionsString)) {
                     councilMember.setOtherFunctions(
                             String.join(", ", functionsString.split("\\s*(<br(\\s*\\/)?>|<\\/p>)\\s*")));
@@ -218,7 +221,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static CouncilMember introduceCouncilMember(Town town, Institution institution, Season season, String extId, Politician politician) {
-        log.info(":NEW COUNCIL MEMBER: {}", deAccent(politician.getName()));
+        log.info("NEW COUNCIL MEMBER: {}", deAccent(politician.getName()));
         CouncilMember member = new CouncilMember();
         member.setRef(generateUniqueKeyReference());
         member.setPolitician(politician);
@@ -231,7 +234,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static Politician introducePolitician(String extId, String image, String name) {
-        log.info(":NEW POLITICIAN: {}", deAccent(name));
+        log.info("NEW POLITICIAN: {}", deAccent(name));
         Politician politician = new Politician();
         politician.setRef(generateUniqueKeyReference());
         politician.setName(toSimpleName(name));
@@ -243,7 +246,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static PartyNominee introducePartyNominee(CouncilMember councilMember, Map<String, Party> partiesMap, String partyName) {
-        log.info(":NEW COUNCIL MEMBER: {} - PARTY NOMINEE: {}", deAccent(councilMember.getPolitician().getName()), partyName);
+        log.info("NEW COUNCIL MEMBER: {} - PARTY NOMINEE: {}", deAccent(councilMember.getPolitician().getName()), partyName);
         PartyNominee nominee = new PartyNominee();
         //TODO: commented out before update
         nominee.setParty(partiesMap.get(partyName));
@@ -254,7 +257,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static ClubMember introduceClubMember(Club club, CouncilMember councilMember, ClubFunction clubFunction) {
-        log.info(":NEW CLUB MEMBER: [{}]: {}", clubFunction.name(), deAccent(councilMember.getPolitician().getName()));
+        log.info("NEW CLUB MEMBER: [{}]: {}", clubFunction.name(), deAccent(councilMember.getPolitician().getName()));
         ClubMember clubMember = new ClubMember();
         clubMember.setClubFunction(clubFunction);
 
@@ -268,7 +271,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static Club introduceClub(Town town, Season season, String clubName) {
-        log.info(":NEW CLUB: {}", clubName);
+        log.info("NEW CLUB: {}", clubName);
         Club club = new Club();
         club.setName(clubName);
         club.setTown(town); //TODO: proxy
@@ -278,7 +281,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     public static Party introduceParty(String partyName) {
-        log.info(":NEW PARTY: {}", partyName);
+        log.info("NEW PARTY: {}", partyName);
         Party party = new Party();
         party.setRef(partyName);
         party.setName(partyName);
@@ -286,7 +289,7 @@ public class PresovCouncilMemberCrawler {
     }
 
     private static ClubParty introduceClubParty(Season season, Club club, Party party) {
-        log.info(":NEW CLUB[{}] PARTY: {}", club.getName(), party.getName());
+        log.info("NEW CLUB[{}] PARTY: {}", club.getName(), party.getName());
         ClubParty clubParty = new ClubParty();
         clubParty.setParty(party);
         clubParty.setSeason(season);
@@ -298,38 +301,4 @@ public class PresovCouncilMemberCrawler {
 //    	new PresovCouncilMemberCrawler().getCouncilMembers();
 //    }
 
-    private static class PresovCouncilMemberRegexpMatcher {
-        static String loadValue(Matcher matcher, String name) {
-            String result = "";
-            switch(name) {
-                case "email":
-                    for (String group : new String[] {"email", "email2"}) {
-                        if (!isNullOrEmpty(matcher.group(group))) {
-                            result += readGroup(matcher, group) + ", ";
-                        }
-                    }
-                    result = result.substring(0, result.length() > 1 ? result.length()-2 : result.length());
-                    break;
-                case "candidateparties":
-                    if (matcher.group("candidateparties") != null && !matcher.group("candidateparties").isEmpty()) {
-                        result = readGroup(matcher, "candidateparties");
-                    } else if (matcher.group("candidateparty") != null && !matcher.group("candidateparty").isEmpty()) {
-                        result = readGroup(matcher, "candidateparty");
-                    }
-                    break;
-                default:
-                    result = readGroup(matcher, name);
-            }
-            log.info("LOAD VALUE: {} -> {}", name, result);
-            return result;
-        }
-
-        static String readGroup(Matcher matcher, String name) {
-            if (matcher != null && !isNullOrEmpty(matcher.group(name))) {
-                return matcher.group(name);
-            }
-            return null;
-        }
-
-    }
 }

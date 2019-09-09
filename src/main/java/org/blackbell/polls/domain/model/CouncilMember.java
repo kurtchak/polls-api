@@ -36,8 +36,9 @@ public class CouncilMember extends EntityWithReference {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @JsonProperty("club")
     @JsonSerialize(using = PoliticianClubSerializer.class)
+    //TODO: get rid of clubMembers list and replace it with historicalClubMembers and one clubMember association
     public ClubMember getClubMember() {
-        return clubMembers.stream().findFirst().orElseGet(null);
+        return clubMembers != null ? clubMembers.stream().findFirst().orElse(null) : null;
     }
 
     @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
