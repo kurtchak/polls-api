@@ -32,15 +32,15 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
     @Query(value =
             "select distinct m from CouncilMember m " +
                     "left join fetch m.clubMembers cm " +
-                        "join fetch cm.club c " +
+                        "left join fetch cm.club c " +
                             "left join fetch c.clubParties cp " +
-                                "join fetch cp.party cpp " +
+                                "left join fetch cp.party cpp " +
                     "join fetch m.institution i " +
                     "join fetch m.season s " +
                     "join fetch m.town t " +
                     "join fetch m.politician pl " +
                         "left join fetch pl.partyNominees pn " +
-                            "join fetch pn.party p " +
+                            "left join fetch pn.party p " +
                 "where m.town.ref = :town " +
                     "and m.season.ref = :season " +
                     "and m.institution.type = :institution")
