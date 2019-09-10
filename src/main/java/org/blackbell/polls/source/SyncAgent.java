@@ -158,10 +158,10 @@ public class SyncAgent {
 
         townsRefs.forEach(townRef -> {
             log.info("town: {}", townRef);
-            syncSeasons(getTown(townRef));
-            syncCouncilMembers(getTown(townRef));
-
             Town town = getTown(townRef);
+            syncSeasons(town);
+            syncCouncilMembers(town);
+
             getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
             town.setLastSyncDate(new Date());
             townRepository.save(town);
@@ -202,7 +202,7 @@ public class SyncAgent {
         // load saved instance
         log.info(Constants.MarkerSync, "Loaded Season to sync: {}", season);
 
-        institutionsMap.keySet().stream()
+        institutionsMap.keySet()
                 .forEach(type -> syncSeasonMeetings(town, season, institutionsMap.get(type).get(0))); // AD-HOC - just first Institution-Comission is retrieved
 
     }

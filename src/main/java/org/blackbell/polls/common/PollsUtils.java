@@ -80,7 +80,7 @@ public class PollsUtils {
         return Arrays.stream(value.split("\\s*,\\s*|\\s+a\\s+")).map(PollsUtils::cleanAndTrim).collect(Collectors.toList());
     }
 
-    public static String generateClubName(List<String> partyList) {
+    public static String recognizeClubName(List<String> partyList) {
         return String.join("/", partyList);
     }
 
