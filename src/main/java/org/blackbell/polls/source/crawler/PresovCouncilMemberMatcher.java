@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.blackbell.polls.common.PollsUtils.isNullOrEmpty;
 
 /**
  * Created by korcak@esten.sk on 8. 9. 2019.

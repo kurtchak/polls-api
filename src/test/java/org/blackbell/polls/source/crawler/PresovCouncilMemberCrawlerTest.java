@@ -1,27 +1,11 @@
 package org.blackbell.polls.source.crawler;
 
-import org.apache.commons.io.IOUtils;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler.MEMBER_DETAIL_RE;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Created by korcak@esten.sk on 8. 9. 2019.
  */
 public class PresovCouncilMemberCrawlerTest {
 
-    @Test
+/*    @Test
     public void test() {
         File workingDir = new File(new File(".").getAbsolutePath());
         try (Stream<Path> walk = Files.walk(Paths.get(workingDir.getCanonicalPath(), "src/test/resources/presov"))) {
@@ -44,4 +28,5 @@ public class PresovCouncilMemberCrawlerTest {
             e.printStackTrace();
         }
     }
+*/
 }

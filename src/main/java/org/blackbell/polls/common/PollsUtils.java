@@ -1,6 +1,5 @@
 package org.blackbell.polls.common;
 
-import org.apache.commons.io.FileUtils;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
@@ -8,8 +7,11 @@ import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -106,12 +108,19 @@ public class PollsUtils {
 
     public static void saveToFile(String filename, String content) {
         try {
-            File file = new File("samples/" + filename);
-            FileUtils.writeStringToFile(file, content);
+            if (Files.notExists(Paths.get("samples"))) {
+                Files.createDirectory(Paths.get("samples"));
+            }
+            Path newFile = Files.createFile(Paths.get("samples/" + filename), null);
+            Files.write(newFile, content.getBytes());
             log.info("Saved file {}", filename);
         } catch (IOException e) {
             log.error("Unable to save file {}", filename);
             e.printStackTrace();
         }
+    }
+
+    public static boolean isNullOrEmpty(String value) {
+        return value == null || value.isEmpty();
     }
 }

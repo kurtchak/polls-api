@@ -55,8 +55,7 @@ public class SyncAgent {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         // AD-HOC
         Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
-//        for (String seasonRef : getSeasonsRefs()) {
-        String seasonRef = "2018-2022";
+        for (String seasonRef : getSeasonsRefs()) {
             if (PRESOV_REF.equals(town.getRef())) {
                 Set<CouncilMember> councilMembers = councilMemberRepository
                         .getByTownAndSeasonAndInstitution(
@@ -74,22 +73,24 @@ public class SyncAgent {
 
                 log.info("COUNCIL MEMBERS: {}", councilMembers.size());
 
-                Set<CouncilMember> newCouncilMembers =
-                        new PresovCouncilMemberCrawler()
-                                .getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
+                if (councilMembers.isEmpty()) {
+                    Set<CouncilMember> newCouncilMembers =
+                            new PresovCouncilMemberCrawler()
+                                    .getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
 
-                if (newCouncilMembers != null) {
-                    // log
-                    newCouncilMembers.forEach(
-                            cm -> log.info("NEW COUNCIL MEMBER: {}",
-                                    PollsUtils.deAccent(cm.getPolitician().getName())));
+                    if (newCouncilMembers != null) {
+                        // log
+                        newCouncilMembers.forEach(
+                                cm -> log.info("NEW COUNCIL MEMBER: {}",
+                                        PollsUtils.deAccent(cm.getPolitician().getName())));
 
-                    councilMemberRepository.save(newCouncilMembers);
-                } else {
-                    log.info("No new CouncilMembers found for town {} and season {}", town.getName(), getSeason(seasonRef));
+                        councilMemberRepository.saveAll(newCouncilMembers);
+                    } else {
+                        log.info("No new CouncilMembers found for town {} and season {}", town.getName(), getSeason(seasonRef));
+                    }
                 }
             }
-//        }
+        }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
 //        councilMemberRepository.flush();
     }
