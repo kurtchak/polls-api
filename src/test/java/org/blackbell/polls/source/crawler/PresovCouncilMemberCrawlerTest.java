@@ -1,11 +1,25 @@
 package org.blackbell.polls.source.crawler;
 
+import org.blackbell.polls.common.PollsUtils;
+import org.junit.jupiter.api.Test;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler.MEMBER_DETAIL_RE;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Created by korcak@esten.sk on 8. 9. 2019.
  */
 public class PresovCouncilMemberCrawlerTest {
 
-/*    @Test
+    @Test
     public void test() {
         File workingDir = new File(new File(".").getAbsolutePath());
         try (Stream<Path> walk = Files.walk(Paths.get(workingDir.getCanonicalPath(), "src/test/resources/presov"))) {
@@ -15,10 +29,8 @@ public class PresovCouncilMemberCrawlerTest {
                     .map(Path::toString).collect(Collectors.toList());
             contents.forEach(path -> {
                 System.out.println(path);
-                FileInputStream fis = null;
                 try {
-                    fis = new FileInputStream(path);
-                    String data = IOUtils.toString(fis, "UTF-8");
+                    String data = PollsUtils.readFileToString(path);
                     assertTrue(data.matches(MEMBER_DETAIL_RE));
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -28,5 +40,5 @@ public class PresovCouncilMemberCrawlerTest {
             e.printStackTrace();
         }
     }
-*/
+
 }

@@ -7,7 +7,10 @@ import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -122,5 +125,20 @@ public class PollsUtils {
 
     public static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
+    }
+
+    public static String readFileToString(String path) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[1024];
+        while ((nRead = fis.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+
+        buffer.flush();
+        byte[] byteArray = buffer.toByteArray();
+
+        return new String(byteArray, StandardCharsets.UTF_8);
     }
 }
