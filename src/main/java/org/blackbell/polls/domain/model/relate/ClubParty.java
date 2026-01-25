@@ -9,10 +9,10 @@ import org.blackbell.polls.domain.model.Party;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.common.BaseEntity;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 /**
  * Created by kurtcha on 11.3.2018.

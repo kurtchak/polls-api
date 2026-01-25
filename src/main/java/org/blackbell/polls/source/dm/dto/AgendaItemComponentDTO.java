@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         visible = true)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = PollsDTO.class, name = "Hlasovania"),
-        @JsonSubTypes.Type(value = ProspectsDTO.class, name = "Materialy"),
+        @JsonSubTypes.Type(value = ProspectsDTO.class, name = "Materiály"),
 })
 public abstract class AgendaItemComponentDTO {
 

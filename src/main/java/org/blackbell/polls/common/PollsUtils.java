@@ -114,7 +114,7 @@ public class PollsUtils {
             if (Files.notExists(Paths.get("samples"))) {
                 Files.createDirectory(Paths.get("samples"));
             }
-            Path newFile = Files.createFile(Paths.get("samples/" + filename), null);
+            Path newFile = Files.createFile(Paths.get("samples/" + filename));
             Files.write(newFile, content.getBytes());
             log.info("Saved file {}", filename);
         } catch (IOException e) {

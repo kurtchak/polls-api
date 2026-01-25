@@ -31,72 +31,104 @@ public class DMParser {
     }
 
     public static Meeting parseMeetingResponse(Meeting meeting, DMMeetingResponse meetingResponse) throws Exception {
+        if (meetingResponse == null || meetingResponse.getChildren() == null || meetingResponse.getChildren().isEmpty()) {
+            log.warn("Meeting response is empty for meeting: {}", meeting.getRef());
+            return meeting;
+        }
+
+        AgendaDTO agendaDTO = null;
+        AttachmentsDTO attachmentsDTO = null;
+
+        // Find AgendaDTO and AttachmentsDTO from children
+        for (MeetingComponentDTO component : meetingResponse.getChildren()) {
+            if (component instanceof AgendaDTO) {
+                agendaDTO = (AgendaDTO) component;
+            } else if (component instanceof AttachmentsDTO) {
+                attachmentsDTO = (AttachmentsDTO) component;
+            }
+        }
+
         // Agenda
-        AgendaDTO agendaDTO =
-                meetingResponse.getChildren().get(0).getClass().equals(AgendaDTO.class)
-                        ? (AgendaDTO) meetingResponse.getChildren().get(0)
-                        : (AgendaDTO) meetingResponse.getChildren().get(1);
-        log.info("-> parseAgenda: " + agendaDTO.getName());
-        loadAgenda(meeting, agendaDTO);
+        if (agendaDTO != null) {
+            log.info("-> parseAgenda: " + agendaDTO.getName());
+            loadAgenda(meeting, agendaDTO);
+        } else {
+            log.warn("No agenda found for meeting: {}", meeting.getRef());
+        }
 
         // Attachments
-        AttachmentsDTO attachmentsDTO =
-                meetingResponse.getChildren().get(1).getClass().equals(AttachmentsDTO.class)
-                        ? (AttachmentsDTO) meetingResponse.getChildren().get(1)
-                        : (AttachmentsDTO) meetingResponse.getChildren().get(0);
-        log.info("-> parseMeetingAttachmens: " + attachmentsDTO.getName());
-        loadMeetingAttachments(meeting, attachmentsDTO);
+        if (attachmentsDTO != null) {
+            log.info("-> parseMeetingAttachments: " + attachmentsDTO.getName());
+            loadMeetingAttachments(meeting, attachmentsDTO);
+        }
+
         return meeting;
     }
 
     private static void loadAgenda(Meeting meeting, AgendaDTO agendaDTO) {
-        log.info(String.format("loadAgenda for meeting[%s]", meeting.getRef()));
+        log.info("loadAgenda for meeting[{}]", meeting.getRef());
+        if (agendaDTO.getAgendaItemDTOs() == null || agendaDTO.getAgendaItemDTOs().isEmpty()) {
+            log.warn("No agenda items for meeting: {}", meeting.getRef());
+            return;
+        }
+
         for (AgendaItemDTO agendaItemDTO : agendaDTO.getAgendaItemDTOs()) {
             AgendaItem item = new AgendaItem();
             item.setName(agendaItemDTO.getName());
             item.setRef(PollsUtils.generateUniqueKeyReference());
             meeting.addAgendaItem(item);
-            if (agendaItemDTO != null && agendaItemDTO.getChildren() != null
-                    && !agendaItemDTO.getChildren().isEmpty()) {
-                PollsDTO pollsDTO = PollsDTO.class.equals(agendaItemDTO.getChildren().get(0).getClass())
-                        ? (PollsDTO) agendaItemDTO.getChildren().get(0)
-                        : (PollsDTO) agendaItemDTO.getChildren().get(1);
-                loadAgendaItemPolls(item, pollsDTO);
 
-                ProspectsDTO prospectsDTO = ProspectsDTO.class.equals(agendaItemDTO.getChildren().get(0).getClass())
-                        ? (ProspectsDTO) agendaItemDTO.getChildren().get(0)
-                        : (ProspectsDTO) agendaItemDTO.getChildren().get(1);
-                loadAgendaItemAttachments(item, prospectsDTO);
+            if (agendaItemDTO.getChildren() != null && !agendaItemDTO.getChildren().isEmpty()) {
+                PollsDTO pollsDTO = null;
+                ProspectsDTO prospectsDTO = null;
+
+                // Find PollsDTO and ProspectsDTO from children
+                for (AgendaItemComponentDTO component : agendaItemDTO.getChildren()) {
+                    if (component instanceof PollsDTO) {
+                        pollsDTO = (PollsDTO) component;
+                    } else if (component instanceof ProspectsDTO) {
+                        prospectsDTO = (ProspectsDTO) component;
+                    }
+                }
+
+                if (pollsDTO != null) {
+                    loadAgendaItemPolls(item, pollsDTO);
+                }
+                if (prospectsDTO != null) {
+                    loadAgendaItemAttachments(item, prospectsDTO);
+                }
             }
         }
     }
 
     private static void loadAgendaItemPolls(AgendaItem item, PollsDTO pollsDTO) {
-        log.info(String.format("loadAgendaItemPolls for item[%s]", item.getRef()));
-        if (pollsDTO.getPollDTOs() != null
-                && pollsDTO.getPollDTOs() != null
-                && !pollsDTO.getPollDTOs().isEmpty()) {
-            log.info(">> pollsDTO: " + pollsDTO.toString());
-            item.setExtId(pollsDTO.getPollDTOs().get(0).getAgendaItemId());
-            for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
-                log.info("-- pollDTO: " + pollDTO.toString());
-                Poll poll = new Poll();
-                poll.setRef(PollsUtils.generateUniqueKeyReference());
-                poll.setName(pollDTO.getName());
-                poll.setExtAgendaItemId(pollDTO.getAgendaItemId());
-                poll.setExtPollRouteId(pollDTO.getPollRoute());
-                VotesCount vc = new VotesCount();
-                vc.setVotedFor(pollDTO.getVotedFor());
-                vc.setVotedAgainst(pollDTO.getVotedAgainst());
-                vc.setNotVoted(pollDTO.getNotVoted());
-                vc.setAbstain(pollDTO.getAbstain());
-                vc.setAbsent(pollDTO.getAbsent());
-                poll.setVotesCount(vc);
-                poll.setVoters(pollDTO.getVoters());
-                poll.setNote(pollDTO.getNote());
-                //TODO: members...
-                item.addPoll(poll);
-            }
+        log.info("loadAgendaItemPolls for item[{}]", item.getRef());
+        if (pollsDTO.getPollDTOs() == null || pollsDTO.getPollDTOs().isEmpty()) {
+            log.debug("No polls for agenda item: {}", item.getRef());
+            return;
+        }
+
+        log.info(">> pollsDTO: {}", pollsDTO);
+        item.setExtId(pollsDTO.getPollDTOs().getFirst().getAgendaItemId());
+
+        for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
+            log.debug("-- pollDTO: {}", pollDTO);
+            Poll poll = new Poll();
+            poll.setRef(PollsUtils.generateUniqueKeyReference());
+            poll.setName(pollDTO.getName());
+            poll.setExtAgendaItemId(pollDTO.getAgendaItemId());
+            poll.setExtPollRouteId(pollDTO.getPollRoute());
+            VotesCount vc = new VotesCount();
+            vc.setVotedFor(pollDTO.getVotedFor());
+            vc.setVotedAgainst(pollDTO.getVotedAgainst());
+            vc.setNotVoted(pollDTO.getNotVoted());
+            vc.setAbstain(pollDTO.getAbstain());
+            vc.setAbsent(pollDTO.getAbsent());
+            poll.setVotesCount(vc);
+            poll.setVoters(pollDTO.getVoters());
+            poll.setNote(pollDTO.getNote());
+            //TODO: members...
+            item.addPoll(poll);
         }
     }
 
@@ -175,12 +207,25 @@ public class DMParser {
 
     public static List<Meeting> parseMeetingsResponse(Town town, Season season, Institution institution, DMMeetingsResponse meetingsResponse) throws ParseException {
         List<Meeting> meetings = new ArrayList<>();
-        for (SeasonMeetingDTO seasonMeetingDTO : meetingsResponse.getSeasonMeetingsDTOs().get(0).getSeasonMeetingDTOs()) {
+
+        if (meetingsResponse == null || meetingsResponse.getSeasonMeetingsDTOs() == null
+                || meetingsResponse.getSeasonMeetingsDTOs().isEmpty()) {
+            log.warn("No meetings found for town: {}, season: {}", town.getRef(), season.getRef());
+            return meetings;
+        }
+
+        SeasonMeetingsDTO seasonMeetingsDTO = meetingsResponse.getSeasonMeetingsDTOs().getFirst();
+        if (seasonMeetingsDTO.getSeasonMeetingDTOs() == null || seasonMeetingsDTO.getSeasonMeetingDTOs().isEmpty()) {
+            log.warn("No season meetings found for town: {}, season: {}", town.getRef(), season.getRef());
+            return meetings;
+        }
+
+        for (SeasonMeetingDTO seasonMeetingDTO : seasonMeetingsDTO.getSeasonMeetingDTOs()) {
             Meeting meeting = new Meeting();
             meeting.setName(seasonMeetingDTO.getName());
             meeting.setExtId(seasonMeetingDTO.getId());
             meeting.setDate(PollsUtils.parseDMDate(seasonMeetingDTO.getDate()));
-            meeting.setRef(PollsUtils.generateUniqueKeyReference()); // TODO:
+            meeting.setRef(PollsUtils.generateUniqueKeyReference()); // TODO: use stable reference
             meeting.setTown(town);
             meeting.setSeason(season);
             meeting.setInstitution(institution);

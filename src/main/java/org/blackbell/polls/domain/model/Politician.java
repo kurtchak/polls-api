@@ -12,9 +12,9 @@ import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;

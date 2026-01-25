@@ -9,7 +9,7 @@ import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
 import org.blackbell.polls.domain.model.enums.VoteResult;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Set;
 
 /**

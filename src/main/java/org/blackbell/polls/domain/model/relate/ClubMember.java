@@ -7,7 +7,7 @@ import org.blackbell.polls.domain.model.CouncilMember;
 import org.blackbell.polls.domain.model.common.BaseEntity;
 import org.blackbell.polls.domain.model.enums.ClubFunction;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * Created by kurtcha on 11.3.2018.

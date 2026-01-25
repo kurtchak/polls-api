@@ -7,7 +7,7 @@ import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.BaseEntity;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 

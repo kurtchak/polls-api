@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 /**
  * Created by Ján Korčák on 18.2.2017.

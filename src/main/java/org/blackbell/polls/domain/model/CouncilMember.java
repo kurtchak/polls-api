@@ -12,7 +12,7 @@ import org.blackbell.polls.domain.model.common.EntityWithReference;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 

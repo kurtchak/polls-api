@@ -6,7 +6,7 @@ import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
 import org.blackbell.polls.source.base.BaseImport;
-import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
+import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
 import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonMap;
+import static org.blackbell.polls.common.PollsUtils.toSimpleNameWithoutAccents;
 
 /**
  * Created by kurtcha on 25.2.2018.
@@ -34,27 +35,37 @@ public class SyncAgent {
     private final PartyRepository partyRepository;
     private final CouncilMemberRepository councilMemberRepository;
     private final InstitutionRepository institutionRepository;
+    private final ClubRepository clubRepository;
+    private final PoliticianRepository politicianRepository;
 
     private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
     private Map<String, Party> partiesMap;
     private Map<InstitutionType, List<Institution>> institutionsMap;
     private Map<String, Season> seasonsMap;
+    private Map<String, Politician> politiciansMap; // For tracking politicians across seasons
 
-    public SyncAgent(MeetingRepository meetingRepository, SeasonRepository seasonRepository, TownRepository townRepository, PartyRepository partyRepository, CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository) {
+    public SyncAgent(MeetingRepository meetingRepository, SeasonRepository seasonRepository,
+                     TownRepository townRepository, PartyRepository partyRepository,
+                     CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository,
+                     ClubRepository clubRepository, PoliticianRepository politicianRepository) {
         this.meetingRepository = meetingRepository;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
         this.partyRepository = partyRepository;
         this.councilMemberRepository = councilMemberRepository;
         this.institutionRepository = institutionRepository;
+        this.clubRepository = clubRepository;
+        this.politicianRepository = politicianRepository;
     }
 
-//    @Scheduled(fixedRate = 86400000, initialDelay = 60000)
     public void syncCouncilMembers(Town town) {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
-        // AD-HOC
         Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
+
+        // Load existing politicians for reuse across seasons (tracking "prezliekači")
+        loadPoliticiansMap(town);
+
         for (String seasonRef : getSeasonsRefs()) {
             if (PRESOV_REF.equals(town.getRef())) {
                 Set<CouncilMember> councilMembers = councilMemberRepository
@@ -66,33 +77,88 @@ public class SyncAgent {
                 Map<String, CouncilMember> councilMembersMap = councilMembers
                         .stream().collect(
                                 Collectors.toMap(
-                                        cm -> PollsUtils
-                                                .toSimpleNameWithoutAccents(
-                                                        cm.getPolitician().getName()),
+                                        cm -> toSimpleNameWithoutAccents(cm.getPolitician().getName()),
                                         cm -> cm));
 
-                log.info("COUNCIL MEMBERS: {}", councilMembers.size());
+                log.info("COUNCIL MEMBERS for season {}: {}", seasonRef, councilMembers.size());
 
                 if (councilMembers.isEmpty()) {
+                    PresovCouncilMemberCrawlerV2 crawler = new PresovCouncilMemberCrawlerV2();
                     Set<CouncilMember> newCouncilMembers =
-                            new PresovCouncilMemberCrawler()
-                                    .getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
+                            crawler.getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
 
-                    if (newCouncilMembers != null) {
-                        // log
-                        newCouncilMembers.forEach(
-                                cm -> log.info("NEW COUNCIL MEMBER: {}",
-                                        PollsUtils.deAccent(cm.getPolitician().getName())));
+                    if (newCouncilMembers != null && !newCouncilMembers.isEmpty()) {
+                        // Reuse existing politicians across seasons
+                        for (CouncilMember cm : newCouncilMembers) {
+                            String politicianKey = toSimpleNameWithoutAccents(cm.getPolitician().getName());
+                            Politician existingPolitician = politiciansMap.get(politicianKey);
+
+                            if (existingPolitician != null) {
+                                // Reuse existing politician - this tracks the person across seasons
+                                log.info("Reusing existing politician: {} (ID: {})",
+                                        PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
+
+                                // Update contact info if newer
+                                if (cm.getPolitician().getEmail() != null) {
+                                    existingPolitician.setEmail(cm.getPolitician().getEmail());
+                                }
+                                if (cm.getPolitician().getPhone() != null) {
+                                    existingPolitician.setPhone(cm.getPolitician().getPhone());
+                                }
+                                if (cm.getPolitician().getPicture() != null) {
+                                    existingPolitician.setPicture(cm.getPolitician().getPicture());
+                                }
+
+                                // Transfer party nominees to existing politician
+                                if (cm.getPolitician().getPartyNominees() != null) {
+                                    for (var nominee : cm.getPolitician().getPartyNominees()) {
+                                        nominee.setPolitician(existingPolitician);
+                                        existingPolitician.addPartyNominee(nominee);
+                                    }
+                                }
+
+                                cm.setPolitician(existingPolitician);
+                            } else {
+                                // New politician
+                                log.info("NEW POLITICIAN: {}", PollsUtils.deAccent(cm.getPolitician().getName()));
+                                politiciansMap.put(politicianKey, cm.getPolitician());
+                            }
+
+                            log.info("NEW COUNCIL MEMBER: {} (season: {})",
+                                    PollsUtils.deAccent(cm.getPolitician().getName()), seasonRef);
+                        }
+
+                        // Save clubs created by crawler
+                        Map<String, Club> clubs = crawler.getClubsMap();
+                        if (!clubs.isEmpty()) {
+                            log.info("Saving {} clubs", clubs.size());
+                            clubRepository.saveAll(clubs.values());
+                        }
 
                         councilMemberRepository.saveAll(newCouncilMembers);
                     } else {
-                        log.info("No new CouncilMembers found for town {} and season {}", town.getName(), getSeason(seasonRef));
+                        log.info("No new CouncilMembers found for town {} and season {}", town.getName(), seasonRef);
                     }
                 }
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
-//        councilMemberRepository.flush();
+    }
+
+    /**
+     * Load existing politicians for the town to enable reuse across seasons.
+     * This is key for tracking "prezliekači" - politicians who change parties/clubs.
+     */
+    private void loadPoliticiansMap(Town town) {
+        if (politiciansMap == null) {
+            politiciansMap = new HashMap<>();
+        }
+        List<Politician> existingPoliticians = politicianRepository.findByTown(town.getRef());
+        for (Politician p : existingPoliticians) {
+            String key = toSimpleNameWithoutAccents(p.getName());
+            politiciansMap.put(key, p);
+        }
+        log.info("Loaded {} existing politicians for town {}", politiciansMap.size(), town.getName());
     }
 
     private Map<String, Party> getPartiesMap() {

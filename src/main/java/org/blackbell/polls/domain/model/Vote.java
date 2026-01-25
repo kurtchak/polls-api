@@ -5,7 +5,7 @@ import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.BaseEntity;
 import org.blackbell.polls.domain.model.enums.VoteChoice;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * Created by Ján Korčák on 18.3.2017.

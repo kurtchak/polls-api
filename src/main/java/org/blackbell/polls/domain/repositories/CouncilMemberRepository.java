@@ -21,11 +21,11 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
                     "left join fetch m.clubMembers cm " +
                         "left join fetch cm.club c " +
                             "left join fetch c.clubParties cp " +
-                                "left join fetch cp.party p " +
+                                "left join fetch cp.party cpp " +
                     "left join fetch m.season s " +
                     "left join fetch m.politician pl " +
                         "left join fetch pl.partyNominees pn " +
-                            "left join fetch pn.party p " +
+                            "left join fetch pn.party pnp " +
                     "where m.ref = :ref")
     CouncilMember findByRef(@Param(value = "ref") String memberRef);
 
