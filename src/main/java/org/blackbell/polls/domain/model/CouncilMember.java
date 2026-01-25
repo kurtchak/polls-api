@@ -42,6 +42,7 @@ public class CouncilMember extends EntityWithReference {
     }
 
     @JsonView(value = {Views.CouncilMember.class, Views.PartyNominees.class, Views.ClubMembers.class, Views.Club.class})
+    @Column(length = 2000)
     private String otherFunctions;
 
     @JsonView(value = Views.CouncilMember.class)

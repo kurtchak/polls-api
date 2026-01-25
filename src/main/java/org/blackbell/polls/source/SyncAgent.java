@@ -10,6 +10,7 @@ import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
 import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class SyncAgent {
     private final InstitutionRepository institutionRepository;
     private final ClubRepository clubRepository;
     private final PoliticianRepository politicianRepository;
+    private final SyncAgent self; // Self-injection for transactional method calls
 
     private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
@@ -48,7 +50,8 @@ public class SyncAgent {
     public SyncAgent(MeetingRepository meetingRepository, SeasonRepository seasonRepository,
                      TownRepository townRepository, PartyRepository partyRepository,
                      CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository,
-                     ClubRepository clubRepository, PoliticianRepository politicianRepository) {
+                     ClubRepository clubRepository, PoliticianRepository politicianRepository,
+                     @Lazy SyncAgent self) {
         this.meetingRepository = meetingRepository;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
@@ -57,8 +60,10 @@ public class SyncAgent {
         this.institutionRepository = institutionRepository;
         this.clubRepository = clubRepository;
         this.politicianRepository = politicianRepository;
+        this.self = self;
     }
 
+    @Transactional
     public void syncCouncilMembers(Town town) {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
@@ -212,8 +217,7 @@ public class SyncAgent {
 //                .stream().collect(Collectors.toMap(Town::getRef, t -> t));
     }
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 500)
-    @Transactional
+    @Scheduled(fixedRate = 86400000, initialDelay = 5000)
     public void sync() {
         Set<String> townsRefs = getTownsRefs();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
@@ -227,11 +231,10 @@ public class SyncAgent {
             log.info("town: {}", townRef);
             Town town = getTown(townRef);
             syncSeasons(town);
-            syncCouncilMembers(town);
+            self.syncCouncilMembers(town);
 
-            getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
-            town.setLastSyncDate(new Date());
-            townRepository.save(town);
+            getSeasonsRefs().forEach(seasonRef -> self.syncSeasonMeetings(town, getSeason(seasonRef)));
+            self.saveTownLastSyncDate(town);
         });
     }
 
@@ -247,7 +250,7 @@ public class SyncAgent {
             log.info(Constants.MarkerSync, "FORMER SEASONS: {}", formerSeasons);
 
             // Save New Seasons
-            retrievedSeasons.stream().filter(season -> !formerSeasons.contains(season)).forEach(this::saveNewSeason);
+            retrievedSeasons.stream().filter(season -> !formerSeasons.contains(season)).forEach(self::saveNewSeason);
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName());
             e.printStackTrace();
@@ -270,16 +273,25 @@ public class SyncAgent {
         log.info(Constants.MarkerSync, "Loaded Season to sync: {}", season);
 
         institutionsMap.keySet()
-                .forEach(type -> syncSeasonMeetings(town, season, institutionsMap.get(type).get(0))); // AD-HOC - just first Institution-Comission is retrieved
+                .forEach(type -> self.syncSeasonMeetings(town, season, institutionsMap.get(type).get(0))); // AD-HOC - just first Institution-Comission is retrieved
 
     }
 
-    private void saveNewSeason(Season season) {
+    @Transactional
+    public void saveNewSeason(Season season) {
         log.info("Adding new season: {}", season);
         seasonRepository.save(season);
     }
 
-    private void syncSeasonMeetings(Town town, Season season, Institution institution) {
+    @Transactional
+    public void saveTownLastSyncDate(Town town) {
+        town.setLastSyncDate(new Date());
+        townRepository.save(town);
+        log.info("Updated lastSyncDate for town: {}", town.getName());
+    }
+
+    @Transactional
+    public void syncSeasonMeetings(Town town, Season season, Institution institution) {
         log.info("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
         if (InstitutionType.KOMISIA.equals(institution.getType())) {
             //TODO:
@@ -350,7 +362,7 @@ public class SyncAgent {
         Set<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
         log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         if (members == null || members.isEmpty()) { // TODO: preco vracia empty set?
-            syncCouncilMembers(town);
+            self.syncCouncilMembers(town);
             members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
             log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         }
