@@ -1,6 +1,13 @@
-FROM openjdk:8-jdk-alpine
-VOLUME /tmp
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+COPY gradle gradle
+COPY gradlew build.gradle.kts settings.gradle.kts ./
+RUN ./gradlew dependencies --no-daemon || true
+COPY src src
+RUN ./gradlew bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
-ARG JAR_FILE
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
