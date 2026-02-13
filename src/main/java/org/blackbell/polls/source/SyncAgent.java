@@ -146,6 +146,40 @@ public class SyncAgent {
                         log.info("No new CouncilMembers found for town {} and season {}", town.getName(), seasonRef);
                     }
                 }
+            } else if ("bratislava".equals(town.getRef())) {
+                Set<CouncilMember> councilMembers = councilMemberRepository
+                        .getByTownAndSeasonAndInstitution(
+                                town.getRef(),
+                                seasonRef,
+                                InstitutionType.ZASTUPITELSTVO);
+
+                log.info("BRATISLAVA COUNCIL MEMBERS for season {}: {}", seasonRef, councilMembers.size());
+
+                if (councilMembers.isEmpty()) {
+                    DataImport dataImport = getDataImport(town);
+                    List<CouncilMember> newMembers = dataImport.loadMembers(getSeason(seasonRef));
+
+                    if (newMembers != null && !newMembers.isEmpty()) {
+                        for (CouncilMember cm : newMembers) {
+                            cm.setTown(town);
+                            cm.setInstitution(townCouncil);
+
+                            String politicianKey = toSimpleNameWithoutAccents(cm.getPolitician().getName());
+                            Politician existingPolitician = politiciansMap.get(politicianKey);
+
+                            if (existingPolitician != null) {
+                                log.info("Reusing existing politician: {} (ID: {})",
+                                        PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
+                                cm.setPolitician(existingPolitician);
+                            } else {
+                                log.info("NEW POLITICIAN: {}", PollsUtils.deAccent(cm.getPolitician().getName()));
+                                politiciansMap.put(politicianKey, cm.getPolitician());
+                            }
+                        }
+                        councilMemberRepository.saveAll(newMembers);
+                        log.info("Saved {} Bratislava council members for season {}", newMembers.size(), seasonRef);
+                    }
+                }
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
@@ -214,7 +248,7 @@ public class SyncAgent {
 
     private void loadTownsMap() {
         townsMap = new HashMap<>();
-        for (String ref : List.of("presov", "poprad")) {
+        for (String ref : List.of("presov", "poprad", "bratislava")) {
             Town town = townRepository.findByRef(ref);
             if (town != null) {
                 townsMap.put(ref, town);
