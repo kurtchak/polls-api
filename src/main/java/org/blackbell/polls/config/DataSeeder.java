@@ -67,6 +67,15 @@ public class DataSeeder implements CommandLineRunner {
             townRepository.save(bratislava);
             log.info("Created town: {}", bratislava);
         }
+
+        if (townRepository.findByRef("poprad") == null) {
+            Town poprad = new Town();
+            poprad.setRef("poprad");
+            poprad.setName("Poprad");
+            poprad.setSource(Source.DM);
+            townRepository.save(poprad);
+            log.info("Created town: {}", poprad);
+        }
     }
 
     private void seedInstitutions() {

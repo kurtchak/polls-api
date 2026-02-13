@@ -212,9 +212,13 @@ public class SyncAgent {
     }
 
     private void loadTownsMap() {
-        townsMap = singletonMap("presov", townRepository.findByRef("presov"));
-//        townsMap = townRepository.findAll()
-//                .stream().collect(Collectors.toMap(Town::getRef, t -> t));
+        townsMap = new HashMap<>();
+        for (String ref : List.of("presov", "poprad")) {
+            Town town = townRepository.findByRef(ref);
+            if (town != null) {
+                townsMap.put(ref, town);
+            }
+        }
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 5000)
