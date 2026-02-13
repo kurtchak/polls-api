@@ -45,6 +45,7 @@ public class DataSeeder implements CommandLineRunner {
         fixSourceCheckConstraint();
         seedTowns();
         seedInstitutions();
+        resyncDmMeetingsWithoutVotes();
 
         log.info("Database seeding completed.");
     }
@@ -101,6 +102,30 @@ public class DataSeeder implements CommandLineRunner {
             poprad.setSource(Source.DM);
             townRepository.save(poprad);
             log.info("Created town: {}", poprad);
+        }
+    }
+
+    /**
+     * One-time fix: delete DM meetings that have polls but no individual votes,
+     * so they get re-synced with the fixed DM API URLs (format=json).
+     */
+    private void resyncDmMeetingsWithoutVotes() {
+        try {
+            int deleted = entityManager.createNativeQuery(
+                    "DELETE FROM meeting WHERE id IN (" +
+                    "  SELECT DISTINCT m.id FROM meeting m" +
+                    "  JOIN town t ON m.town_id = t.id" +
+                    "  JOIN agenda_item ai ON ai.meeting_id = m.id" +
+                    "  JOIN poll p ON p.agenda_item_id = ai.id" +
+                    "  LEFT JOIN vote v ON v.poll_id = p.id" +
+                    "  WHERE t.source = 'DM' AND v.id IS NULL" +
+                    "  GROUP BY m.id" +
+                    ")").executeUpdate();
+            if (deleted > 0) {
+                log.info("Deleted {} DM meetings without votes for re-sync", deleted);
+            }
+        } catch (Exception e) {
+            log.warn("Could not clean up DM meetings: {}", e.getMessage());
         }
     }
 
