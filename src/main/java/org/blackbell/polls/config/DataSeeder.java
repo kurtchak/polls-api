@@ -63,7 +63,7 @@ public class DataSeeder implements CommandLineRunner {
             Town bratislava = new Town();
             bratislava.setRef("bratislava");
             bratislava.setName("Bratislava");
-            bratislava.setSource(Source.DM);
+            bratislava.setSource(Source.BA_OPENDATA);
             townRepository.save(bratislava);
             log.info("Created town: {}", bratislava);
         }

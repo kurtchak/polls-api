@@ -6,6 +6,7 @@ import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
 import org.blackbell.polls.source.base.BaseImport;
+import org.blackbell.polls.source.bratislava.BratislavaImport;
 import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
 import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
@@ -354,6 +355,9 @@ public class SyncAgent {
     private static DataImport getDataImport(Town town) {
         if (town.getSource() == Source.DM) {
             return new DMImport();
+        }
+        if (town.getSource() == Source.BA_OPENDATA) {
+            return new BratislavaImport();
         }
         return new BaseImport();
     }
