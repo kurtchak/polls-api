@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * Seeds the database with initial data for development/testing.
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "railway"})
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
