@@ -50,7 +50,6 @@ public class PoliticiansController {
 
     /**
      * Get "prezliekači" - politicians who changed political parties between seasons.
-     * Useful for tracking political loyalty/opportunism.
      */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/party-switchers")
@@ -58,6 +57,18 @@ public class PoliticiansController {
         log.info("Getting party switchers (prezliekači)");
         List<Politician> switchers = politicianRepository.findPartySwitchers();
         log.info("Found {} party switchers", switchers.size());
+        return switchers;
+    }
+
+    /**
+     * Get party switchers filtered by town.
+     */
+    @JsonView(Views.CouncilMember.class)
+    @GetMapping("/{town}/party-switchers")
+    public List<Politician> getPartySwitchersByTown(@PathVariable String town) {
+        log.info("Getting party switchers for town: {}", town);
+        List<Politician> switchers = politicianRepository.findPartySwitchersByTown(town);
+        log.info("Found {} party switchers for {}", switchers.size(), town);
         return switchers;
     }
 
@@ -70,6 +81,18 @@ public class PoliticiansController {
         log.info("Getting club switchers");
         List<Politician> switchers = politicianRepository.findClubSwitchers();
         log.info("Found {} club switchers", switchers.size());
+        return switchers;
+    }
+
+    /**
+     * Get club switchers filtered by town.
+     */
+    @JsonView(Views.CouncilMember.class)
+    @GetMapping("/{town}/club-switchers")
+    public List<Politician> getClubSwitchersByTown(@PathVariable String town) {
+        log.info("Getting club switchers for town: {}", town);
+        List<Politician> switchers = politicianRepository.findClubSwitchersByTown(town);
+        log.info("Found {} club switchers for {}", switchers.size(), town);
         return switchers;
     }
 }

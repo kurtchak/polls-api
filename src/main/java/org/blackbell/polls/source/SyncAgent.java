@@ -233,7 +233,7 @@ public class SyncAgent {
             syncSeasons(town);
             self.syncCouncilMembers(town);
 
-            getSeasonsRefs().forEach(seasonRef -> self.syncSeasonMeetings(town, getSeason(seasonRef)));
+            getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
             self.saveTownLastSyncDate(town);
         });
     }

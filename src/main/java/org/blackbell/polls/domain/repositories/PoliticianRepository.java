@@ -71,6 +71,25 @@ public interface PoliticianRepository extends JpaRepository<Politician, Long> {
     List<Politician> findPartySwitchers();
 
     /**
+     * Find politicians who changed parties, filtered by town.
+     */
+    @Query(value =
+            "select distinct p from Politician p " +
+                    "left join fetch p.partyNominees pn " +
+                    "left join fetch pn.party pa " +
+                    "left join fetch pn.season s " +
+                    "where p.id in (" +
+                    "  select p2.id from Politician p2 " +
+                    "  join p2.partyNominees pn2 " +
+                    "  join p2.councilMembers cm2 " +
+                    "  join cm2.town t2 " +
+                    "  where t2.ref = :town " +
+                    "  group by p2.id " +
+                    "  having count(distinct pn2.party.id) > 1" +
+                    ")")
+    List<Politician> findPartySwitchersByTown(@Param("town") String townRef);
+
+    /**
      * Find politicians who changed clubs between seasons.
      */
     @Query(value =
@@ -87,4 +106,24 @@ public interface PoliticianRepository extends JpaRepository<Politician, Long> {
                     "  having count(distinct clm2.club.id) > 1" +
                     ")")
     List<Politician> findClubSwitchers();
+
+    /**
+     * Find politicians who changed clubs, filtered by town.
+     */
+    @Query(value =
+            "select distinct p from Politician p " +
+                    "left join fetch p.councilMembers cm " +
+                    "left join fetch cm.clubMembers clm " +
+                    "left join fetch clm.club cl " +
+                    "left join fetch cm.season s " +
+                    "where p.id in (" +
+                    "  select p2.id from Politician p2 " +
+                    "  join p2.councilMembers cm2 " +
+                    "  join cm2.clubMembers clm2 " +
+                    "  join cm2.town t2 " +
+                    "  where t2.ref = :town " +
+                    "  group by p2.id " +
+                    "  having count(distinct clm2.club.id) > 1" +
+                    ")")
+    List<Politician> findClubSwitchersByTown(@Param("town") String townRef);
 }
