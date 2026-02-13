@@ -59,13 +59,18 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Created town: {}", kosice);
         }
 
-        if (townRepository.findByRef("bratislava") == null) {
-            Town bratislava = new Town();
+        Town bratislava = townRepository.findByRef("bratislava");
+        if (bratislava == null) {
+            bratislava = new Town();
             bratislava.setRef("bratislava");
             bratislava.setName("Bratislava");
             bratislava.setSource(Source.BA_OPENDATA);
             townRepository.save(bratislava);
             log.info("Created town: {}", bratislava);
+        } else if (bratislava.getSource() != Source.BA_OPENDATA) {
+            bratislava.setSource(Source.BA_OPENDATA);
+            townRepository.save(bratislava);
+            log.info("Updated town source: {}", bratislava);
         }
 
         if (townRepository.findByRef("poprad") == null) {

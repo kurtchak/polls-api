@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class BratislavaServiceClient {
                 "?where=1%3D1" +
                 "&outFields=" + encode("Volebné_obdobie") +
                 "&returnDistinctValues=true&f=json";
-        log.info("Querying distinct electoral periods: {}", url);
+        log.info("Querying distinct electoral periods");
         return queryAll(url);
     }
 
@@ -36,7 +37,7 @@ public class BratislavaServiceClient {
                 "?where=" + encode("Volebné_obdobie=" + period) +
                 "&outFields=" + encode("Dátum") +
                 "&returnDistinctValues=true&f=json";
-        log.info("Querying distinct dates for period {}: {}", period, url);
+        log.info("Querying distinct dates for period {}", period);
         return queryAll(url);
     }
 
@@ -69,8 +70,12 @@ public class BratislavaServiceClient {
         return queryAll(url);
     }
 
+    /**
+     * Execute query using URI to prevent RestTemplate from double-encoding
+     * the already percent-encoded service name in the URL.
+     */
     private static List<ArcGisVoteRecord> queryAll(String url) throws Exception {
-        ArcGisQueryResponse response = restTemplate.getForObject(url, ArcGisQueryResponse.class);
+        ArcGisQueryResponse response = restTemplate.getForObject(URI.create(url), ArcGisQueryResponse.class);
         if (response == null || response.getFeatures() == null) {
             return new ArrayList<>();
         }
@@ -85,7 +90,7 @@ public class BratislavaServiceClient {
 
         while (true) {
             String url = baseUrl + "&resultOffset=" + offset + "&resultRecordCount=" + PAGE_SIZE;
-            ArcGisQueryResponse response = restTemplate.getForObject(url, ArcGisQueryResponse.class);
+            ArcGisQueryResponse response = restTemplate.getForObject(URI.create(url), ArcGisQueryResponse.class);
             if (response == null || response.getFeatures() == null || response.getFeatures().isEmpty()) {
                 break;
             }

@@ -234,7 +234,7 @@ public class BratislavaImport implements DataImport {
         return switch (hlasovanie) {
             case "ZA" -> VoteChoice.VOTED_FOR;
             case "PROTI" -> VoteChoice.VOTED_AGAINST;
-            case "ZDRŽAL SA", "ZDRŽALA SA" -> VoteChoice.ABSTAIN;
+            case "ZDRŽAL SA", "ZDRŽALA SA", "ZDRŽAL SA/ZDRŽALA SA" -> VoteChoice.ABSTAIN;
             case "NEHLASOVAL", "NEHLASOVALA", "NEHLASOVAL/NEHLASOVALA" -> VoteChoice.NOT_VOTED;
             case "NEPRÍTOMNÝ", "NEPRÍTOMNÁ", "NEPRÍTOMNÝ/NEPRÍTOMNÁ" -> VoteChoice.ABSENT;
             default -> {
