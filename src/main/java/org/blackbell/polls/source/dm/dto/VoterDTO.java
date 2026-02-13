@@ -1,13 +1,15 @@
 package org.blackbell.polls.source.dm.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Created by kurtcha on 5.3.2018.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VoterDTO {
 
-    @JsonProperty(value = "name")
+    @JsonProperty(value = "Name")
     private String name;
 
     @JsonProperty(value = "za")
