@@ -345,12 +345,20 @@ public class SyncAgent {
                     Meeting existing = meetingRepository.findByExtId(meeting.getExtId());
                     if (existing != null) {
                         if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
-                            log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
-                                    existing.getAgendaItems().size(), meeting.getName());
-                            continue;
+                            // Check if polls have individual votes - if not, re-process
+                            boolean hasVotes = existing.getAgendaItems().stream()
+                                    .filter(ai -> ai.getPolls() != null)
+                                    .flatMap(ai -> ai.getPolls().stream())
+                                    .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
+                            if (hasVotes) {
+                                log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                                        existing.getAgendaItems().size(), meeting.getName());
+                                continue;
+                            }
+                            log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
+                        } else {
+                            log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
                         }
-                        // Delete incomplete meeting (saved without agenda items due to earlier errors)
-                        log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
                         meetingRepository.delete(existing);
                         meetingRepository.flush();
                     }

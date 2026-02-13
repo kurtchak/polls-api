@@ -45,7 +45,6 @@ public class DataSeeder implements CommandLineRunner {
         fixSourceCheckConstraint();
         seedTowns();
         seedInstitutions();
-        resyncDmMeetingsWithoutVotes();
 
         log.info("Database seeding completed.");
     }
