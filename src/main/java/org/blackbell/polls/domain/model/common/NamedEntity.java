@@ -1,5 +1,6 @@
 package org.blackbell.polls.domain.model.common;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 
 /**
@@ -8,6 +9,7 @@ import jakarta.persistence.MappedSuperclass;
 @MappedSuperclass
 public class NamedEntity extends EntityWithReference {
 
+    @Column(length = 1000)
     protected String name;
 
     public String getName() {

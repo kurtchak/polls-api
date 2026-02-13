@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -15,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 @Entity
 public class MeetingAttachment extends NamedEntity {
 
+    @Column(length = 1000)
     @JsonView(value = {Views.Meeting.class, Views.Poll.class})
     private String source;
 
