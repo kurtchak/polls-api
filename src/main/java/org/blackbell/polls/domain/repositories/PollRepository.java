@@ -43,8 +43,8 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
                         "join fetch m.season s " +
                         "join fetch m.institution i " +
                         "join fetch m.town t " +
-                        "join fetch p.votes v " +
-                        "join fetch v.councilMember cm " +
+                        "left join fetch p.votes v " +
+                        "left join fetch v.councilMember cm " +
                         "left join fetch cm.politician pl " +
                         "left join fetch pl.partyNominees pn " +
                         "left join fetch pn.party pt " +
