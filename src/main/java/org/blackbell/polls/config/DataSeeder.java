@@ -111,16 +111,26 @@ public class DataSeeder implements CommandLineRunner {
      */
     private void resyncDmMeetingsWithoutVotes() {
         try {
-            int deleted = entityManager.createNativeQuery(
-                    "DELETE FROM meeting WHERE id IN (" +
-                    "  SELECT DISTINCT m.id FROM meeting m" +
-                    "  JOIN town t ON m.town_id = t.id" +
-                    "  JOIN agenda_item ai ON ai.meeting_id = m.id" +
-                    "  JOIN poll p ON p.agenda_item_id = ai.id" +
-                    "  LEFT JOIN vote v ON v.poll_id = p.id" +
-                    "  WHERE t.source = 'DM' AND v.id IS NULL" +
-                    "  GROUP BY m.id" +
+            // Find meeting IDs that have polls but no votes
+            String meetingIds =
+                    "SELECT DISTINCT m.id FROM meeting m" +
+                    " JOIN town t ON m.town_id = t.id" +
+                    " JOIN agenda_item ai ON ai.meeting_id = m.id" +
+                    " JOIN poll p ON p.agenda_item_id = ai.id" +
+                    " LEFT JOIN vote v ON v.poll_id = p.id" +
+                    " WHERE t.source = 'DM' AND v.id IS NULL";
+
+            // Delete in correct order: polls -> agenda_items -> meetings
+            entityManager.createNativeQuery(
+                    "DELETE FROM poll WHERE agenda_item_id IN (" +
+                    "  SELECT ai.id FROM agenda_item ai WHERE ai.meeting_id IN (" + meetingIds + ")" +
                     ")").executeUpdate();
+            entityManager.createNativeQuery(
+                    "DELETE FROM agenda_item WHERE meeting_id IN (" + meetingIds + ")").executeUpdate();
+            entityManager.createNativeQuery(
+                    "DELETE FROM meeting_attachment WHERE meeting_id IN (" + meetingIds + ")").executeUpdate();
+            int deleted = entityManager.createNativeQuery(
+                    "DELETE FROM meeting WHERE id IN (" + meetingIds + ")").executeUpdate();
             if (deleted > 0) {
                 log.info("Deleted {} DM meetings without votes for re-sync", deleted);
             }
