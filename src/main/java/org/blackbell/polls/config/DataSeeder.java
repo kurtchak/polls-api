@@ -106,33 +106,44 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     /**
-     * One-time fix: delete DM meetings that have polls but no individual votes,
-     * so they get re-synced with the fixed DM API URLs (format=json).
+     * One-time fix: delete DM agenda items that have no votes on their polls,
+     * so meetings get re-synced with the fixed DM API URLs (format=json).
+     * SyncAgent re-processes meetings when they have 0 agenda items.
      */
     private void resyncDmMeetingsWithoutVotes() {
         try {
-            // Find meeting IDs that have polls but no votes
-            String meetingIds =
-                    "SELECT DISTINCT m.id FROM meeting m" +
-                    " JOIN town t ON m.town_id = t.id" +
-                    " JOIN agenda_item ai ON ai.meeting_id = m.id" +
-                    " JOIN poll p ON p.agenda_item_id = ai.id" +
-                    " LEFT JOIN vote v ON v.poll_id = p.id" +
-                    " WHERE t.source = 'DM' AND v.id IS NULL";
-
-            // Delete in correct order: polls -> agenda_items -> meetings
-            entityManager.createNativeQuery(
-                    "DELETE FROM poll WHERE agenda_item_id IN (" +
-                    "  SELECT ai.id FROM agenda_item ai WHERE ai.meeting_id IN (" + meetingIds + ")" +
+            // Delete agenda items (and their polls) for DM meetings where no votes exist
+            // Step 1: delete polls without votes for DM towns
+            int polls = entityManager.createNativeQuery(
+                    "DELETE FROM poll WHERE id IN (" +
+                    "  SELECT p.id FROM poll p" +
+                    "  JOIN agenda_item ai ON p.agenda_item_id = ai.id" +
+                    "  JOIN meeting m ON ai.meeting_id = m.id" +
+                    "  JOIN town t ON m.town_id = t.id" +
+                    "  LEFT JOIN vote v ON v.poll_id = p.id" +
+                    "  WHERE t.source = 'DM' AND v.id IS NULL" +
                     ")").executeUpdate();
-            entityManager.createNativeQuery(
-                    "DELETE FROM agenda_item WHERE meeting_id IN (" + meetingIds + ")").executeUpdate();
-            entityManager.createNativeQuery(
-                    "DELETE FROM meeting_attachment WHERE meeting_id IN (" + meetingIds + ")").executeUpdate();
-            int deleted = entityManager.createNativeQuery(
-                    "DELETE FROM meeting WHERE id IN (" + meetingIds + ")").executeUpdate();
-            if (deleted > 0) {
-                log.info("Deleted {} DM meetings without votes for re-sync", deleted);
+
+            // Step 2: delete agenda items that now have no polls
+            int items = entityManager.createNativeQuery(
+                    "DELETE FROM agenda_item_attachment WHERE agenda_item_id IN (" +
+                    "  SELECT ai.id FROM agenda_item ai" +
+                    "  JOIN meeting m ON ai.meeting_id = m.id" +
+                    "  JOIN town t ON m.town_id = t.id" +
+                    "  LEFT JOIN poll p ON p.agenda_item_id = ai.id" +
+                    "  WHERE t.source = 'DM' AND p.id IS NULL" +
+                    ")").executeUpdate();
+            items += entityManager.createNativeQuery(
+                    "DELETE FROM agenda_item WHERE id IN (" +
+                    "  SELECT ai.id FROM agenda_item ai" +
+                    "  JOIN meeting m ON ai.meeting_id = m.id" +
+                    "  JOIN town t ON m.town_id = t.id" +
+                    "  LEFT JOIN poll p ON p.agenda_item_id = ai.id" +
+                    "  WHERE t.source = 'DM' AND p.id IS NULL" +
+                    ")").executeUpdate();
+
+            if (polls > 0 || items > 0) {
+                log.info("Cleaned up DM data for re-sync: {} polls, {} agenda items deleted", polls, items);
             }
         } catch (Exception e) {
             log.warn("Could not clean up DM meetings: {}", e.getMessage());
