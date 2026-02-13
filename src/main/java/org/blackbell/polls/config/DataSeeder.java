@@ -13,6 +13,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Seeds the database with initial data for development/testing.
  */
@@ -25,19 +29,36 @@ public class DataSeeder implements CommandLineRunner {
     private final TownRepository townRepository;
     private final InstitutionRepository institutionRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public DataSeeder(TownRepository townRepository, InstitutionRepository institutionRepository) {
         this.townRepository = townRepository;
         this.institutionRepository = institutionRepository;
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         log.info("Seeding database with initial data...");
 
+        fixSourceCheckConstraint();
         seedTowns();
         seedInstitutions();
 
         log.info("Database seeding completed.");
+    }
+
+    private void fixSourceCheckConstraint() {
+        try {
+            entityManager.createNativeQuery(
+                    "ALTER TABLE town DROP CONSTRAINT IF EXISTS town_source_check").executeUpdate();
+            entityManager.createNativeQuery(
+                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_OPENDATA', 'OTHER'))").executeUpdate();
+            log.info("Updated town_source_check constraint to include BA_OPENDATA");
+        } catch (Exception e) {
+            log.warn("Could not update town_source_check constraint: {}", e.getMessage());
+        }
     }
 
     private void seedTowns() {
