@@ -300,17 +300,23 @@ public class SyncAgent {
         log.info(Constants.MarkerSync, "{}:{}:{}: syncSeasonMeetings", town.getName(), season.getName(), institution.getName());
         try {
             DataImport dataImport = getDataImport(town);
-            Date latestMeetingDate = meetingRepository.getLatestMeetingDate(town, institution.getType(), season.getName());
-            log.info(Constants.MarkerSync, ": LatestSyncDate: " + latestMeetingDate);
             List<Meeting> meetings = dataImport.loadMeetings(town, season, institution);
             if (meetings != null) {
                 for (Meeting meeting : meetings) {
-                    if (latestMeetingDate == null || meeting.getDate().after(latestMeetingDate)) {
-                        loadMeeting(meeting, dataImport);
-                        meetingRepository.save(meeting);// TODO: check synchronization with other meetings and its retention
-                    } else {
-                        log.info(Constants.MarkerSync, ": meeting details already loaded: {}", meeting.getDate());
+                    Meeting existing = meetingRepository.findByExtId(meeting.getExtId());
+                    if (existing != null) {
+                        if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
+                            log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                                    existing.getAgendaItems().size(), meeting.getName());
+                            continue;
+                        }
+                        // Delete incomplete meeting (saved without agenda items due to earlier errors)
+                        log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
+                        meetingRepository.delete(existing);
+                        meetingRepository.flush();
                     }
+                    loadMeeting(meeting, dataImport);
+                    meetingRepository.save(meeting);
                 }
             }
         } catch (Exception e) {
@@ -328,7 +334,12 @@ public class SyncAgent {
                 if (item.getPolls() != null) {
                     for (Poll poll : item.getPolls()) {
                         log.info(Constants.MarkerSync, ">> poll: {}", poll);
-                        dataImport.loadPollDetails(poll, getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution()));
+                        try {
+                            dataImport.loadPollDetails(poll, getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution()));
+                        } catch (Exception e) {
+                            log.warn(Constants.MarkerSync, "Could not load poll details (votes) for poll '{}' - saving poll with vote counts only: {}",
+                                    poll.getName(), e.getMessage());
+                        }
                     }
                 }
             }

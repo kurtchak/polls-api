@@ -53,6 +53,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
                               @Param(value = "institutionType") InstitutionType institutionType,
                               @Param(value = "season") String season);
 
+    @Query("SELECT m FROM Meeting m LEFT JOIN FETCH m.agendaItems WHERE m.extId = :extId")
+    Meeting findByExtId(@Param("extId") String extId);
+
     @Query(value =
             "select distinct m.season from Meeting m " +
                 "where m.town = :town " +

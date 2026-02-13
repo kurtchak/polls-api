@@ -28,6 +28,7 @@ public class Poll extends NamedEntity {
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @JsonProperty(value = "note")
+    @Column(length = 1000)
     private String note;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
