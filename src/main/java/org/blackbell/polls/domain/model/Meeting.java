@@ -39,7 +39,7 @@ public class Meeting extends NamedEntity {
     private Institution institution;
 
     @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.CouncilMember.class, Views.AgendaItem.class})
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd.MM.yyyy")
     @Temporal(TemporalType.DATE)
     private Date date;
 

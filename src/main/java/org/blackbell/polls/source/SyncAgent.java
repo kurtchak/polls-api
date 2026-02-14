@@ -418,6 +418,7 @@ public class SyncAgent {
         log.debug(Constants.MarkerSync, "loadMeeting: {}", meeting);
         dataImport.loadMeetingDetails(meeting, meeting.getExtId());
         if (meeting.getAgendaItems() != null) {
+            Map<String, CouncilMember> membersMap = getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution());
             for (AgendaItem item : meeting.getAgendaItems()) {
                 if (item.getPolls() != null) {
                     for (Poll poll : item.getPolls()) {
@@ -427,7 +428,7 @@ public class SyncAgent {
                             continue;
                         }
                         try {
-                            dataImport.loadPollDetails(poll, getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution()));
+                            dataImport.loadPollDetails(poll, membersMap);
                         } catch (Exception e) {
                             log.warn(Constants.MarkerSync, "Could not load poll details (votes) for poll '{}' - saving poll with vote counts only: {}",
                                     poll.getName(), e.getMessage());
@@ -435,8 +436,97 @@ public class SyncAgent {
                     }
                 }
             }
+            createMissingMembersFromVotes(meeting, membersMap);
         }
         log.debug(Constants.MarkerSync, "NEW MEETING: {}", meeting);
+    }
+
+    /**
+     * Auto-create Politician + CouncilMember records for DM API voters that couldn't be matched
+     * to existing council members. This handles old-season members not in the crawler data.
+     */
+    private void createMissingMembersFromVotes(Meeting meeting, Map<String, CouncilMember> membersMap) {
+        int created = 0;
+        for (AgendaItem item : meeting.getAgendaItems()) {
+            if (item.getPolls() == null) continue;
+            for (Poll poll : item.getPolls()) {
+                if (poll.getVotes() == null) continue;
+                for (Vote vote : poll.getVotes()) {
+                    if (vote.getCouncilMember() != null || vote.getVoterName() == null) continue;
+
+                    String voterName = vote.getVoterName();
+                    String nameKey = toSimpleNameWithoutAccents(voterName);
+
+                    // Check membersMap (may have been created from earlier poll in same meeting)
+                    CouncilMember member = membersMap.get(nameKey);
+                    if (member == null) {
+                        String[] parts = nameKey.split("\\s", 2);
+                        if (parts.length == 2) {
+                            member = membersMap.get(parts[1] + " " + parts[0]);
+                        }
+                    }
+                    if (member != null) {
+                        vote.setCouncilMember(member);
+                        continue;
+                    }
+
+                    // Find or create politician
+                    Politician politician = findPoliticianByName(nameKey);
+                    if (politician == null) {
+                        String simpleName = PollsUtils.toSimpleName(voterName);
+                        String titles = PollsUtils.getTitles(voterName);
+                        politician = new Politician();
+                        politician.setName(simpleName);
+                        politician.setRef(PollsUtils.generateUniqueKeyReference());
+                        politician.setTitles(titles);
+                        politician = politicianRepository.save(politician);
+                        if (politiciansMap != null) {
+                            politiciansMap.put(nameKey, politician);
+                        }
+                        log.info(Constants.MarkerSync, "Auto-created politician from DM voter: '{}'", simpleName);
+                    }
+
+                    // Create council member
+                    CouncilMember newMember = new CouncilMember();
+                    newMember.setRef(PollsUtils.generateUniqueKeyReference());
+                    newMember.setPolitician(politician);
+                    newMember.setTown(meeting.getTown());
+                    newMember.setSeason(meeting.getSeason());
+                    newMember.setInstitution(meeting.getInstitution());
+                    newMember = councilMemberRepository.save(newMember);
+
+                    // Update membersMap for subsequent polls
+                    membersMap.put(nameKey, newMember);
+                    String[] parts = nameKey.split("\\s", 2);
+                    if (parts.length == 2) {
+                        membersMap.put(parts[1] + " " + parts[0], newMember);
+                    }
+
+                    vote.setCouncilMember(newMember);
+                    created++;
+                }
+            }
+        }
+        if (created > 0) {
+            log.info(Constants.MarkerSync, "Auto-created {} council member(s) for meeting '{}' (season: {})",
+                    created, meeting.getName(), meeting.getSeason().getRef());
+        }
+    }
+
+    private Politician findPoliticianByName(String nameKey) {
+        if (politiciansMap == null) return null;
+        Politician politician = politiciansMap.get(nameKey);
+        if (politician == null) {
+            String[] parts = nameKey.split("\\s", 2);
+            if (parts.length == 2) {
+                politician = politiciansMap.get(parts[1] + " " + parts[0]);
+            }
+        }
+        if (politician != null && politician.getId() != 0) {
+            // Re-attach detached entity within current transaction
+            return politicianRepository.findById(politician.getId()).orElse(politician);
+        }
+        return politician;
     }
 
     private static DataImport getDataImport(Town town) {
