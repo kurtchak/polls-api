@@ -21,15 +21,18 @@ import static org.blackbell.polls.common.PollsUtils.toSimpleNameWithoutAccents;
 public class DMPdfImporter {
 
     private static final Logger log = LoggerFactory.getLogger(DMPdfImporter.class);
+    private static final String DM_BASE_URL = "https://www.digitalnemesto.sk";
 
     private final DMPdfVotingParser parser = new DMPdfVotingParser();
 
     public void importVotesFromPdf(Meeting meeting, String pdfUrl,
                                    Map<String, CouncilMember> membersMap) {
-        log.info("Downloading voting PDF: {}", pdfUrl);
+        // Resolve relative URLs against DM base URL
+        String fullUrl = pdfUrl.startsWith("http") ? pdfUrl : DM_BASE_URL + pdfUrl;
+        log.info("Downloading voting PDF: {}", fullUrl);
 
         List<DMPdfVotingParser.PdfVoteRecord> records;
-        try (InputStream is = URI.create(pdfUrl).toURL().openStream()) {
+        try (InputStream is = URI.create(fullUrl).toURL().openStream()) {
             records = parser.parsePdf(is);
         } catch (Exception e) {
             log.error("Failed to download/parse voting PDF for meeting '{}': {}",
