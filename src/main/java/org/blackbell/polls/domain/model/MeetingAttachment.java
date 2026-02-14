@@ -50,19 +50,4 @@ public class MeetingAttachment extends NamedEntity {
         this.meeting = meeting;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MeetingAttachment)) return false;
-
-        MeetingAttachment that = (MeetingAttachment) o;
-
-        return getId() == that.getId();
-
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
-    }
 }
