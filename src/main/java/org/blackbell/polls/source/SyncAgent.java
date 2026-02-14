@@ -377,17 +377,27 @@ public class SyncAgent {
                 log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
                         meeting.getName(), existing.getSyncError());
             } else if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
-                // Check if polls have individual votes - if not, re-process
+                // Check if polls have individual votes WITH matched council members
                 boolean hasVotes = existing.getAgendaItems().stream()
                         .filter(ai -> ai.getPolls() != null)
                         .flatMap(ai -> ai.getPolls().stream())
                         .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
                 if (hasVotes) {
-                    log.debug(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
-                            existing.getAgendaItems().size(), meeting.getName());
-                    return;
+                    boolean hasMatchedVotes = existing.getAgendaItems().stream()
+                            .filter(ai -> ai.getPolls() != null)
+                            .flatMap(ai -> ai.getPolls().stream())
+                            .filter(p -> p.getVotes() != null)
+                            .flatMap(p -> p.getVotes().stream())
+                            .anyMatch(v -> v.getCouncilMember() != null);
+                    if (hasMatchedVotes) {
+                        log.debug(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                                existing.getAgendaItems().size(), meeting.getName());
+                        return;
+                    }
+                    log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
+                } else {
+                    log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
                 }
-                log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
             } else {
                 log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
             }
@@ -468,7 +478,13 @@ public class SyncAgent {
         }
         for (CouncilMember councilMember : members) {
             log.debug(Constants.MarkerSync, "Loaded Council Member > {}", councilMember.getPolitician().getName());
-            membersMap.put(PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName()), councilMember);
+            String nameKey = PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName());
+            membersMap.put(nameKey, councilMember);
+            // Also store under reversed name order for matching DM API "Lastname Firstname" format
+            String[] parts = nameKey.split("\\s", 2);
+            if (parts.length == 2) {
+                membersMap.put(parts[1] + " " + parts[0], councilMember);
+            }
         }
         String membersKey = PollsUtils.generateMemberKey(town, season, institution.getType());
         log.debug(Constants.MarkerSync, "Loaded Council Member Group > {}", membersKey);

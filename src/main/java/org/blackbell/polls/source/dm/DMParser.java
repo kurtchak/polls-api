@@ -161,11 +161,21 @@ public class DMParser {
         if (pollDetailResponse.getChildren() != null) {
             Set<Vote> votes = new HashSet<>();
             for (VoterDTO voterDTO : pollDetailResponse.getChildren()) {
-                String name = PollsUtils.startWithFirstname(PollsUtils.toSimpleNameWithoutAccents(voterDTO.getName()));
-                log.debug("Voter: {} => Simple name: {}", voterDTO.getName(), name);
+                String nameWithoutAccents = PollsUtils.toSimpleNameWithoutAccents(voterDTO.getName());
+                CouncilMember member = membersMap.get(nameWithoutAccents);
+                if (member == null) {
+                    String[] parts = nameWithoutAccents.split("\\s", 2);
+                    if (parts.length == 2) {
+                        member = membersMap.get(parts[1] + " " + parts[0]);
+                    }
+                }
+                if (member == null && !membersMap.isEmpty()) {
+                    log.warn("Unmatched voter: '{}' (normalized: '{}')", voterDTO.getName(), nameWithoutAccents);
+                }
+                log.debug("Voter: {} => Simple name: {}", voterDTO.getName(), nameWithoutAccents);
                 Vote vote = new Vote();
                 vote.setVoterName(voterDTO.getName());
-                vote.setCouncilMember(membersMap.get(name));
+                vote.setCouncilMember(member);
                 vote.setPoll(poll);
                 if (voterDTO.isVotedFor()) {
                     vote.setVoted(VoteChoice.VOTED_FOR);
