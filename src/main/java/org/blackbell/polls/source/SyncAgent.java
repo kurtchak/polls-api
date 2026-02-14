@@ -16,6 +16,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.blackbell.polls.sync.SyncProgress;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ public class SyncAgent {
     private final ClubRepository clubRepository;
     private final PoliticianRepository politicianRepository;
     private final SyncAgent self; // Self-injection for transactional method calls
+    private final SyncProgress syncProgress;
 
     private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
@@ -52,7 +55,7 @@ public class SyncAgent {
                      TownRepository townRepository, PartyRepository partyRepository,
                      CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository,
                      ClubRepository clubRepository, PoliticianRepository politicianRepository,
-                     @Lazy SyncAgent self) {
+                     @Lazy SyncAgent self, SyncProgress syncProgress) {
         this.meetingRepository = meetingRepository;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
@@ -62,6 +65,7 @@ public class SyncAgent {
         this.clubRepository = clubRepository;
         this.politicianRepository = politicianRepository;
         this.self = self;
+        this.syncProgress = syncProgress;
     }
 
     @Transactional
@@ -261,20 +265,28 @@ public class SyncAgent {
         Set<String> townsRefs = getTownsRefs();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
         log.info(Constants.MarkerSync, "Synchronization started");
+        syncProgress.startSync();
 
         if (townsRefs.isEmpty()) {
             log.info(Constants.MarkerSync, "No town to sync");
         }
 
-        townsRefs.forEach(townRef -> {
-            log.info("town: {}", townRef);
-            Town town = getTown(townRef);
-            syncSeasons(town);
-            self.syncCouncilMembers(town);
+        try {
+            townsRefs.forEach(townRef -> {
+                log.info("town: {}", townRef);
+                Town town = getTown(townRef);
+                syncProgress.startTown(townRef);
+                syncSeasons(town);
+                self.syncCouncilMembers(town);
 
-            getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
-            self.saveTownLastSyncDate(town);
-        });
+                getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
+                self.saveTownLastSyncDate(town);
+                log.info(Constants.MarkerSync, "Synchronization finished for town: {}", townRef);
+            });
+        } finally {
+            syncProgress.finishSync();
+            log.info(Constants.MarkerSync, "Synchronization finished");
+        }
     }
 
     private void syncSeasons(Town town) {
@@ -330,7 +342,7 @@ public class SyncAgent {
     }
 
     public void syncSeasonMeetings(Town town, Season season, Institution institution) {
-        log.info("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
+        log.debug("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
         if (InstitutionType.KOMISIA.equals(institution.getType())) {
             //TODO:
             return;
@@ -340,11 +352,14 @@ public class SyncAgent {
             DataImport dataImport = getDataImport(town);
             List<Meeting> meetings = dataImport.loadMeetings(town, season, institution);
             if (meetings != null) {
+                syncProgress.startSeason(town.getRef(), season.getRef(), meetings.size());
                 for (Meeting meeting : meetings) {
                     try {
                         self.syncSingleMeeting(meeting, dataImport);
                     } catch (Exception e) {
                         log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), e.getMessage());
+                    } finally {
+                        syncProgress.meetingProcessed();
                     }
                 }
             }
@@ -368,7 +383,7 @@ public class SyncAgent {
                         .flatMap(ai -> ai.getPolls().stream())
                         .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
                 if (hasVotes) {
-                    log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                    log.debug(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
                             existing.getAgendaItems().size(), meeting.getName());
                     return;
                 }
@@ -390,13 +405,13 @@ public class SyncAgent {
     }
 
     private void loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {
-        log.info(Constants.MarkerSync, "loadMeeting: {}", meeting);
+        log.debug(Constants.MarkerSync, "loadMeeting: {}", meeting);
         dataImport.loadMeetingDetails(meeting, meeting.getExtId());
         if (meeting.getAgendaItems() != null) {
             for (AgendaItem item : meeting.getAgendaItems()) {
                 if (item.getPolls() != null) {
                     for (Poll poll : item.getPolls()) {
-                        log.info(Constants.MarkerSync, ">> poll: {}", poll);
+                        log.debug(Constants.MarkerSync, ">> poll: {}", poll);
                         if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {
                             log.warn(Constants.MarkerSync, "Skipping poll details - missing ext IDs for poll '{}'", poll.getName());
                             continue;
@@ -411,7 +426,7 @@ public class SyncAgent {
                 }
             }
         }
-        log.info(Constants.MarkerSync, "NEW MEETING: {}", meeting);
+        log.debug(Constants.MarkerSync, "NEW MEETING: {}", meeting);
     }
 
     private static DataImport getDataImport(Town town) {
@@ -426,7 +441,7 @@ public class SyncAgent {
 
     // MEMBERS
     private Map<String, CouncilMember> getMembersMap(Town town, Season season, Institution institution) throws Exception {
-        log.info(Constants.MarkerSync, "Get membersMap for {}:{}:", town.getName(), institution.getName());
+        log.debug(Constants.MarkerSync, "Get membersMap for {}:{}:", town.getName(), institution.getName());
         if (allMembersMap == null) {
             allMembersMap = new HashMap<>();
         }
@@ -438,25 +453,25 @@ public class SyncAgent {
     }
 
     private void loadCouncilMembers(Town town, Season season, Institution institution) throws Exception {
-        log.info(Constants.MarkerSync, " -- loadCouncilMembers for season: {}", season);
+        log.debug(Constants.MarkerSync, " -- loadCouncilMembers for season: {}", season);
         Map<String, CouncilMember> membersMap = new HashMap<>();
         Set<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
-        log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
+        log.debug(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         if (members == null || members.isEmpty()) { // TODO: preco vracia empty set?
             self.syncCouncilMembers(town);
             members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
-            log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
+            log.debug(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         }
         if (members == null || members.isEmpty()) {
             log.warn(Constants.MarkerSync, "No CouncilMembers found for town {}, season {}, institution {} - votes will be saved without member links",
                     town.getRef(), season.getRef(), institution.getType());
         }
         for (CouncilMember councilMember : members) {
-            log.info(Constants.MarkerSync, "Loaded Council Member > {}", councilMember.getPolitician().getName());
+            log.debug(Constants.MarkerSync, "Loaded Council Member > {}", councilMember.getPolitician().getName());
             membersMap.put(PollsUtils.toSimpleNameWithoutAccents(councilMember.getPolitician().getName()), councilMember);
         }
         String membersKey = PollsUtils.generateMemberKey(town, season, institution.getType());
-        log.info(Constants.MarkerSync, "Loaded Council Member Group > {}", membersKey);
+        log.debug(Constants.MarkerSync, "Loaded Council Member Group > {}", membersKey);
         allMembersMap.put(membersKey, membersMap);
     }
 

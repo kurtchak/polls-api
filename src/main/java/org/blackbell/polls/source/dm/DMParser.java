@@ -50,7 +50,7 @@ public class DMParser {
 
         // Agenda
         if (agendaDTO != null) {
-            log.info("-> parseAgenda: " + agendaDTO.getName());
+            log.debug("-> parseAgenda: " + agendaDTO.getName());
             loadAgenda(meeting, agendaDTO);
         } else {
             log.warn("No agenda found for meeting: {}", meeting.getRef());
@@ -58,7 +58,7 @@ public class DMParser {
 
         // Attachments
         if (attachmentsDTO != null) {
-            log.info("-> parseMeetingAttachments: " + attachmentsDTO.getName());
+            log.debug("-> parseMeetingAttachments: " + attachmentsDTO.getName());
             loadMeetingAttachments(meeting, attachmentsDTO);
         }
 
@@ -66,7 +66,7 @@ public class DMParser {
     }
 
     private static void loadAgenda(Meeting meeting, AgendaDTO agendaDTO) {
-        log.info("loadAgenda for meeting[{}]", meeting.getRef());
+        log.debug("loadAgenda for meeting[{}]", meeting.getRef());
         if (agendaDTO.getAgendaItemDTOs() == null || agendaDTO.getAgendaItemDTOs().isEmpty()) {
             log.warn("No agenda items for meeting: {}", meeting.getRef());
             return;
@@ -102,13 +102,13 @@ public class DMParser {
     }
 
     private static void loadAgendaItemPolls(AgendaItem item, PollsDTO pollsDTO) {
-        log.info("loadAgendaItemPolls for item[{}]", item.getRef());
+        log.debug("loadAgendaItemPolls for item[{}]", item.getRef());
         if (pollsDTO.getPollDTOs() == null || pollsDTO.getPollDTOs().isEmpty()) {
             log.debug("No polls for agenda item: {}", item.getRef());
             return;
         }
 
-        log.info(">> pollsDTO: {}", pollsDTO);
+        log.debug(">> pollsDTO: {}", pollsDTO);
         item.setExtId(pollsDTO.getPollDTOs().getFirst().getAgendaItemId());
 
         for (PollDTO pollDTO : pollsDTO.getPollDTOs()) {
@@ -133,7 +133,7 @@ public class DMParser {
     }
 
     private static void loadAgendaItemAttachments(AgendaItem item, ProspectsDTO prospectsDTO) {
-        log.info(String.format("loadAgendaItemAttachments for item[%s]", item.getRef()));
+        log.debug("loadAgendaItemAttachments for item[{}]", item.getRef());
         if (prospectsDTO != null && prospectsDTO.getProspectDTOs() != null) {
             for (ProspectDTO prospectDTO : prospectsDTO.getProspectDTOs()) {
                 AgendaItemAttachment attachment = new AgendaItemAttachment();
@@ -162,7 +162,7 @@ public class DMParser {
             Set<Vote> votes = new HashSet<>();
             for (VoterDTO voterDTO : pollDetailResponse.getChildren()) {
                 String name = PollsUtils.startWithFirstname(PollsUtils.toSimpleNameWithoutAccents(voterDTO.getName()));
-                log.info("Voter: " + voterDTO.getName() + "\t => \t" + "Simple name: " + name);
+                log.debug("Voter: {} => Simple name: {}", voterDTO.getName(), name);
                 Vote vote = new Vote();
                 vote.setVoterName(voterDTO.getName());
                 vote.setCouncilMember(membersMap.get(name));
@@ -180,7 +180,7 @@ public class DMParser {
                 } else {
                     log.error("Unknown VoteChoice for " + voterDTO);
                 }
-                log.info("Vote: " + vote);
+                log.debug("Vote: {}", vote);
                 votes.add(vote);
             }
             poll.setVotes(votes);
@@ -192,7 +192,7 @@ public class DMParser {
         List<Season> seasons = new ArrayList<>();
         if (seasonsResponse.getSeasonDTOs() != null) {
             for (SeasonDTO seasonDTO : seasonsResponse.getSeasonDTOs()) {
-                log.info("seasonDTO: " + seasonDTO);
+                log.debug("seasonDTO: {}", seasonDTO);
                 seasons.add(parseSeason(seasonDTO));
             }
         }
