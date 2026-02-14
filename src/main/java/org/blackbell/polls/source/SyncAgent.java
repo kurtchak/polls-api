@@ -3,8 +3,10 @@ package org.blackbell.polls.source;
 import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
+import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
+import org.blackbell.polls.source.dm.DMPdfImporter;
 import org.blackbell.polls.source.base.BaseImport;
 import org.blackbell.polls.source.bratislava.BratislavaImport;
 import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
@@ -419,26 +421,51 @@ public class SyncAgent {
         dataImport.loadMeetingDetails(meeting, meeting.getExtId());
         if (meeting.getAgendaItems() != null) {
             Map<String, CouncilMember> membersMap = getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution());
-            for (AgendaItem item : meeting.getAgendaItems()) {
-                if (item.getPolls() != null) {
-                    for (Poll poll : item.getPolls()) {
-                        log.debug(Constants.MarkerSync, ">> poll: {}", poll);
-                        if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {
-                            log.warn(Constants.MarkerSync, "Skipping poll details - missing ext IDs for poll '{}'", poll.getName());
-                            continue;
-                        }
-                        try {
-                            dataImport.loadPollDetails(poll, membersMap);
-                        } catch (Exception e) {
-                            log.warn(Constants.MarkerSync, "Could not load poll details (votes) for poll '{}' - saving poll with vote counts only: {}",
-                                    poll.getName(), e.getMessage());
+
+            boolean hasPolls = meeting.getAgendaItems().stream()
+                    .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
+
+            if (hasPolls) {
+                // PRIORITY 1: DM API structured data
+                for (AgendaItem item : meeting.getAgendaItems()) {
+                    if (item.getPolls() != null) {
+                        for (Poll poll : item.getPolls()) {
+                            poll.setDataSource(DataSourceType.DM_API);
+                            log.debug(Constants.MarkerSync, ">> poll: {}", poll);
+                            if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {
+                                log.warn(Constants.MarkerSync, "Skipping poll details - missing ext IDs for poll '{}'", poll.getName());
+                                continue;
+                            }
+                            try {
+                                dataImport.loadPollDetails(poll, membersMap);
+                            } catch (Exception e) {
+                                log.warn(Constants.MarkerSync, "Could not load poll details (votes) for poll '{}' - saving poll with vote counts only: {}",
+                                        poll.getName(), e.getMessage());
+                            }
                         }
                     }
                 }
+            } else {
+                // PRIORITY 2: PDF fallback
+                String pdfUrl = findVotingPdfUrl(meeting);
+                if (pdfUrl != null) {
+                    log.info(Constants.MarkerSync, "Loading votes from PDF for meeting: {}", meeting.getName());
+                    new DMPdfImporter().importVotesFromPdf(meeting, pdfUrl, membersMap);
+                }
             }
+
             createMissingMembersFromVotes(meeting, membersMap);
         }
         log.debug(Constants.MarkerSync, "NEW MEETING: {}", meeting);
+    }
+
+    private String findVotingPdfUrl(Meeting meeting) {
+        if (meeting.getAttachments() == null) return null;
+        return meeting.getAttachments().stream()
+                .filter(a -> a.getSource() != null && a.getName() != null
+                        && a.getName().toLowerCase().contains("hlasovan"))
+                .map(MeetingAttachment::getSource)
+                .findFirst().orElse(null);
     }
 
     /**

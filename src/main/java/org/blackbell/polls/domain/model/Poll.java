@@ -7,6 +7,7 @@ import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.api.serializers.VoteListSerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
+import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.MajorityType;
 import org.blackbell.polls.domain.model.enums.VoteResult;
 
@@ -39,6 +40,10 @@ public class Poll extends NamedEntity {
     @JsonProperty(value = "markedAsIrrelevant")
     @Transient
     private boolean markedAsIrrelevant;
+
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
+    @Enumerated(EnumType.STRING)
+    private DataSourceType dataSource;
 
     @JsonView(value = {Views.Polls.class, Views.AgendaItem.class})
     @Embedded
@@ -115,6 +120,14 @@ public class Poll extends NamedEntity {
 
     public void setVotes(Set<Vote> votes) {
         this.votes = votes;
+    }
+
+    public DataSourceType getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSourceType dataSource) {
+        this.dataSource = dataSource;
     }
 
     public VotesCount getVotesCount() {

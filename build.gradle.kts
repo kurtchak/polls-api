@@ -28,6 +28,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jsoup:jsoup:1.18.3")
+	implementation("org.apache.pdfbox:pdfbox:3.0.4")
 
 	runtimeOnly("org.postgresql:postgresql")
 	runtimeOnly("com.microsoft.sqlserver:mssql-jdbc")
