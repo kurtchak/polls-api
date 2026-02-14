@@ -38,7 +38,7 @@ public class Meeting extends NamedEntity {
     @JsonSerialize(using = InstitutionPropertySerializer.class)
     private Institution institution;
 
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.CouncilMember.class, Views.AgendaItem.class})
     @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
     @Temporal(TemporalType.DATE)
     private Date date;

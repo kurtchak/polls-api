@@ -64,4 +64,10 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     @Query("SELECT m FROM Meeting m JOIN FETCH m.town JOIN FETCH m.season JOIN FETCH m.institution WHERE m.syncError IS NOT NULL ORDER BY m.town.ref, m.season.ref, m.date")
     List<Meeting> findFailedMeetings();
+
+    @Query("SELECT m.season.ref, COUNT(DISTINCT m.id), COUNT(DISTINCT p.id) " +
+            "FROM Meeting m LEFT JOIN m.agendaItems ai LEFT JOIN ai.polls p " +
+            "WHERE m.town.ref = :townRef " +
+            "GROUP BY m.season.ref")
+    List<Object[]> countMeetingsAndPollsByTown(@Param("townRef") String townRef);
 }
