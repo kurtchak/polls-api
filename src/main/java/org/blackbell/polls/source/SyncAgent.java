@@ -425,6 +425,10 @@ public class SyncAgent {
             boolean hasPolls = meeting.getAgendaItems().stream()
                     .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
 
+            int attachmentCount = meeting.getAttachments() != null ? meeting.getAttachments().size() : 0;
+            log.info(Constants.MarkerSync, "Meeting '{}': {} agenda items, hasPolls={}, {} attachments",
+                    meeting.getName(), meeting.getAgendaItems().size(), hasPolls, attachmentCount);
+
             if (hasPolls) {
                 // PRIORITY 1: DM API structured data
                 for (AgendaItem item : meeting.getAgendaItems()) {
@@ -448,9 +452,15 @@ public class SyncAgent {
             } else {
                 // PRIORITY 2: PDF fallback
                 String pdfUrl = findVotingPdfUrl(meeting);
+                log.info(Constants.MarkerSync, "PDF fallback for '{}': pdfUrl={}", meeting.getName(), pdfUrl);
                 if (pdfUrl != null) {
                     log.info(Constants.MarkerSync, "Loading votes from PDF for meeting: {}", meeting.getName());
                     new DMPdfImporter().importVotesFromPdf(meeting, pdfUrl, membersMap);
+                } else {
+                    log.info(Constants.MarkerSync, "No voting PDF found for meeting: {} (attachments: {})",
+                            meeting.getName(), meeting.getAttachments() != null ?
+                                    meeting.getAttachments().stream().map(MeetingAttachment::getName)
+                                            .collect(Collectors.joining(", ")) : "null");
                 }
             }
 
