@@ -61,4 +61,7 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
                 "where m.town = :town " +
                 "order by m.date")
     Date getSeasonsWithMeetingsForTown(@Param(value = "town") Town town);
+
+    @Query("SELECT m FROM Meeting m JOIN FETCH m.town JOIN FETCH m.season JOIN FETCH m.institution WHERE m.syncError IS NOT NULL ORDER BY m.town.ref, m.season.ref, m.date")
+    List<Meeting> findFailedMeetings();
 }

@@ -49,4 +49,10 @@ public class MeetingsController {
     public Meeting meeting(@PathVariable(value="ref") String ref) throws Exception {
         return meetingRepository.getByRef(ref);
     }
+
+    @JsonView(value = Views.Meetings.class)
+    @RequestMapping("/meetings/failed")
+    public List<Meeting> failedMeetings() {
+        return meetingRepository.findFailedMeetings();
+    }
 }

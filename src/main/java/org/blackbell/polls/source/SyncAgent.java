@@ -329,7 +329,6 @@ public class SyncAgent {
         log.info("Updated lastSyncDate for town: {}", town.getName());
     }
 
-    @Transactional
     public void syncSeasonMeetings(Town town, Season season, Institution institution) {
         log.info("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
         if (InstitutionType.KOMISIA.equals(institution.getType())) {
@@ -342,35 +341,52 @@ public class SyncAgent {
             List<Meeting> meetings = dataImport.loadMeetings(town, season, institution);
             if (meetings != null) {
                 for (Meeting meeting : meetings) {
-                    Meeting existing = meetingRepository.findByExtId(meeting.getExtId());
-                    if (existing != null) {
-                        if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
-                            // Check if polls have individual votes - if not, re-process
-                            boolean hasVotes = existing.getAgendaItems().stream()
-                                    .filter(ai -> ai.getPolls() != null)
-                                    .flatMap(ai -> ai.getPolls().stream())
-                                    .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
-                            if (hasVotes) {
-                                log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
-                                        existing.getAgendaItems().size(), meeting.getName());
-                                continue;
-                            }
-                            log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
-                        } else {
-                            log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
-                        }
-                        meetingRepository.delete(existing);
-                        meetingRepository.flush();
+                    try {
+                        self.syncSingleMeeting(meeting, dataImport);
+                    } catch (Exception e) {
+                        log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), e.getMessage());
                     }
-                    loadMeeting(meeting, dataImport);
-                    meetingRepository.save(meeting);
                 }
             }
         } catch (Exception e) {
             log.error(Constants.MarkerSync, String.format("An error occured during the %s meetings synchronization.", season.getRef()));
             e.printStackTrace();
         }
+    }
 
+    @Transactional
+    public void syncSingleMeeting(Meeting meeting, DataImport dataImport) {
+        Meeting existing = meetingRepository.findByExtId(meeting.getExtId());
+        if (existing != null) {
+            if (existing.getSyncError() != null) {
+                log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
+                        meeting.getName(), existing.getSyncError());
+            } else if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
+                // Check if polls have individual votes - if not, re-process
+                boolean hasVotes = existing.getAgendaItems().stream()
+                        .filter(ai -> ai.getPolls() != null)
+                        .flatMap(ai -> ai.getPolls().stream())
+                        .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
+                if (hasVotes) {
+                    log.info(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                            existing.getAgendaItems().size(), meeting.getName());
+                    return;
+                }
+                log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
+            } else {
+                log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
+            }
+            meetingRepository.delete(existing);
+            meetingRepository.flush();
+        }
+        try {
+            loadMeeting(meeting, dataImport);
+            meeting.setSyncError(null);
+        } catch (Exception e) {
+            log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage());
+            meeting.setSyncError(e.getMessage());
+        }
+        meetingRepository.save(meeting);
     }
 
     private void loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {

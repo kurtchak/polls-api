@@ -51,6 +51,9 @@ public class Meeting extends NamedEntity {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL)
     private Set<MeetingAttachment> attachments;
 
+    @Column(length = 1000)
+    private String syncError;
+
     @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     public String getRef() {
         return ref;
@@ -115,6 +118,14 @@ public class Meeting extends NamedEntity {
 
     public String getExtId() {
         return extId;
+    }
+
+    public String getSyncError() {
+        return syncError;
+    }
+
+    public void setSyncError(String syncError) {
+        this.syncError = syncError;
     }
 
     public void addAgendaItem(AgendaItem agendaItem) {
