@@ -383,14 +383,14 @@ public class SyncAgent {
                         .flatMap(ai -> ai.getPolls().stream())
                         .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
                 if (hasVotes) {
-                    boolean hasMatchedVotes = existing.getAgendaItems().stream()
+                    boolean hasUnmatchedVotes = existing.getAgendaItems().stream()
                             .filter(ai -> ai.getPolls() != null)
                             .flatMap(ai -> ai.getPolls().stream())
                             .filter(p -> p.getVotes() != null)
                             .flatMap(p -> p.getVotes().stream())
-                            .anyMatch(v -> v.getCouncilMember() != null);
-                    if (hasMatchedVotes) {
-                        log.debug(Constants.MarkerSync, "Meeting already loaded with {} agenda items: {}",
+                            .anyMatch(v -> v.getCouncilMember() == null);
+                    if (!hasUnmatchedVotes) {
+                        log.debug(Constants.MarkerSync, "Meeting fully matched with {} agenda items: {}",
                                 existing.getAgendaItems().size(), meeting.getName());
                         return;
                     }
