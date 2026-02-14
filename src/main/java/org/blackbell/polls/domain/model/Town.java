@@ -20,8 +20,8 @@ public class Town extends NamedEntity {
     private Source source;
 
     @JsonView(value = {Views.Towns.class})
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss")
-    @Temporal(TemporalType.DATE)
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
+    @Temporal(TemporalType.TIMESTAMP)
     private Date lastSyncDate;
 
     @JsonView(value = {Views.Towns.class, Views.Club.class})
