@@ -381,6 +381,10 @@ public class SyncAgent {
                 if (item.getPolls() != null) {
                     for (Poll poll : item.getPolls()) {
                         log.info(Constants.MarkerSync, ">> poll: {}", poll);
+                        if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {
+                            log.warn(Constants.MarkerSync, "Skipping poll details - missing ext IDs for poll '{}'", poll.getName());
+                            continue;
+                        }
                         try {
                             dataImport.loadPollDetails(poll, getMembersMap(meeting.getTown(), meeting.getSeason(), meeting.getInstitution()));
                         } catch (Exception e) {
@@ -428,7 +432,8 @@ public class SyncAgent {
             log.info(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
         }
         if (members == null || members.isEmpty()) {
-            throw new Exception(String.format("No CouncilMembers loaded for the town %s, season %s and institution %s.", town.getRef(), season.getRef(), institution));
+            log.warn(Constants.MarkerSync, "No CouncilMembers found for town {}, season {}, institution {} - votes will be saved without member links",
+                    town.getRef(), season.getRef(), institution.getType());
         }
         for (CouncilMember councilMember : members) {
             log.info(Constants.MarkerSync, "Loaded Council Member > {}", councilMember.getPolitician().getName());

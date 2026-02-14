@@ -27,6 +27,10 @@ public class Vote extends BaseEntity {
     @JoinColumn(name = "council_member_id")
     private CouncilMember councilMember;
 
+    @JsonView(value = Views.Poll.class)
+    @Column(name = "voter_name")
+    private String voterName;
+
     @JsonView(value = {Views.CouncilMember.class, Views.Votes.class})
     @Enumerated(EnumType.STRING)
     @Column(name = "voted")
@@ -43,6 +47,14 @@ public class Vote extends BaseEntity {
 
     public void setCouncilMember(CouncilMember councilMember) {
         this.councilMember = councilMember;
+    }
+
+    public String getVoterName() {
+        return voterName;
+    }
+
+    public void setVoterName(String voterName) {
+        this.voterName = voterName;
     }
 
     public Poll getPoll() {
@@ -68,15 +80,17 @@ public class Vote extends BaseEntity {
 
         Vote vote = (Vote) o;
 
-        if (!getCouncilMember().equals(vote.getCouncilMember())) return false;
+        if (voterName != null ? !voterName.equals(vote.voterName) : vote.voterName != null) return false;
+        if (getCouncilMember() != null ? !getCouncilMember().equals(vote.getCouncilMember()) : vote.getCouncilMember() != null) return false;
         if (getVoted() != vote.getVoted()) return false;
-        return getPoll().equals(vote.getPoll());
-
+        return getPoll() != null ? getPoll().equals(vote.getPoll()) : vote.getPoll() == null;
     }
 
     @Override
     public int hashCode() {
-        return (int) (getId() ^ (getId() >>> 32));
+        int result = voterName != null ? voterName.hashCode() : 0;
+        result = 31 * result + (getVoted() != null ? getVoted().hashCode() : 0);
+        return result;
     }
 
     @Override

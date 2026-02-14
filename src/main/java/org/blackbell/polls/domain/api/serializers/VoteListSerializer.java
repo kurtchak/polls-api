@@ -33,12 +33,12 @@ public class VoteListSerializer extends StdSerializer<Set<Vote>> {
         int count = 0;
         JsonSerializer<Object> memberSerializer = provider.findValueSerializer(CouncilMember.class);
         if (votes != null) {
-            Map<VoteChoice, List<CouncilMember>> votersMap = new HashMap<>();
+            Map<VoteChoice, List<Vote>> votersMap = new HashMap<>();
             for (VoteChoice voteChoice : VoteChoice.values()) {
                 votersMap.put(voteChoice, new ArrayList<>());
             }
             for (Vote v : votes) {
-                votersMap.get(v.getVoted()).add(v.getCouncilMember());
+                votersMap.get(v.getVoted()).add(v);
             }
             for (VoteChoice voteChoice : VoteChoice.values()) {
                 String label = "";
@@ -53,15 +53,14 @@ public class VoteListSerializer extends StdSerializer<Set<Vote>> {
                 jgen.writeStartObject();
                 jgen.writeFieldName("voters");
                 jgen.writeStartArray(votersMap.get(voteChoice).size());
-                for (CouncilMember cm : votersMap.get(voteChoice)) {
-//                System.out.println("vote: " + v);
-//                String member = v.getCouncilMember().toString();
-                    //TODO: CHYBAJU DATA!!!
-                    if (cm != null) {
-                        memberSerializer.serialize(cm, jgen, provider);
+                for (Vote vote : votersMap.get(voteChoice)) {
+                    if (vote.getCouncilMember() != null) {
+                        memberSerializer.serialize(vote.getCouncilMember(), jgen, provider);
+                    } else if (vote.getVoterName() != null) {
+                        jgen.writeStartObject();
+                        jgen.writeStringField("name", vote.getVoterName());
+                        jgen.writeEndObject();
                     }
-//                break;
-//                    count += 1;
                 }
                 jgen.writeEndArray();
                 jgen.writeNumberField("count", votersMap.get(voteChoice).size());
