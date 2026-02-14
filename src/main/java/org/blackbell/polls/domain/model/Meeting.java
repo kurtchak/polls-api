@@ -54,6 +54,7 @@ public class Meeting extends NamedEntity {
     @Column(length = 1000)
     private String syncError;
 
+    @Column(columnDefinition = "boolean default false")
     private boolean syncComplete;
 
     @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
