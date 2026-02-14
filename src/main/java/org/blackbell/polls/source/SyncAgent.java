@@ -259,7 +259,7 @@ public class SyncAgent {
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 5000)
-    public void sync() {
+    public synchronized void sync() {
         syncAll();
     }
 
@@ -268,8 +268,10 @@ public class SyncAgent {
      * Returns false if sync is already running.
      */
     @Async
-    public void triggerSync(String townRef) {
+    public synchronized void triggerSync(String townRef) {
         if (townRef != null) {
+            // Reload towns map to pick up newly added towns
+            townsMap = null;
             Town town = getTown(townRef);
             if (town == null) {
                 log.warn(Constants.MarkerSync, "Town not found: {}", townRef);
@@ -285,7 +287,7 @@ public class SyncAgent {
         return syncProgress.getStatus().isRunning();
     }
 
-    private void syncAll() {
+    private synchronized void syncAll() {
         Set<String> townsRefs = getTownsRefs();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
         log.info(Constants.MarkerSync, "Synchronization started");

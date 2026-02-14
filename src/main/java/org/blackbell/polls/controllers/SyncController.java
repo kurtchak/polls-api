@@ -31,14 +31,13 @@ public class SyncController {
 
     @PostMapping("/sync/trigger/{town}")
     public ResponseEntity<Map<String, String>> triggerSync(@PathVariable(required = false) String town) {
-        if (syncAgent.isRunning()) {
-            return ResponseEntity.status(409)
-                    .body(Map.of("status", "already_running", "message", "Synchronization is already in progress"));
-        }
+        boolean alreadyRunning = syncAgent.isRunning();
         syncAgent.triggerSync(town);
-        String message = town != null
-                ? "Synchronization started for town: " + town
-                : "Synchronization started for all towns";
-        return ResponseEntity.ok(Map.of("status", "started", "message", message));
+        String target = town != null ? town : "all towns";
+        String status = alreadyRunning ? "queued" : "started";
+        String message = alreadyRunning
+                ? "Sync already running, " + target + " queued after current sync"
+                : "Synchronization started for " + target;
+        return ResponseEntity.ok(Map.of("status", status, "message", message));
     }
 }
