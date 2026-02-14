@@ -45,7 +45,7 @@ public class Poll extends NamedEntity {
     @Enumerated(EnumType.STRING)
     private DataSourceType dataSource;
 
-    @JsonView(value = {Views.Polls.class, Views.AgendaItem.class})
+    @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Embedded
     private VotesCount votesCount;
 
