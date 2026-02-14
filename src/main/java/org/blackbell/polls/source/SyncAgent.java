@@ -14,6 +14,7 @@ import org.blackbell.polls.source.dm.DMImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -253,17 +254,38 @@ public class SyncAgent {
     }
 
     private void loadTownsMap() {
-        townsMap = new HashMap<>();
-        for (String ref : List.of("presov", "poprad", "bratislava")) {
-            Town town = townRepository.findByRef(ref);
-            if (town != null) {
-                townsMap.put(ref, town);
-            }
-        }
+        townsMap = townRepository.findAll().stream()
+                .collect(Collectors.toMap(Town::getRef, t -> t));
     }
 
     @Scheduled(fixedRate = 86400000, initialDelay = 5000)
     public void sync() {
+        syncAll();
+    }
+
+    /**
+     * Manually trigger sync for all towns. Runs async when called via self-proxy.
+     * Returns false if sync is already running.
+     */
+    @Async
+    public void triggerSync(String townRef) {
+        if (townRef != null) {
+            Town town = getTown(townRef);
+            if (town == null) {
+                log.warn(Constants.MarkerSync, "Town not found: {}", townRef);
+                return;
+            }
+            syncSingleTown(town);
+        } else {
+            syncAll();
+        }
+    }
+
+    public boolean isRunning() {
+        return syncProgress.getStatus().isRunning();
+    }
+
+    private void syncAll() {
         Set<String> townsRefs = getTownsRefs();
         institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
         log.info(Constants.MarkerSync, "Synchronization started");
@@ -277,18 +299,37 @@ public class SyncAgent {
             townsRefs.forEach(townRef -> {
                 log.info("town: {}", townRef);
                 Town town = getTown(townRef);
-                syncProgress.startTown(townRef);
-                syncSeasons(town);
-                self.syncCouncilMembers(town);
-
-                getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
-                self.saveTownLastSyncDate(town);
-                log.info(Constants.MarkerSync, "Synchronization finished for town: {}", townRef);
+                syncTown(town);
             });
         } finally {
             syncProgress.finishSync();
             log.info(Constants.MarkerSync, "Synchronization finished");
         }
+    }
+
+    private void syncSingleTown(Town town) {
+        institutionsMap = loadInstitutionsMap(institutionRepository.findAll());
+        log.info(Constants.MarkerSync, "Manual sync started for town: {}", town.getRef());
+        syncProgress.startSync();
+
+        try {
+            // Reload seasons map to pick up any new seasons
+            seasonsMap = null;
+            syncTown(town);
+        } finally {
+            syncProgress.finishSync();
+            log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
+        }
+    }
+
+    private void syncTown(Town town) {
+        syncProgress.startTown(town.getRef());
+        syncSeasons(town);
+        self.syncCouncilMembers(town);
+
+        getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
+        self.saveTownLastSyncDate(town);
+        log.info(Constants.MarkerSync, "Synchronization finished for town: {}", town.getRef());
     }
 
     private void syncSeasons(Town town) {
