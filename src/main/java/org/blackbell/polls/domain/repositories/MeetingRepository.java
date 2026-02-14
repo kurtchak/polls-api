@@ -70,4 +70,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
             "WHERE m.town.ref = :townRef " +
             "GROUP BY m.season.ref")
     List<Object[]> countMeetingsAndPollsByTown(@Param("townRef") String townRef);
+
+    @Query("SELECT COUNT(m) FROM Meeting m " +
+            "WHERE m.town.ref = :townRef AND m.season.ref = :seasonRef AND m.syncComplete = false")
+    long countIncompleteMeetings(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
+
+    @Query("SELECT COUNT(m) FROM Meeting m " +
+            "WHERE m.town.ref = :townRef AND m.season.ref = :seasonRef")
+    long countMeetingsByTownAndSeason(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
 }

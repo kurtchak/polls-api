@@ -54,6 +54,8 @@ public class Meeting extends NamedEntity {
     @Column(length = 1000)
     private String syncError;
 
+    private boolean syncComplete;
+
     @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     public String getRef() {
         return ref;
@@ -126,6 +128,14 @@ public class Meeting extends NamedEntity {
 
     public void setSyncError(String syncError) {
         this.syncError = syncError;
+    }
+
+    public boolean isSyncComplete() {
+        return syncComplete;
+    }
+
+    public void setSyncComplete(boolean syncComplete) {
+        this.syncComplete = syncComplete;
     }
 
     public void addAgendaItem(AgendaItem agendaItem) {

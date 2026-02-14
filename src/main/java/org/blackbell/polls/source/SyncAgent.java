@@ -317,7 +317,7 @@ public class SyncAgent {
         try {
             // Reload seasons map to pick up any new seasons
             seasonsMap = null;
-            syncTown(town);
+            syncTown(town, true);
         } finally {
             syncProgress.finishSync();
             log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
@@ -325,11 +325,15 @@ public class SyncAgent {
     }
 
     private void syncTown(Town town) {
+        syncTown(town, false);
+    }
+
+    private void syncTown(Town town, boolean forceAllSeasons) {
         syncProgress.startTown(town.getRef());
         syncSeasons(town);
         self.syncCouncilMembers(town);
 
-        getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
+        getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef), forceAllSeasons));
         self.saveTownLastSyncDate(town);
         log.info(Constants.MarkerSync, "Synchronization finished for town: {}", town.getRef());
     }
@@ -362,15 +366,40 @@ public class SyncAgent {
         return institutionTypeListMap;
     }
 
-    //TODO: zaciatok a koniec volebneho obdobia nie je jasne definovany
-    private void syncSeasonMeetings(Town town, Season season) {
-        log.info(Constants.MarkerSync, "{}: syncSeasonMeetings", town.getName());
-        // load saved instance
-        log.info(Constants.MarkerSync, "Loaded Season to sync: {}", season);
+    private void syncSeasonMeetings(Town town, Season season, boolean forceAllSeasons) {
+        // Skip historical seasons where all meetings are already complete (unless forced)
+        if (!forceAllSeasons && isHistoricalSeason(season) && isSeasonFullySynced(town, season)) {
+            log.info(Constants.MarkerSync, "{}: Skipping fully synced historical season {}", town.getName(), season.getRef());
+            return;
+        }
+        log.info(Constants.MarkerSync, "{}: syncSeasonMeetings {}", town.getName(), season.getRef());
 
         institutionsMap.keySet()
-                .forEach(type -> self.syncSeasonMeetings(town, season, institutionsMap.get(type).get(0))); // AD-HOC - just first Institution-Comission is retrieved
+                .forEach(type -> self.syncSeasonMeetings(town, season, institutionsMap.get(type).get(0)));
+    }
 
+    /**
+     * A season is historical if its end year is before the current year.
+     * Season ref format: "2014-2018" → end year = 2018.
+     */
+    private boolean isHistoricalSeason(Season season) {
+        try {
+            String ref = season.getRef();
+            int endYear = Integer.parseInt(ref.substring(ref.indexOf('-') + 1));
+            return endYear < java.time.Year.now().getValue();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * A season is fully synced if it has meetings and ALL of them are syncComplete.
+     */
+    private boolean isSeasonFullySynced(Town town, Season season) {
+        long total = meetingRepository.countMeetingsByTownAndSeason(town.getRef(), season.getRef());
+        if (total == 0) return false; // Never synced
+        long incomplete = meetingRepository.countIncompleteMeetings(town.getRef(), season.getRef());
+        return incomplete == 0;
     }
 
     @Transactional
@@ -418,6 +447,11 @@ public class SyncAgent {
     public void syncSingleMeeting(Meeting meeting, DataImport dataImport) {
         Meeting existing = meetingRepository.findByExtId(meeting.getExtId());
         if (existing != null) {
+            // Fast skip: already fully synced
+            if (existing.isSyncComplete()) {
+                log.debug(Constants.MarkerSync, "Skipping complete meeting: {}", meeting.getName());
+                return;
+            }
             if (existing.getSyncError() != null) {
                 log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
                         meeting.getName(), existing.getSyncError());
@@ -435,8 +469,10 @@ public class SyncAgent {
                             .flatMap(p -> p.getVotes().stream())
                             .anyMatch(v -> v.getCouncilMember() == null);
                     if (!hasUnmatchedVotes) {
-                        log.debug(Constants.MarkerSync, "Meeting fully matched with {} agenda items: {}",
-                                existing.getAgendaItems().size(), meeting.getName());
+                        // Mark as complete for future fast skip
+                        existing.setSyncComplete(true);
+                        meetingRepository.save(existing);
+                        log.debug(Constants.MarkerSync, "Marked meeting as syncComplete: {}", meeting.getName());
                         return;
                     }
                     log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
@@ -452,11 +488,32 @@ public class SyncAgent {
         try {
             loadMeeting(meeting, dataImport);
             meeting.setSyncError(null);
+            // Check if newly loaded meeting is complete
+            meeting.setSyncComplete(isMeetingComplete(meeting));
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage());
             meeting.setSyncError(e.getMessage());
+            meeting.setSyncComplete(false);
         }
         meetingRepository.save(meeting);
+    }
+
+    /**
+     * A meeting is complete if it has agenda items with polls that have matched votes.
+     */
+    private boolean isMeetingComplete(Meeting meeting) {
+        if (meeting.getSyncError() != null) return false;
+        if (meeting.getAgendaItems() == null || meeting.getAgendaItems().isEmpty()) return false;
+        boolean hasPolls = meeting.getAgendaItems().stream()
+                .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
+        if (!hasPolls) return false;
+        boolean hasUnmatched = meeting.getAgendaItems().stream()
+                .filter(ai -> ai.getPolls() != null)
+                .flatMap(ai -> ai.getPolls().stream())
+                .filter(p -> p.getVotes() != null)
+                .flatMap(p -> p.getVotes().stream())
+                .anyMatch(v -> v.getCouncilMember() == null);
+        return !hasUnmatched;
     }
 
     private void loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {
