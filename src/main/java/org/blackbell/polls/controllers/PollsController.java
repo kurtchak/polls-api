@@ -46,7 +46,8 @@ public class PollsController {
                                   @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
         return polls.stream()
-            .filter(poll -> !IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
+            .filter(poll -> poll.getAgendaItem() == null || poll.getAgendaItem().getName() == null
+                    || !IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
             .collect(Collectors.toList());
     }
 
@@ -74,7 +75,8 @@ public class PollsController {
         @PathVariable(value = "dateTo", required = false) @DateTimeFormat(pattern = Constants.DATE_FORMAT_PATTERN) Date dateTo) throws Exception {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
         return polls.stream()
-            .filter(poll -> IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
+            .filter(poll -> poll.getAgendaItem() != null && poll.getAgendaItem().getName() != null
+                    && IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
             .collect(Collectors.toList());
     }
 

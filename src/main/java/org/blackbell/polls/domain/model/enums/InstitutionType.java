@@ -37,8 +37,10 @@ public enum InstitutionType {
 
     public static InstitutionType fromRef(String ref) {
         switch (ref) {
-            case Constants.ZASTUPITELSTVO: return ZASTUPITELSTVO;
-            case Constants.RADA: return RADA;
+            case Constants.ZASTUPITELSTVO:
+            case Constants.DM_ZASTUPITELSTVO: return ZASTUPITELSTVO;
+            case Constants.RADA:
+            case Constants.DM_RADA: return RADA;
             case Constants.KOMISIA: return KOMISIA;
             default:return ZASTUPITELSTVO;
         }
