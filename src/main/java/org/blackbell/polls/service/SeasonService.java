@@ -31,11 +31,13 @@ public class SeasonService {
 
         return seasons.stream().map(s -> {
             long[] c = countsMap.getOrDefault(s.getRef(), new long[]{0, 0});
+            long incomplete = meetingRepository.countIncompleteMeetings(city, s.getRef());
             Map<String, Object> map = new HashMap<>();
             map.put("ref", s.getRef());
             map.put("name", s.getName());
             map.put("meetingCount", c[0]);
             map.put("pollCount", c[1]);
+            map.put("incompleteMeetings", incomplete);
             return map;
         }).toList();
     }
