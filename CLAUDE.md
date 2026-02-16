@@ -79,3 +79,19 @@ src/main/java/org/blackbell/polls/
 - Nový `PresovCouncilMemberCrawlerV2` pre novú štruktúru presov.sk
 - `PoliticianRepository` + `PoliticiansController` pre sledovanie prezliekačov
 - Oprava `DMParser` - diacritika "Materiály", robustnejší parsing
+
+## Plánované AI features
+
+### Sprístupnenie hlasovaní bežným občanom
+- **Preklad názvov hlasovaní** do zrozumiteľného jazyka (názvy bodov programu sú často úradnícky nečitateľné)
+- **Zhrnutie** čoho sa hlasovanie týkalo, pre koho je to relevantné
+
+### Kategorizácia a zhlukovanie
+- **Labeling/tagging** hlasovaní podľa tém (doprava, školstvo, rozpočet, územný plán...)
+- **Zhlukovanie** podobných hlasovaní naprieč zasadnutiami
+
+### Analýza hlasovania členov
+- **Súlad so stranou/klubom** - miera zhody hlasovania člena s jeho klubom
+- **Detekcia "rebel" hlasovaní** - kedy člen hlasuje opakovane proti svojmu klubu
+- **Skupiny podľa hlasovacích vzorcov** - ktorí členovia hlasujú podobne, aj keď sú z rôznych klubov/strán
+- **Cross-club analýza** - či člen hlasuje častejšie v súlade s iným klubom než vlastným
