@@ -3,18 +3,9 @@ package org.blackbell.polls.common;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
-import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -29,7 +20,7 @@ import java.util.stream.Collectors;
  * email: korcak@esten.sk
  */
 public class PollsUtils {
-    private static final Logger log = LoggerFactory.getLogger(PresovCouncilMemberCrawler.class);
+    private static final Logger log = LoggerFactory.getLogger(PollsUtils.class);
 
     private static String cutDateStringToTFormat(String dateString) {
         return dateString.substring(0,19);
@@ -64,6 +55,9 @@ public class PollsUtils {
 
     public static String startWithFirstname(String fullname) {
         String[] name = fullname.split("\\s", 2);
+        if (name.length < 2) {
+            return fullname;
+        }
         return String.join(" ", Arrays.asList(name[1], name[0]));
     }
 
@@ -109,36 +103,7 @@ public class PollsUtils {
         return pattern.matcher(nfdNormalizedString).replaceAll("");
     }
 
-    public static void saveToFile(String filename, String content) {
-        try {
-            if (Files.notExists(Paths.get("samples"))) {
-                Files.createDirectory(Paths.get("samples"));
-            }
-            Path newFile = Files.createFile(Paths.get("samples/" + filename));
-            Files.write(newFile, content.getBytes());
-            log.info("Saved file {}", filename);
-        } catch (IOException e) {
-            log.error("Unable to save file {}", filename);
-            e.printStackTrace();
-        }
-    }
-
     public static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
-    }
-
-    public static String readFileToString(String path) throws IOException {
-        FileInputStream fis = new FileInputStream(path);
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int nRead;
-        byte[] data = new byte[1024];
-        while ((nRead = fis.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-        }
-
-        buffer.flush();
-        byte[] byteArray = buffer.toByteArray();
-
-        return new String(byteArray, StandardCharsets.UTF_8);
     }
 }

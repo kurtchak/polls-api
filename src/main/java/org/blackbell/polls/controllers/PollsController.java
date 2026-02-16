@@ -18,6 +18,7 @@ import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.PollRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,12 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class PollsController {
     private static final Logger log = LoggerFactory.getLogger(PollsController.class);
 
-    private static final Pattern IRRELEVANT_AGENDA_PATTERN = Pattern.compile("((O|o)tvorenie)|((U|u)rčenie\\s*zapisovateľ(.){0,2})|(overovateľ(.){0,2}\\szápisnice)|((S|s)chválenie\\s*(návrhu)?\\s*programu)");
+    private final Pattern irrelevantAgendaPattern;
+    private final PollRepository pollRepository;
 
-    private PollRepository pollRepository;
-
-    public PollsController(PollRepository pollRepository) {
+    public PollsController(PollRepository pollRepository,
+                           @Value("${polls.irrelevant-agenda-pattern}") String irrelevantAgendaPattern) {
         this.pollRepository = pollRepository;
+        this.irrelevantAgendaPattern = Pattern.compile(irrelevantAgendaPattern);
     }
 
     @JsonView(value = Views.Polls.class)
@@ -47,7 +49,7 @@ public class PollsController {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
         return polls.stream()
             .filter(poll -> poll.getAgendaItem() == null || poll.getAgendaItem().getName() == null
-                    || !IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
+                    || !irrelevantAgendaPattern.matcher(poll.getAgendaItem().getName()).find())
             .collect(Collectors.toList());
     }
 
@@ -76,7 +78,7 @@ public class PollsController {
         List<Poll> polls = pollRepository.getByTownAndSeasonAndInstitution(city, season, InstitutionType.fromRef(institution), dateFrom, dateTo);
         return polls.stream()
             .filter(poll -> poll.getAgendaItem() != null && poll.getAgendaItem().getName() != null
-                    && IRRELEVANT_AGENDA_PATTERN.matcher(poll.getAgendaItem().getName()).find())
+                    && irrelevantAgendaPattern.matcher(poll.getAgendaItem().getName()).find())
             .collect(Collectors.toList());
     }
 

@@ -35,8 +35,10 @@ import static org.blackbell.polls.common.PollsUtils.*;
 public class PresovCouncilMemberCrawlerV2 {
     private static final Logger log = LoggerFactory.getLogger(PresovCouncilMemberCrawlerV2.class);
 
-    private static final String PRESOV_MSZ_MEMBERS_URL = "https://www.presov.sk/poslanci-msz.html";
     private static final String PORTAL_BASE_URL = "https://www.presov.sk";
+
+    private final String membersUrl;
+    private final int timeoutMs;
 
     // Patterns for parsing club membership
     private static final Pattern CLUB_MEMBER_PATTERN = Pattern.compile(
@@ -53,6 +55,11 @@ public class PresovCouncilMemberCrawlerV2 {
 
     // Map of clubs by name for reuse
     private final Map<String, Club> clubsMap = new HashMap<>();
+
+    public PresovCouncilMemberCrawlerV2(String membersUrl, int timeoutMs) {
+        this.membersUrl = membersUrl;
+        this.timeoutMs = timeoutMs;
+    }
 
     /**
      * Fetches council members from presov.sk website.
@@ -74,10 +81,10 @@ public class PresovCouncilMemberCrawlerV2 {
         Set<CouncilMember> members = new HashSet<>();
 
         try {
-            log.info("Fetching council members from: {}", PRESOV_MSZ_MEMBERS_URL);
-            Document document = Jsoup.connect(PRESOV_MSZ_MEMBERS_URL)
+            log.info("Fetching council members from: {}", membersUrl);
+            Document document = Jsoup.connect(membersUrl)
                     .userAgent("Mozilla/5.0")
-                    .timeout(30000)
+                    .timeout(timeoutMs)
                     .get();
 
             Elements personElements = document.select("div.persons-detail-envelope");
@@ -99,7 +106,7 @@ public class PresovCouncilMemberCrawlerV2 {
             log.info("Successfully parsed {} new council members", members.size());
 
         } catch (IOException e) {
-            log.error("Failed to fetch council members from {}: {}", PRESOV_MSZ_MEMBERS_URL, e.getMessage());
+            log.error("Failed to fetch council members from {}: {}", membersUrl, e.getMessage());
         }
 
         return members;
@@ -214,7 +221,7 @@ public class PresovCouncilMemberCrawlerV2 {
             log.debug("Fetching detail page: {}", detailUrl);
             Document detailDoc = Jsoup.connect(detailUrl)
                     .userAgent("Mozilla/5.0")
-                    .timeout(30000)
+                    .timeout(timeoutMs)
                     .get();
 
             // Find the detail section

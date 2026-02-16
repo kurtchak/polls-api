@@ -16,7 +16,6 @@ import java.util.Map;
  */
 @Repository
 public interface InstitutionRepository extends JpaRepository<Institution, Long> {
-    //TODO: will crash when called for Commission
     @Query(value = "select i from Institution i where i.type = :type")
     Institution findByType(@Param(value = "type") InstitutionType type);
 

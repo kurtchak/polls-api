@@ -9,6 +9,7 @@ import org.blackbell.polls.source.bratislava.api.ArcGisVoteRecord;
 import org.blackbell.polls.source.bratislava.api.BratislavaServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
  * - Coverage: 11.12.2014 — 29.06.2023 (electoral periods 7 and 8)
  * - CC BY 4.0 license
  */
+@Component
 public class BratislavaImport implements DataImport {
 
     private static final Logger log = LoggerFactory.getLogger(BratislavaImport.class);

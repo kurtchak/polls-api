@@ -44,7 +44,6 @@ public class MembersController {
         return councilMemberRepository.findByRef(ref);
     }
 
-    //TODO:mixed routes
     @JsonView(value = {Views.CouncilMembers.class, Views.Club.class})
     @RequestMapping("/{city}/{season}/clubs/free")
     public Collection<CouncilMember> freeMembers(@PathVariable(value="city") String city,

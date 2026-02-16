@@ -12,6 +12,7 @@ import org.blackbell.polls.domain.model.common.NamedEntity;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -155,6 +156,25 @@ public class Meeting extends NamedEntity {
         attachments.add(attachment);
     }
 
+    /**
+     * A meeting is complete if it has agenda items with polls that have matched votes
+     * (no unmatched votes and no sync errors).
+     */
+    public boolean isComplete() {
+        if (syncError != null) return false;
+        if (agendaItems == null || agendaItems.isEmpty()) return false;
+        boolean hasPolls = agendaItems.stream()
+                .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
+        if (!hasPolls) return false;
+        boolean hasUnmatched = agendaItems.stream()
+                .filter(ai -> ai.getPolls() != null)
+                .flatMap(ai -> ai.getPolls().stream())
+                .filter(p -> p.getVotes() != null)
+                .flatMap(p -> p.getVotes().stream())
+                .anyMatch(v -> v.getCouncilMember() == null);
+        return !hasUnmatched;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -162,20 +182,15 @@ public class Meeting extends NamedEntity {
 
         Meeting meeting = (Meeting) o;
 
-        if (!getSeason().equals(meeting.getSeason())) return false;
-        if (!getTown().equals(meeting.getTown())) return false;
-        if (!getInstitution().equals(meeting.getInstitution())) return false;
-        return getDate().equals(meeting.getDate());
-
+        if (!Objects.equals(getSeason(), meeting.getSeason())) return false;
+        if (!Objects.equals(getTown(), meeting.getTown())) return false;
+        if (!Objects.equals(getInstitution(), meeting.getInstitution())) return false;
+        return Objects.equals(getDate(), meeting.getDate());
     }
 
     @Override
     public int hashCode() {
-        int result = getSeason().hashCode();
-        result = 31 * result + getTown().hashCode();
-        result = 31 * result + getInstitution().hashCode();
-        result = 31 * result + getDate().hashCode();
-        return result;
+        return Objects.hash(getSeason(), getTown(), getInstitution(), getDate());
     }
 
     @Override

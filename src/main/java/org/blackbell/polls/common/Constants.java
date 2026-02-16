@@ -21,15 +21,6 @@ public class Constants {
     public static final String FULLDATE_WITH_T_FORMAT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
     public static final DateFormat FULLDATE_WITH_T_FORMAT;
 
-    public static final String DM_CITIES_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/Obce/";
-    public static final String DM_ORGANIZATIONS_REQUEST_URL = "https://digitalnemesto.sk/DmApi/organizacie/{dm_city_id}";
-    public static final String DM_CITY_REQUEST_URL = "https://digitalnemesto.sk/DmApi/GetOrganizaciaInfoFromHash/{dm_city_id}";
-    public static final String DM_MEETINGS_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/GetDZZasadnutie/{institution}/mesto-{city}?VolebneObdobie={season}&format=json";
-    public static final String DM_COMMISION_MEETINGS_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/GetDZKomisie/mesto-{city}?VolebneObdobie={season}&format=json";
-    public static final String DM_MEETING_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/GetDZZaKoDet/{dm_meeting_id}?format=json";
-    public static final String DM_POLL_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/GetDZHlas/{dm_agenda_item_id}/{dm_poll_route}?format=json";
-    public static final String DM_SEASONS_REQUEST_URL = "https://www.digitalnemesto.sk/DmApi/GetDZVolebneObdobie/mesto-{city}?format=json";
-
     public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
     public static final String TITLE_RE = "(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr";
     public static final Pattern TITLE_PATTERN = Pattern.compile(Constants.TITLE_RE);

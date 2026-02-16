@@ -1,45 +1,43 @@
 package org.blackbell.polls.source.dm.api;
 
-import org.blackbell.polls.common.Constants;
+import org.blackbell.polls.config.DmApiProperties;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by Ján Korčák on 1.4.2017.
  * email: korcak@esten.sk
  */
+@Component
 public class DMAPIUtils {
-    public static String getDMMeetingsRequestUrl(Town city, InstitutionType institution, String season) {
+
+    private final DmApiProperties dmApiProperties;
+
+    public DMAPIUtils(DmApiProperties dmApiProperties) {
+        this.dmApiProperties = dmApiProperties;
+    }
+
+    public String getDMMeetingsRequestUrl(Town city, InstitutionType institution, String season) {
         if (InstitutionType.KOMISIA.equals(institution)) {
-            return Constants.DM_COMMISION_MEETINGS_REQUEST_URL
-                    .replaceAll("\\{city\\}", city.getRef())
-                    .replaceAll("\\{season\\}", season);
+            return dmApiProperties.getCommissionMeetingsUrl(city.getRef(), season);
         }
-        return Constants.DM_MEETINGS_REQUEST_URL
-                .replaceAll("\\{city\\}", city.getRef())
-                .replaceAll("\\{institution\\}", institution.toDMValue())
-                .replaceAll("\\{season\\}", season);
+        return dmApiProperties.getMeetingsUrl(city.getRef(), institution.toDMValue(), season);
     }
 
-    public static String getDMCitiesRequestUrl() {
-        return Constants.DM_CITIES_REQUEST_URL;
+    public String getDMCitiesRequestUrl() {
+        return dmApiProperties.getCitiesUrl();
     }
 
-    public static String getDMCityRequestUrl(String dmCityId) {
-        return Constants.DM_CITY_REQUEST_URL;
+    public String getDMSeasonsRequestUrl(Town city) {
+        return dmApiProperties.getSeasonsUrl(city.getRef());
     }
 
-    public static String getDMSeasonsRequestUrl(Town city) {
-        return Constants.DM_SEASONS_REQUEST_URL.replaceAll("\\{city\\}", city.getRef());
+    public String getDMMeetingDetailRequestUrl(String dmMeetingId) {
+        return dmApiProperties.getMeetingDetailUrl(dmMeetingId);
     }
 
-    public static String getDMMeetingDetailRequestUrl(String dmMettingId) {
-        return Constants.DM_MEETING_REQUEST_URL.replaceAll("\\{dm_meeting_id\\}", dmMettingId);
-    }
-
-    public static String getDMPollDetailRequestUrl(String dmPollId, String pollRoute) {
-        return Constants.DM_POLL_REQUEST_URL
-                .replaceAll("\\{dm_agenda_item_id\\}", dmPollId)
-                .replaceAll("\\{dm_poll_route\\}", pollRoute);
+    public String getDMPollDetailRequestUrl(String dmPollId, String pollRoute) {
+        return dmApiProperties.getPollDetailUrl(dmPollId, pollRoute);
     }
 }

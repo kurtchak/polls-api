@@ -7,10 +7,10 @@ import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
 import org.blackbell.polls.source.dm.DMPdfImporter;
-import org.blackbell.polls.source.base.BaseImport;
 import org.blackbell.polls.source.bratislava.BratislavaImport;
 import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
 import org.blackbell.polls.source.dm.DMImport;
+import org.blackbell.polls.config.CrawlerProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -46,6 +46,9 @@ public class SyncAgent {
     private final PoliticianRepository politicianRepository;
     private final SyncAgent self; // Self-injection for transactional method calls
     private final SyncProgress syncProgress;
+    private final DMImport dmImport;
+    private final BratislavaImport bratislavaImport;
+    private final CrawlerProperties crawlerProperties;
 
     private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
@@ -58,7 +61,9 @@ public class SyncAgent {
                      TownRepository townRepository, PartyRepository partyRepository,
                      CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository,
                      ClubRepository clubRepository, PoliticianRepository politicianRepository,
-                     @Lazy SyncAgent self, SyncProgress syncProgress) {
+                     @Lazy SyncAgent self, SyncProgress syncProgress,
+                     DMImport dmImport, BratislavaImport bratislavaImport,
+                     CrawlerProperties crawlerProperties) {
         this.meetingRepository = meetingRepository;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
@@ -69,6 +74,9 @@ public class SyncAgent {
         this.politicianRepository = politicianRepository;
         this.self = self;
         this.syncProgress = syncProgress;
+        this.dmImport = dmImport;
+        this.bratislavaImport = bratislavaImport;
+        this.crawlerProperties = crawlerProperties;
     }
 
     @Transactional
@@ -96,7 +104,8 @@ public class SyncAgent {
                 log.info("COUNCIL MEMBERS for season {}: {}", seasonRef, councilMembers.size());
 
                 if (councilMembers.isEmpty()) {
-                    PresovCouncilMemberCrawlerV2 crawler = new PresovCouncilMemberCrawlerV2();
+                    PresovCouncilMemberCrawlerV2 crawler = new PresovCouncilMemberCrawlerV2(
+                            crawlerProperties.getPresovMembersUrl(), crawlerProperties.getTimeoutMs());
                     Set<CouncilMember> newCouncilMembers =
                             crawler.getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
 
@@ -258,7 +267,7 @@ public class SyncAgent {
                 .collect(Collectors.toMap(Town::getRef, t -> t));
     }
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 5000)
+    @Scheduled(fixedRateString = "${sync.fixed-rate-ms}", initialDelayString = "${sync.initial-delay-ms}")
     public synchronized void sync() {
         syncAll();
     }
@@ -418,7 +427,6 @@ public class SyncAgent {
     public void syncSeasonMeetings(Town town, Season season, Institution institution) {
         log.debug("syncSeasonMeetings -> {} - {} - {}", town, season, institution);
         if (InstitutionType.KOMISIA.equals(institution.getType())) {
-            //TODO:
             return;
         }
         log.info(Constants.MarkerSync, "{}:{}:{}: syncSeasonMeetings", town.getName(), season.getName(), institution.getName());
@@ -489,31 +497,13 @@ public class SyncAgent {
             loadMeeting(meeting, dataImport);
             meeting.setSyncError(null);
             // Check if newly loaded meeting is complete
-            meeting.setSyncComplete(isMeetingComplete(meeting));
+            meeting.setSyncComplete(meeting.isComplete());
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage());
             meeting.setSyncError(e.getMessage());
             meeting.setSyncComplete(false);
         }
         meetingRepository.save(meeting);
-    }
-
-    /**
-     * A meeting is complete if it has agenda items with polls that have matched votes.
-     */
-    private boolean isMeetingComplete(Meeting meeting) {
-        if (meeting.getSyncError() != null) return false;
-        if (meeting.getAgendaItems() == null || meeting.getAgendaItems().isEmpty()) return false;
-        boolean hasPolls = meeting.getAgendaItems().stream()
-                .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
-        if (!hasPolls) return false;
-        boolean hasUnmatched = meeting.getAgendaItems().stream()
-                .filter(ai -> ai.getPolls() != null)
-                .flatMap(ai -> ai.getPolls().stream())
-                .filter(p -> p.getVotes() != null)
-                .flatMap(p -> p.getVotes().stream())
-                .anyMatch(v -> v.getCouncilMember() == null);
-        return !hasUnmatched;
     }
 
     private void loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {
@@ -666,14 +656,14 @@ public class SyncAgent {
         return politician;
     }
 
-    private static DataImport getDataImport(Town town) {
+    private DataImport getDataImport(Town town) {
         if (town.getSource() == Source.DM) {
-            return new DMImport();
+            return dmImport;
         }
         if (town.getSource() == Source.BA_OPENDATA) {
-            return new BratislavaImport();
+            return bratislavaImport;
         }
-        return new BaseImport();
+        throw new UnsupportedOperationException("No data import available for source: " + town.getSource());
     }
 
     // MEMBERS
@@ -694,7 +684,7 @@ public class SyncAgent {
         Map<String, CouncilMember> membersMap = new HashMap<>();
         Set<CouncilMember> members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
         log.debug(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));
-        if (members == null || members.isEmpty()) { // TODO: preco vracia empty set?
+        if (members == null || members.isEmpty()) {
             self.syncCouncilMembers(town);
             members = councilMemberRepository.getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), institution.getType());
             log.debug(Constants.MarkerSync, " -- members: {}", (members != null ? members.size() : 0));

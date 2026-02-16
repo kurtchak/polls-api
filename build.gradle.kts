@@ -31,7 +31,6 @@ dependencies {
 	implementation("org.apache.pdfbox:pdfbox:3.0.4")
 
 	runtimeOnly("org.postgresql:postgresql")
-	runtimeOnly("com.microsoft.sqlserver:mssql-jdbc")
 	runtimeOnly("com.h2database:h2")
 
 	compileOnly("org.projectlombok:lombok")

@@ -127,7 +127,6 @@ public class DMParser {
             poll.setVotesCount(vc);
             poll.setVoters(pollDTO.getVoters());
             poll.setNote(pollDTO.getNote());
-            //TODO: members...
             item.addPoll(poll);
         }
     }
@@ -229,7 +228,7 @@ public class DMParser {
             meeting.setName(seasonMeetingDTO.getName());
             meeting.setExtId(seasonMeetingDTO.getId());
             meeting.setDate(PollsUtils.parseDMDate(seasonMeetingDTO.getDate()));
-            meeting.setRef(PollsUtils.generateUniqueKeyReference()); // TODO: use stable reference
+            meeting.setRef(PollsUtils.generateUniqueKeyReference());
             meeting.setTown(town);
             meeting.setSeason(season);
             meeting.setInstitution(institution);

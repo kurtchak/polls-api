@@ -14,6 +14,7 @@ import org.blackbell.polls.domain.model.relate.PartyNominee;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -36,7 +37,6 @@ public class CouncilMember extends EntityWithReference {
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.Poll.class})
     @JsonProperty("club")
     @JsonSerialize(using = PoliticianClubSerializer.class)
-    //TODO: get rid of clubMembers list and replace it with historicalClubMembers and one clubMember association
     public ClubMember getClubMember() {
         return clubMembers != null ? clubMembers.stream().findFirst().orElse(null) : null;
     }
@@ -165,19 +165,15 @@ public class CouncilMember extends EntityWithReference {
 
         CouncilMember member = (CouncilMember) o;
 
-        if (!getSeason().equals(member.getSeason())) return false;
-        if (!getTown().equals(member.getTown())) return false;
-        if (!getInstitution().equals(member.getInstitution())) return false;
-        return getPolitician().equals(member.getPolitician());
+        if (!Objects.equals(getSeason(), member.getSeason())) return false;
+        if (!Objects.equals(getTown(), member.getTown())) return false;
+        if (!Objects.equals(getInstitution(), member.getInstitution())) return false;
+        return Objects.equals(getPolitician(), member.getPolitician());
     }
 
     @Override
     public int hashCode() {
-        int result = getSeason().hashCode();
-        result = 31 * result + getTown().hashCode();
-        result = 31 * result + getInstitution().hashCode();
-        result = 31 * result + getPolitician().hashCode();
-        return result;
+        return Objects.hash(getSeason(), getTown(), getInstitution(), getPolitician());
     }
 
     @Override
@@ -196,6 +192,6 @@ public class CouncilMember extends EntityWithReference {
     }
 
     public Set<PartyNominee> getPartyNominees() {
-        return politician.getPartyNominees(); // TODO: create structure/map identified by season
+        return politician.getPartyNominees();
     }
 }
