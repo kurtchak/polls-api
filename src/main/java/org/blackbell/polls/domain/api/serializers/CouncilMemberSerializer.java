@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import org.blackbell.polls.domain.model.Club;
 import org.blackbell.polls.domain.model.CouncilMember;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
  * email: korcak@esten.sk
  */
 public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
+    private static final Logger log = LoggerFactory.getLogger(CouncilMemberSerializer.class);
 
     public CouncilMemberSerializer() {
         this(null);
@@ -50,7 +52,7 @@ public class CouncilMemberSerializer extends StdSerializer<CouncilMember> {
 
         ClubMember clubMember = value.getClubMember();
         if (clubMember != null) {
-            System.out.println(clubMember.getCouncilMember().getPolitician().getName() + " -> " + clubMember);
+            log.debug("{} -> {}", clubMember.getCouncilMember().getPolitician().getName(), clubMember);
             jgen.writeFieldName("club");
             jgen.writeStartObject();
     //        jgen.writeStringField("club", clubMember.toString());
