@@ -42,31 +42,36 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         log.info("Seeding database with initial data...");
 
-        fixSourceCheckConstraint();
+        fixSourceCheckConstraints();
         seedTowns();
         seedInstitutions();
 
         log.info("Database seeding completed.");
     }
 
-    private void fixSourceCheckConstraint() {
+    private void fixSourceCheckConstraints() {
         try {
-            // Drop constraint first so we can update data freely
+            // --- Town source constraint ---
             entityManager.createNativeQuery(
                     "ALTER TABLE town DROP CONSTRAINT IF EXISTS town_source_check").executeUpdate();
-
             // Migrate legacy BA_OPENDATA → BA_ARCGIS
             int migrated = entityManager.createNativeQuery(
                     "UPDATE town SET source = 'BA_ARCGIS' WHERE source = 'BA_OPENDATA'").executeUpdate();
             if (migrated > 0) {
                 log.info("Migrated {} town(s) from BA_OPENDATA to BA_ARCGIS", migrated);
             }
-
             entityManager.createNativeQuery(
                     "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'DM_PDF', 'OTHER'))").executeUpdate();
-            log.info("Updated town_source_check constraint for new Source values");
+
+            // --- Poll data_source constraint ---
+            entityManager.createNativeQuery(
+                    "ALTER TABLE poll DROP CONSTRAINT IF EXISTS poll_data_source_check").executeUpdate();
+            entityManager.createNativeQuery(
+                    "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM_API', 'DM_PDF', 'BA_API', 'BA_WEB', 'MANUAL'))").executeUpdate();
+
+            log.info("Updated source check constraints for new enum values");
         } catch (Exception e) {
-            log.warn("Could not update town_source_check constraint: {}", e.getMessage());
+            log.warn("Could not update source check constraints: {}", e.getMessage());
         }
     }
 
