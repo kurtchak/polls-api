@@ -18,6 +18,6 @@ public interface DataImport {
 
     void loadPollDetails(Poll poll, Map<String, CouncilMember> membersMap) throws Exception;
 
-    List<CouncilMember> loadMembers(Season season);
+    List<CouncilMember> loadMembers(Town town, Season season, Institution institution);
 
 }

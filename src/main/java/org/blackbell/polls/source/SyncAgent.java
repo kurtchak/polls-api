@@ -7,10 +7,6 @@ import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.*;
 import org.blackbell.polls.source.dm.DMPdfImporter;
-import org.blackbell.polls.source.bratislava.BratislavaImport;
-import org.blackbell.polls.source.crawler.PresovCouncilMemberCrawlerV2;
-import org.blackbell.polls.source.dm.DMImport;
-import org.blackbell.polls.config.CrawlerProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -24,7 +20,6 @@ import org.blackbell.polls.sync.SyncProgress;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonMap;
 import static org.blackbell.polls.common.PollsUtils.toSimpleNameWithoutAccents;
 
 /**
@@ -33,8 +28,6 @@ import static org.blackbell.polls.common.PollsUtils.toSimpleNameWithoutAccents;
 @Component
 public class SyncAgent {
     private static final Logger log = LoggerFactory.getLogger(SyncAgent.class);
-
-    private static final String PRESOV_REF = "presov";
 
     private final MeetingRepository meetingRepository;
     private final SeasonRepository seasonRepository;
@@ -46,9 +39,7 @@ public class SyncAgent {
     private final PoliticianRepository politicianRepository;
     private final SyncAgent self; // Self-injection for transactional method calls
     private final SyncProgress syncProgress;
-    private final DMImport dmImport;
-    private final BratislavaImport bratislavaImport;
-    private final CrawlerProperties crawlerProperties;
+    private final DataSourceResolver resolver;
 
     private Map<String, Town> townsMap;
     private Map<String, Map<String, CouncilMember>> allMembersMap;
@@ -62,8 +53,7 @@ public class SyncAgent {
                      CouncilMemberRepository councilMemberRepository, InstitutionRepository institutionRepository,
                      ClubRepository clubRepository, PoliticianRepository politicianRepository,
                      @Lazy SyncAgent self, SyncProgress syncProgress,
-                     DMImport dmImport, BratislavaImport bratislavaImport,
-                     CrawlerProperties crawlerProperties) {
+                     DataSourceResolver resolver) {
         this.meetingRepository = meetingRepository;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
@@ -74,10 +64,62 @@ public class SyncAgent {
         this.politicianRepository = politicianRepository;
         this.self = self;
         this.syncProgress = syncProgress;
-        this.dmImport = dmImport;
-        this.bratislavaImport = bratislavaImport;
-        this.crawlerProperties = crawlerProperties;
+        this.resolver = resolver;
     }
+
+    // --- Resolver helper methods ---
+
+    @FunctionalInterface
+    private interface CheckedFunction<T, R> {
+        R apply(T t) throws Exception;
+    }
+
+    /**
+     * FIRST WINS: skúsi zdroje v poradí, vráti prvý úspešný výsledok.
+     */
+    private <T> T resolveAndLoad(Town town, String seasonRef,
+            InstitutionType inst, DataOperation op,
+            CheckedFunction<DataImport, T> loader) {
+        List<DataImport> imports = resolver.resolve(town, seasonRef, inst, op);
+        for (DataImport di : imports) {
+            try {
+                T result = loader.apply(di);
+                if (result != null && !(result instanceof Collection<?> c && c.isEmpty())) {
+                    log.info("Source {} provided data for {}/{}/{}",
+                        di.getClass().getSimpleName(), town.getRef(), seasonRef, op);
+                    return result;
+                }
+            } catch (Exception e) {
+                log.warn("Source {} failed for {}/{}/{}: {}",
+                    di.getClass().getSimpleName(), town.getRef(), seasonRef, op, e.getMessage());
+            }
+        }
+        log.error("No data source provided data for {}/{}/{}", town.getRef(), seasonRef, op);
+        return null;
+    }
+
+    /**
+     * AGGREGATE: zozbiera výsledky zo všetkých zdrojov (pre sezóny).
+     */
+    private <T> List<T> resolveAndAggregate(Town town, DataOperation op,
+            CheckedFunction<DataImport, List<T>> loader) {
+        List<T> aggregated = new ArrayList<>();
+        for (DataImport di : resolver.allForTown(town)) {
+            try {
+                List<T> result = loader.apply(di);
+                if (result != null) aggregated.addAll(result);
+            } catch (Exception e) {
+                log.warn("Source {} failed for {}/{}: {}",
+                    di.getClass().getSimpleName(), town.getRef(), op, e.getMessage());
+            }
+        }
+        if (aggregated.isEmpty()) {
+            log.error("No source provided {} for town {}", op, town.getRef());
+        }
+        return aggregated;
+    }
+
+    // --- Council Members ---
 
     @Transactional
     public void syncCouncilMembers(Town town) {
@@ -88,117 +130,72 @@ public class SyncAgent {
         loadPoliticiansMap(town);
 
         for (String seasonRef : getSeasonsRefs()) {
-            if (PRESOV_REF.equals(town.getRef())) {
-                Set<CouncilMember> councilMembers = councilMemberRepository
-                        .getByTownAndSeasonAndInstitution(
-                                town.getRef(),
-                                seasonRef,
-                                InstitutionType.ZASTUPITELSTVO);
+            Set<CouncilMember> existingMembers = councilMemberRepository
+                    .getByTownAndSeasonAndInstitution(
+                            town.getRef(),
+                            seasonRef,
+                            InstitutionType.ZASTUPITELSTVO);
 
-                Map<String, CouncilMember> councilMembersMap = councilMembers
-                        .stream().collect(
-                                Collectors.toMap(
-                                        cm -> toSimpleNameWithoutAccents(cm.getPolitician().getName()),
-                                        cm -> cm));
+            log.info("COUNCIL MEMBERS for {} season {}: {}", town.getRef(), seasonRef, existingMembers.size());
 
-                log.info("COUNCIL MEMBERS for season {}: {}", seasonRef, councilMembers.size());
+            if (!existingMembers.isEmpty()) continue;
 
-                if (councilMembers.isEmpty()) {
-                    PresovCouncilMemberCrawlerV2 crawler = new PresovCouncilMemberCrawlerV2(
-                            crawlerProperties.getPresovMembersUrl(), crawlerProperties.getTimeoutMs());
-                    Set<CouncilMember> newCouncilMembers =
-                            crawler.getCouncilMembers(town, townCouncil, getSeason(seasonRef), getPartiesMap(), councilMembersMap);
+            List<CouncilMember> newMembers = resolveAndLoad(town, seasonRef,
+                    InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
+                    di -> di.loadMembers(town, getSeason(seasonRef), townCouncil));
 
-                    if (newCouncilMembers != null && !newCouncilMembers.isEmpty()) {
-                        // Reuse existing politicians across seasons
-                        for (CouncilMember cm : newCouncilMembers) {
-                            String politicianKey = toSimpleNameWithoutAccents(cm.getPolitician().getName());
-                            Politician existingPolitician = politiciansMap.get(politicianKey);
-
-                            if (existingPolitician != null) {
-                                // Reuse existing politician - this tracks the person across seasons
-                                log.info("Reusing existing politician: {} (ID: {})",
-                                        PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
-
-                                // Update contact info if newer
-                                if (cm.getPolitician().getEmail() != null) {
-                                    existingPolitician.setEmail(cm.getPolitician().getEmail());
-                                }
-                                if (cm.getPolitician().getPhone() != null) {
-                                    existingPolitician.setPhone(cm.getPolitician().getPhone());
-                                }
-                                if (cm.getPolitician().getPicture() != null) {
-                                    existingPolitician.setPicture(cm.getPolitician().getPicture());
-                                }
-
-                                // Transfer party nominees to existing politician
-                                if (cm.getPolitician().getPartyNominees() != null) {
-                                    for (var nominee : cm.getPolitician().getPartyNominees()) {
-                                        nominee.setPolitician(existingPolitician);
-                                        existingPolitician.addPartyNominee(nominee);
-                                    }
-                                }
-
-                                cm.setPolitician(existingPolitician);
-                            } else {
-                                // New politician
-                                log.info("NEW POLITICIAN: {}", PollsUtils.deAccent(cm.getPolitician().getName()));
-                                politiciansMap.put(politicianKey, cm.getPolitician());
-                            }
-
-                            log.info("NEW COUNCIL MEMBER: {} (season: {})",
-                                    PollsUtils.deAccent(cm.getPolitician().getName()), seasonRef);
-                        }
-
-                        // Save clubs created by crawler
-                        Map<String, Club> clubs = crawler.getClubsMap();
-                        if (!clubs.isEmpty()) {
-                            log.info("Saving {} clubs", clubs.size());
-                            clubRepository.saveAll(clubs.values());
-                        }
-
-                        councilMemberRepository.saveAll(newCouncilMembers);
-                    } else {
-                        log.info("No new CouncilMembers found for town {} and season {}", town.getName(), seasonRef);
-                    }
-                }
-            } else if ("bratislava".equals(town.getRef())) {
-                Set<CouncilMember> councilMembers = councilMemberRepository
-                        .getByTownAndSeasonAndInstitution(
-                                town.getRef(),
-                                seasonRef,
-                                InstitutionType.ZASTUPITELSTVO);
-
-                log.info("BRATISLAVA COUNCIL MEMBERS for season {}: {}", seasonRef, councilMembers.size());
-
-                if (councilMembers.isEmpty()) {
-                    DataImport dataImport = getDataImport(town);
-                    List<CouncilMember> newMembers = dataImport.loadMembers(getSeason(seasonRef));
-
-                    if (newMembers != null && !newMembers.isEmpty()) {
-                        for (CouncilMember cm : newMembers) {
-                            cm.setTown(town);
-                            cm.setInstitution(townCouncil);
-
-                            String politicianKey = toSimpleNameWithoutAccents(cm.getPolitician().getName());
-                            Politician existingPolitician = politiciansMap.get(politicianKey);
-
-                            if (existingPolitician != null) {
-                                log.info("Reusing existing politician: {} (ID: {})",
-                                        PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
-                                cm.setPolitician(existingPolitician);
-                            } else {
-                                log.info("NEW POLITICIAN: {}", PollsUtils.deAccent(cm.getPolitician().getName()));
-                                politiciansMap.put(politicianKey, cm.getPolitician());
-                            }
-                        }
-                        councilMemberRepository.saveAll(newMembers);
-                        log.info("Saved {} Bratislava council members for season {}", newMembers.size(), seasonRef);
-                    }
-                }
+            if (newMembers != null && !newMembers.isEmpty()) {
+                reuseExistingPoliticians(newMembers, town, townCouncil);
+                councilMemberRepository.saveAll(newMembers);
+                log.info("Saved {} council members for {} season {}", newMembers.size(), town.getRef(), seasonRef);
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
+    }
+
+    /**
+     * Reuse existing politicians across seasons and set town/institution on members.
+     */
+    private void reuseExistingPoliticians(List<CouncilMember> members, Town town, Institution institution) {
+        for (CouncilMember cm : members) {
+            // Ensure town and institution are set
+            if (cm.getTown() == null) cm.setTown(town);
+            if (cm.getInstitution() == null) cm.setInstitution(institution);
+
+            String politicianKey = toSimpleNameWithoutAccents(cm.getPolitician().getName());
+            Politician existingPolitician = politiciansMap.get(politicianKey);
+
+            if (existingPolitician != null) {
+                // Reuse existing politician - this tracks the person across seasons
+                log.info("Reusing existing politician: {} (ID: {})",
+                        PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
+
+                // Update contact info if newer
+                if (cm.getPolitician().getEmail() != null) {
+                    existingPolitician.setEmail(cm.getPolitician().getEmail());
+                }
+                if (cm.getPolitician().getPhone() != null) {
+                    existingPolitician.setPhone(cm.getPolitician().getPhone());
+                }
+                if (cm.getPolitician().getPicture() != null) {
+                    existingPolitician.setPicture(cm.getPolitician().getPicture());
+                }
+
+                // Transfer party nominees to existing politician
+                if (cm.getPolitician().getPartyNominees() != null) {
+                    for (var nominee : cm.getPolitician().getPartyNominees()) {
+                        nominee.setPolitician(existingPolitician);
+                        existingPolitician.addPartyNominee(nominee);
+                    }
+                }
+
+                cm.setPolitician(existingPolitician);
+            } else {
+                // New politician
+                log.info("NEW POLITICIAN: {}", PollsUtils.deAccent(cm.getPolitician().getName()));
+                politiciansMap.put(politicianKey, cm.getPolitician());
+            }
+        }
     }
 
     /**
@@ -326,7 +323,7 @@ public class SyncAgent {
         try {
             // Reload seasons map to pick up any new seasons
             seasonsMap = null;
-            syncTown(town, true);
+            syncTown(town);
         } finally {
             syncProgress.finishSync();
             log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
@@ -334,24 +331,19 @@ public class SyncAgent {
     }
 
     private void syncTown(Town town) {
-        syncTown(town, false);
-    }
-
-    private void syncTown(Town town, boolean forceAllSeasons) {
         syncProgress.startTown(town.getRef());
         syncSeasons(town);
         self.syncCouncilMembers(town);
 
-        getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef), forceAllSeasons));
+        getSeasonsRefs().forEach(seasonRef -> syncSeasonMeetings(town, getSeason(seasonRef)));
         self.saveTownLastSyncDate(town);
         log.info(Constants.MarkerSync, "Synchronization finished for town: {}", town.getRef());
     }
 
     private void syncSeasons(Town town) {
         try {
-            List<Season> retrievedSeasons =
-                    new ArrayList<>(getDataImport(town)
-                            .loadSeasons(town));
+            List<Season> retrievedSeasons = resolveAndAggregate(town, DataOperation.SEASONS,
+                    di -> di.loadSeasons(town));
             log.info(Constants.MarkerSync, "RETRIEVED SEASONS: {}", retrievedSeasons);
 
             // Load Former Seasons
@@ -374,9 +366,9 @@ public class SyncAgent {
         return institutionTypeListMap;
     }
 
-    private void syncSeasonMeetings(Town town, Season season, boolean forceAllSeasons) {
-        // Skip historical seasons where all meetings are already complete (unless forced)
-        if (!forceAllSeasons && isHistoricalSeason(season) && isSeasonFullySynced(town, season)) {
+    private void syncSeasonMeetings(Town town, Season season) {
+        // Skip historical seasons where all meetings are already complete
+        if (isHistoricalSeason(season) && isSeasonFullySynced(town, season)) {
             log.info(Constants.MarkerSync, "{}: Skipping fully synced historical season {}", town.getName(), season.getRef());
             return;
         }
@@ -430,23 +422,42 @@ public class SyncAgent {
         }
         log.info(Constants.MarkerSync, "{}:{}:{}: syncSeasonMeetings", town.getName(), season.getName(), institution.getName());
         try {
-            DataImport dataImport = getDataImport(town);
-            List<Meeting> meetings = dataImport.loadMeetings(town, season, institution);
+            List<Meeting> meetings = resolveAndLoad(town, season.getRef(),
+                    institution.getType(), DataOperation.MEETINGS,
+                    di -> di.loadMeetings(town, season, institution));
             if (meetings != null) {
+                // Resolve the DataImport for meeting details (same source that provided meetings)
+                DataImport detailsImport = resolveDetailImport(town, season, institution);
                 syncProgress.startSeason(town.getRef(), season.getRef(), meetings.size());
                 for (Meeting meeting : meetings) {
                     try {
-                        self.syncSingleMeeting(meeting, dataImport);
+                        self.syncSingleMeeting(meeting, detailsImport);
                     } catch (Exception e) {
                         log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), e.getMessage());
                     } finally {
                         syncProgress.meetingProcessed();
                     }
                 }
+            } else {
+                Season s = getSeason(season.getRef());
+                if (s != null) {
+                    s.setSyncError("No data source available for meetings");
+                    seasonRepository.save(s);
+                }
             }
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "An error occured during the {} meetings synchronization.", season.getRef(), e);
         }
+    }
+
+    /**
+     * Resolve the DataImport to use for meeting details and poll details.
+     * Uses FIRST WINS strategy from the resolver.
+     */
+    private DataImport resolveDetailImport(Town town, Season season, Institution institution) {
+        List<DataImport> imports = resolver.resolve(town, season.getRef(),
+                institution.getType(), DataOperation.MEETING_DETAILS);
+        return imports.isEmpty() ? null : imports.get(0);
     }
 
     @Transactional
@@ -518,11 +529,12 @@ public class SyncAgent {
                     meeting.getName(), meeting.getAgendaItems().size(), hasPolls, attachmentCount);
 
             if (hasPolls) {
-                // PRIORITY 1: DM API structured data
                 for (AgendaItem item : meeting.getAgendaItems()) {
                     if (item.getPolls() != null) {
                         for (Poll poll : item.getPolls()) {
-                            poll.setDataSource(DataSourceType.DM_API);
+                            if (poll.getDataSource() == null) {
+                                poll.setDataSource(DataSourceType.DM_API);
+                            }
                             log.debug(Constants.MarkerSync, ">> poll: {}", poll);
                             if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {
                                 log.warn(Constants.MarkerSync, "Skipping poll details - missing ext IDs for poll '{}'", poll.getName());
@@ -538,7 +550,7 @@ public class SyncAgent {
                     }
                 }
             } else {
-                // PRIORITY 2: PDF fallback
+                // PDF fallback (runtime decision, stays in SyncAgent)
                 String pdfUrl = findVotingPdfUrl(meeting);
                 log.info(Constants.MarkerSync, "PDF fallback for '{}': pdfUrl={}", meeting.getName(), pdfUrl);
                 if (pdfUrl != null) {
@@ -652,16 +664,6 @@ public class SyncAgent {
             return politicianRepository.findById(politician.getId()).orElse(politician);
         }
         return politician;
-    }
-
-    private DataImport getDataImport(Town town) {
-        if (town.getSource() == Source.DM) {
-            return dmImport;
-        }
-        if (town.getSource() == Source.BA_OPENDATA) {
-            return bratislavaImport;
-        }
-        throw new UnsupportedOperationException("No data import available for source: " + town.getSource());
     }
 
     // MEMBERS

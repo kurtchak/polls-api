@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
 /**
@@ -12,6 +13,17 @@ import jakarta.persistence.Entity;
  */
 @Entity
 public class Season extends NamedEntity {
+
+    @Column(length = 500)
+    private String syncError;
+
+    public String getSyncError() {
+        return syncError;
+    }
+
+    public void setSyncError(String syncError) {
+        this.syncError = syncError;
+    }
 
     @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class, Views.Towns.class, Views.Club.class})
     public String getRef() {

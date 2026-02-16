@@ -41,7 +41,7 @@ public class DMImport implements DataImport {
     }
 
     @Override
-    public List<CouncilMember> loadMembers(Season season) {
+    public List<CouncilMember> loadMembers(Town town, Season season, Institution institution) {
         return null;
     }
 }

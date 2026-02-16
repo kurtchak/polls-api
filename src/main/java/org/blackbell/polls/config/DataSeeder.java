@@ -54,8 +54,8 @@ public class DataSeeder implements CommandLineRunner {
             entityManager.createNativeQuery(
                     "ALTER TABLE town DROP CONSTRAINT IF EXISTS town_source_check").executeUpdate();
             entityManager.createNativeQuery(
-                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_OPENDATA', 'OTHER'))").executeUpdate();
-            log.info("Updated town_source_check constraint to include BA_OPENDATA");
+                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'DM_PDF', 'OTHER'))").executeUpdate();
+            log.info("Updated town_source_check constraint for new Source values");
         } catch (Exception e) {
             log.warn("Could not update town_source_check constraint: {}", e.getMessage());
         }

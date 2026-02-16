@@ -11,24 +11,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Import module for Bratislava city council voting data.
- *
- * Data source: ArcGIS Feature Service on data.bratislava.sk
- * - REST JSON API (no scraping, no headless browser needed)
- * - 240,912 individual voting records (as of Feb 2026)
- * - Coverage: 11.12.2014 — 29.06.2023 (electoral periods 7 and 8)
- * - CC BY 4.0 license
+ * Import module for Bratislava ArcGIS data (periods 7 and 8: 2014-2022).
  */
 @Component
-public class BratislavaImport implements DataImport {
+public class BratislavaArcGisImport implements DataImport {
 
-    private static final Logger log = LoggerFactory.getLogger(BratislavaImport.class);
+    private static final Logger log = LoggerFactory.getLogger(BratislavaArcGisImport.class);
 
     private static final SimpleDateFormat BA_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -39,7 +32,7 @@ public class BratislavaImport implements DataImport {
 
     @Override
     public List<Season> loadSeasons(Town town) throws Exception {
-        log.info("Loading seasons for Bratislava from ArcGIS...");
+        log.info("Loading ArcGIS seasons for Bratislava...");
         List<ArcGisVoteRecord> records = BratislavaServiceClient.queryDistinctPeriods();
         List<Season> seasons = new ArrayList<>();
         for (ArcGisVoteRecord record : records) {
@@ -49,7 +42,7 @@ public class BratislavaImport implements DataImport {
                 season.setRef(seasonName);
                 season.setName(seasonName);
                 seasons.add(season);
-                log.info("Found Bratislava season: {} (period {})", seasonName, record.getElectoralPeriod());
+                log.info("Found ArcGIS Bratislava season: {} (period {})", seasonName, record.getElectoralPeriod());
             }
         }
         return seasons;
@@ -58,11 +51,11 @@ public class BratislavaImport implements DataImport {
     @Override
     public List<Meeting> loadMeetings(Town town, Season season, Institution institution) throws Exception {
         if (!PERIOD_TO_SEASON.containsValue(season.getRef())) {
-            log.debug("Season {} is not a Bratislava season, skipping", season.getRef());
-            return new ArrayList<>();
+            log.debug("Season {} is not an ArcGIS Bratislava season, skipping", season.getRef());
+            return null;
         }
         int period = seasonToPeriod(season.getRef());
-        log.info("Loading meetings for Bratislava, season: {} (period {})", season.getName(), period);
+        log.info("Loading meetings for Bratislava ArcGIS, season: {} (period {})", season.getName(), period);
 
         List<ArcGisVoteRecord> records = BratislavaServiceClient.queryDistinctDatesForPeriod(period);
         List<Meeting> meetings = new ArrayList<>();
@@ -79,7 +72,7 @@ public class BratislavaImport implements DataImport {
             meetings.add(meeting);
         }
 
-        log.info("Found {} meetings for Bratislava period {}", meetings.size(), period);
+        log.info("Found {} meetings for Bratislava ArcGIS period {}", meetings.size(), period);
         return meetings;
     }
 
@@ -88,11 +81,11 @@ public class BratislavaImport implements DataImport {
         String[] parts = externalMeetingId.split(":");
         int period = Integer.parseInt(parts[1]);
         String date = parts[2];
-        log.info("Loading meeting details for Bratislava: period={} date={}", period, date);
+        log.info("Loading ArcGIS meeting details for Bratislava: period={} date={}", period, date);
 
         List<ArcGisVoteRecord> records = BratislavaServiceClient.queryRecordsForDate(period, date);
         if (records.isEmpty()) {
-            log.warn("No records found for Bratislava meeting: {}", externalMeetingId);
+            log.warn("No records found for Bratislava ArcGIS meeting: {}", externalMeetingId);
             return;
         }
 
@@ -126,7 +119,6 @@ public class BratislavaImport implements DataImport {
                 Poll poll = new Poll();
                 poll.setRef(PollsUtils.generateUniqueKeyReference());
                 poll.setName(agendaItemName + " (hlasovanie " + pollSeq + ")");
-                // Store identifiers for loadPollDetails to re-query if needed
                 poll.setExtAgendaItemId("ba:" + period + ":" + date);
                 poll.setExtPollRouteId(String.valueOf(pollSeq));
                 poll.setVoters(pollRecords.size());
@@ -136,7 +128,7 @@ public class BratislavaImport implements DataImport {
         }
 
         int agendaCount = meeting.getAgendaItems() != null ? meeting.getAgendaItems().size() : 0;
-        log.info("Loaded {} agenda items for Bratislava meeting {}", agendaCount, date);
+        log.info("Loaded {} agenda items for Bratislava ArcGIS meeting {}", agendaCount, date);
     }
 
     @Override
@@ -147,7 +139,7 @@ public class BratislavaImport implements DataImport {
         int period = Integer.parseInt(parts[1]);
         String date = parts[2];
 
-        log.info("Loading poll details for Bratislava: date={} poll={}", date, pollSeq);
+        log.info("Loading ArcGIS poll details for Bratislava: date={} poll={}", date, pollSeq);
         List<ArcGisVoteRecord> records = BratislavaServiceClient.queryRecordsForPoll(period, date, pollSeq);
 
         Set<Vote> votes = new HashSet<>();
@@ -167,17 +159,17 @@ public class BratislavaImport implements DataImport {
             votes.add(vote);
         }
         poll.setVotes(votes);
-        log.info("Loaded {} votes for poll {}", votes.size(), poll.getName());
+        log.info("Loaded {} votes for ArcGIS poll {}", votes.size(), poll.getName());
     }
 
     @Override
-    public List<CouncilMember> loadMembers(Season season) {
+    public List<CouncilMember> loadMembers(Town town, Season season, Institution institution) {
         if (!PERIOD_TO_SEASON.containsValue(season.getRef())) {
-            log.debug("Season {} is not a Bratislava season, skipping", season.getRef());
+            log.debug("Season {} is not an ArcGIS Bratislava season, skipping", season.getRef());
             return null;
         }
         int period = seasonToPeriod(season.getRef());
-        log.info("Loading council members for Bratislava, season: {} (period {})", season.getName(), period);
+        log.info("Loading ArcGIS council members for Bratislava, season: {} (period {})", season.getName(), period);
 
         try {
             List<ArcGisVoteRecord> records = BratislavaServiceClient.queryDistinctMembersForPeriod(period);
@@ -200,21 +192,23 @@ public class BratislavaImport implements DataImport {
                 member.setRef(PollsUtils.generateUniqueKeyReference());
                 member.setPolitician(politician);
                 member.setSeason(season);
+                member.setTown(town);
+                member.setInstitution(institution);
                 member.setDescription(record.getClub());
                 members.add(member);
 
-                log.debug("Found Bratislava council member: {} ({})", fullName, record.getClub());
+                log.debug("Found ArcGIS Bratislava council member: {} ({})", fullName, record.getClub());
             }
 
-            log.info("Loaded {} distinct council members for Bratislava period {}", members.size(), period);
+            log.info("Loaded {} distinct council members for Bratislava ArcGIS period {}", members.size(), period);
             return members;
         } catch (Exception e) {
-            log.error("Error loading Bratislava council members: {}", e.getMessage());
+            log.error("Error loading Bratislava ArcGIS council members: {}", e.getMessage());
             return null;
         }
     }
 
-    private static VotesCount countVotes(List<ArcGisVoteRecord> records) {
+    static VotesCount countVotes(List<ArcGisVoteRecord> records) {
         VotesCount vc = new VotesCount();
         for (ArcGisVoteRecord record : records) {
             VoteChoice choice = mapVoteChoice(record.getVote());
@@ -252,6 +246,6 @@ public class BratislavaImport implements DataImport {
                 return entry.getKey();
             }
         }
-        throw new IllegalArgumentException("Unknown Bratislava season: " + seasonRef);
+        throw new IllegalArgumentException("Unknown ArcGIS Bratislava season: " + seasonRef);
     }
 }
