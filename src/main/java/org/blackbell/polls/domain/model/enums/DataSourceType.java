@@ -4,5 +4,6 @@ public enum DataSourceType {
     DM_API,
     DM_PDF,
     BA_API,
+    BA_WEB,
     MANUAL
 }
