@@ -10,7 +10,4 @@ public enum Source {
     BA_WEB,       // Bratislava web scraping (2022-2026)
     PRESOV_WEB,   // Prešov web scraping (members)
     OTHER;
-
-    // Backward compat pre Town.source stĺpec
-    public static final Source BA_OPENDATA = BA_ARCGIS;
 }

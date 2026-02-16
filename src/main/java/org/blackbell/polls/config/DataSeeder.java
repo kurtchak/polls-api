@@ -51,8 +51,17 @@ public class DataSeeder implements CommandLineRunner {
 
     private void fixSourceCheckConstraint() {
         try {
+            // Drop constraint first so we can update data freely
             entityManager.createNativeQuery(
                     "ALTER TABLE town DROP CONSTRAINT IF EXISTS town_source_check").executeUpdate();
+
+            // Migrate legacy BA_OPENDATA → BA_ARCGIS
+            int migrated = entityManager.createNativeQuery(
+                    "UPDATE town SET source = 'BA_ARCGIS' WHERE source = 'BA_OPENDATA'").executeUpdate();
+            if (migrated > 0) {
+                log.info("Migrated {} town(s) from BA_OPENDATA to BA_ARCGIS", migrated);
+            }
+
             entityManager.createNativeQuery(
                     "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'DM_PDF', 'OTHER'))").executeUpdate();
             log.info("Updated town_source_check constraint for new Source values");
@@ -85,11 +94,11 @@ public class DataSeeder implements CommandLineRunner {
             bratislava = new Town();
             bratislava.setRef("bratislava");
             bratislava.setName("Bratislava");
-            bratislava.setSource(Source.BA_OPENDATA);
+            bratislava.setSource(Source.BA_ARCGIS);
             townRepository.save(bratislava);
             log.info("Created town: {}", bratislava);
-        } else if (bratislava.getSource() != Source.BA_OPENDATA) {
-            bratislava.setSource(Source.BA_OPENDATA);
+        } else if (bratislava.getSource() != Source.BA_ARCGIS) {
+            bratislava.setSource(Source.BA_ARCGIS);
             townRepository.save(bratislava);
             log.info("Updated town source: {}", bratislava);
         }
