@@ -1,16 +1,9 @@
 package org.blackbell.polls.controllers;
 
-/**
- * Created by Ján Korčák on 21.4.2018.
- * email: korcak@esten.sk
- */
-
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.Vote;
-import org.blackbell.polls.domain.repositories.VoteRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.blackbell.polls.service.VoteService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,18 +12,17 @@ import java.util.List;
 
 @RestController
 public class VotesController {
-    private static final Logger log = LoggerFactory.getLogger(VotesController.class);
 
-    private VoteRepository voteRepository;
+    private final VoteService voteService;
 
-    public VotesController(VoteRepository voteRepository) {
-        this.voteRepository = voteRepository;
+    public VotesController(VoteService voteService) {
+        this.voteService = voteService;
     }
 
     @JsonView(value = Views.Votes.class)
-    @RequestMapping({"/members/{ref}/votes",
-                     "/{city}/{institution}/member/{ref}/votes"})
-    public List<Vote> memberVotes(@PathVariable(value="ref") String memberRef) throws Exception {
-        return voteRepository.findByCouncilMemberRef(memberRef);
+    @RequestMapping({"/members/{memberRef}/votes",
+                     "/{city}/{institution}/member/{memberRef}/votes"})
+    public List<Vote> memberVotes(@PathVariable String memberRef) {
+        return voteService.getMemberVotes(memberRef);
     }
 }

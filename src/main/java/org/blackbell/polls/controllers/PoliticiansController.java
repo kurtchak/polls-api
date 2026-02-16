@@ -3,9 +3,7 @@ package org.blackbell.polls.controllers;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.Politician;
-import org.blackbell.polls.domain.repositories.PoliticianRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.blackbell.polls.service.PoliticianService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,86 +11,49 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * Controller for politician-related endpoints.
- * Supports tracking politicians across electoral seasons ("prezliekači").
- */
 @RestController
 @RequestMapping("/politicians")
 public class PoliticiansController {
-    private static final Logger log = LoggerFactory.getLogger(PoliticiansController.class);
 
-    private final PoliticianRepository politicianRepository;
+    private final PoliticianService politicianService;
 
-    public PoliticiansController(PoliticianRepository politicianRepository) {
-        this.politicianRepository = politicianRepository;
+    public PoliticiansController(PoliticianService politicianService) {
+        this.politicianService = politicianService;
     }
 
-    /**
-     * Get all politicians who have been council members in a specific town.
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/{town}")
     public List<Politician> getPoliticiansByTown(@PathVariable String town) {
-        log.info("Getting politicians for town: {}", town);
-        return politicianRepository.findByTown(town);
+        return politicianService.getPoliticiansByTown(town);
     }
 
-    /**
-     * Get politician by name with full history (all seasons, parties, clubs).
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/name/{name}")
     public Politician getPoliticianByName(@PathVariable String name) {
-        log.info("Getting politician by name: {}", name);
-        return politicianRepository.findByNameWithHistory(name).orElse(null);
+        return politicianService.getPoliticianByName(name);
     }
 
-    /**
-     * Get "prezliekači" - politicians who changed political parties between seasons.
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/party-switchers")
     public List<Politician> getPartySwitchers() {
-        log.info("Getting party switchers (prezliekači)");
-        List<Politician> switchers = politicianRepository.findPartySwitchers();
-        log.info("Found {} party switchers", switchers.size());
-        return switchers;
+        return politicianService.getPartySwitchers();
     }
 
-    /**
-     * Get party switchers filtered by town.
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/{town}/party-switchers")
     public List<Politician> getPartySwitchersByTown(@PathVariable String town) {
-        log.info("Getting party switchers for town: {}", town);
-        List<Politician> switchers = politicianRepository.findPartySwitchersByTown(town);
-        log.info("Found {} party switchers for {}", switchers.size(), town);
-        return switchers;
+        return politicianService.getPartySwitchersByTown(town);
     }
 
-    /**
-     * Get politicians who changed clubs between seasons.
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/club-switchers")
     public List<Politician> getClubSwitchers() {
-        log.info("Getting club switchers");
-        List<Politician> switchers = politicianRepository.findClubSwitchers();
-        log.info("Found {} club switchers", switchers.size());
-        return switchers;
+        return politicianService.getClubSwitchers();
     }
 
-    /**
-     * Get club switchers filtered by town.
-     */
     @JsonView(Views.CouncilMember.class)
     @GetMapping("/{town}/club-switchers")
     public List<Politician> getClubSwitchersByTown(@PathVariable String town) {
-        log.info("Getting club switchers for town: {}", town);
-        List<Politician> switchers = politicianRepository.findClubSwitchersByTown(town);
-        log.info("Found {} club switchers for {}", switchers.size(), town);
-        return switchers;
+        return politicianService.getClubSwitchersByTown(town);
     }
 }
