@@ -361,8 +361,7 @@ public class SyncAgent {
             // Save New Seasons
             retrievedSeasons.stream().filter(season -> !formerSeasons.contains(season)).forEach(self::saveNewSeason);
         } catch (Exception e) {
-            log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName());
-            e.printStackTrace();
+            log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName(), e);
         }
     }
 
@@ -446,8 +445,7 @@ public class SyncAgent {
                 }
             }
         } catch (Exception e) {
-            log.error(Constants.MarkerSync, String.format("An error occured during the %s meetings synchronization.", season.getRef()));
-            e.printStackTrace();
+            log.error(Constants.MarkerSync, "An error occured during the {} meetings synchronization.", season.getRef(), e);
         }
     }
 
