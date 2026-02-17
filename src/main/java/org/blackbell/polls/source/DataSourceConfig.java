@@ -80,7 +80,10 @@ public class DataSourceConfig {
         // --- Bratislava ---
         // 2022-2026: web scraping pre všetko
         r.add(new SourceRule("bratislava", "2022-2026", null, null, Source.BA_WEB));
-        // 2014-2018, 2018-2022: ArcGIS
+        // 2014-2018, 2018-2022: členov scrapujeme z webu (fotky, emaily, kluby),
+        // ostatné operácie (zasadnutia, hlasovania) cez ArcGIS
+        r.add(new SourceRule("bratislava", "2014-2018", null, DataOperation.MEMBERS, Source.BA_WEB));
+        r.add(new SourceRule("bratislava", "2018-2022", null, DataOperation.MEMBERS, Source.BA_WEB));
         r.add(new SourceRule("bratislava", "2014-2018", null, null, Source.BA_ARCGIS));
         r.add(new SourceRule("bratislava", "2018-2022", null, null, Source.BA_ARCGIS));
         // Default pre Bratislavu (nová sezóna bez pravidla → skúsi BA_WEB)

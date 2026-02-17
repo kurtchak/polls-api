@@ -46,7 +46,7 @@ public class BratislavaWebScraper {
     private static final Logger log = LoggerFactory.getLogger(BratislavaWebScraper.class);
 
     private static final String BASE_URL = "https://zastupitelstvo.bratislava.sk";
-    private static final String MEMBERS_URL = BASE_URL + "/mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-2022-2026/";
+    private static final String MEMBERS_URL_TEMPLATE = BASE_URL + "/mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-%s/";
     private static final String SESSIONS_URL = BASE_URL + "/zasadnutia/";
     private static final String MZ_ORGAN_PARAM = "Mestské zastupiteľstvo hlavného mesta SR Bratislavy (2022 - 2026)";
     private static final String MZ_SLUG_PREFIX = "mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-2022-2026-zasadnutie";
@@ -73,13 +73,14 @@ public class BratislavaWebScraper {
      * Fetches detail pages for each member to get email, phone, club, party nominations.
      */
     public List<CouncilMember> scrapeMembers(Town town, Season season, Institution institution) {
-        log.info("Scraping Bratislava 2022-2026 council members from {}", MEMBERS_URL);
+        String membersUrl = String.format(MEMBERS_URL_TEMPLATE, season.getRef());
+        log.info("Scraping Bratislava {} council members from {}", season.getRef(), membersUrl);
         List<CouncilMember> members = new ArrayList<>();
         Map<String, Party> partiesMap = new HashMap<>();
         clubsMap.clear();
 
         try {
-            Document doc = fetchDocument(MEMBERS_URL);
+            Document doc = fetchDocument(membersUrl);
             Elements memberDivs = doc.select("div.team-wrapper div.col-md-6");
 
             log.info("Found {} member elements", memberDivs.size());
@@ -94,7 +95,7 @@ public class BratislavaWebScraper {
                 }
             }
 
-            log.info("Scraped {} Bratislava 2022-2026 council members", members.size());
+            log.info("Scraped {} Bratislava {} council members", members.size(), season.getRef());
         } catch (IOException e) {
             log.error("Failed to fetch Bratislava members page: {}", e.getMessage());
         }

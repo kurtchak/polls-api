@@ -96,17 +96,19 @@ public class CouncilMemberSyncService {
     }
 
     /**
-     * Check if existing members need enrichment (e.g. loaded with basic info only, missing email/club).
+     * Check if existing members need enrichment (e.g. loaded with basic info only, missing photo/email/club).
      * Uses noneMatch: triggers only when zero members have a given field,
      * meaning initial enrichment hasn't been done yet. Members that legitimately
      * lack a club (e.g. primátor) won't cause repeated re-enrichment.
      */
     private boolean membersNeedEnrichment(Set<CouncilMember> members) {
+        boolean noPhotos = members.stream()
+                .noneMatch(m -> m.getPolitician().getPicture() != null);
         boolean noEmails = members.stream()
                 .noneMatch(m -> m.getPolitician().getEmail() != null);
         boolean noClubs = members.stream()
                 .noneMatch(m -> m.getClubMembers() != null && !m.getClubMembers().isEmpty());
-        return noEmails || noClubs;
+        return noPhotos || noEmails || noClubs;
     }
 
     /**
@@ -124,10 +126,11 @@ public class CouncilMemberSyncService {
 
         if (freshMembers == null || freshMembers.isEmpty()) return;
 
-        // Check if fresh data actually contains detail info (email/phone/club).
+        // Check if fresh data actually contains detail info (photo/email/phone/club).
         // Data sources like DM API return basic member info only — no point enriching.
         boolean hasDetailData = freshMembers.stream().anyMatch(m ->
-                m.getPolitician().getEmail() != null
+                m.getPolitician().getPicture() != null
+                || m.getPolitician().getEmail() != null
                 || m.getPolitician().getPhone() != null
                 || (m.getClubMembers() != null && !m.getClubMembers().isEmpty()));
         if (!hasDetailData) {
@@ -179,6 +182,10 @@ public class CouncilMemberSyncService {
         Politician freshPol = fresh.getPolitician();
         boolean updated = false;
 
+        if (existingPol.getPicture() == null && freshPol.getPicture() != null) {
+            existingPol.setPicture(freshPol.getPicture());
+            updated = true;
+        }
         if (existingPol.getEmail() == null && freshPol.getEmail() != null) {
             existingPol.setEmail(freshPol.getEmail());
             updated = true;
