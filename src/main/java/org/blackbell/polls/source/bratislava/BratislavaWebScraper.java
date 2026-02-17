@@ -233,10 +233,14 @@ public class BratislavaWebScraper {
             }
         }
 
-        // Club info is in a nested <div> inside the <p>
-        Element clubDiv = p.selectFirst("div");
-        if (clubDiv != null) {
-            parseClubInfo(member, clubDiv, partiesMap);
+        // Club info: HTML has <div> inside <p>, but jsoup auto-closes <p> before <div>,
+        // so the club div becomes a sibling of <p> inside the container.
+        // Use ownText() to match only the innermost div with direct club text.
+        for (Element div : container.select("div")) {
+            if (div.ownText().contains("Poslanecký klub")) {
+                parseClubInfo(member, div, partiesMap);
+                break;
+            }
         }
     }
 

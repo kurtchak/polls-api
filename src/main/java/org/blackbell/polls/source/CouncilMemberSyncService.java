@@ -99,8 +99,11 @@ public class CouncilMemberSyncService {
      * Check if existing members need enrichment (e.g. loaded with basic info only, missing email/club).
      */
     private boolean membersNeedEnrichment(Set<CouncilMember> members) {
-        return members.stream()
+        boolean noEmails = members.stream()
                 .noneMatch(m -> m.getPolitician().getEmail() != null);
+        boolean noClubs = members.stream()
+                .noneMatch(m -> m.getClubMembers() != null && !m.getClubMembers().isEmpty());
+        return noEmails || noClubs;
     }
 
     /**
