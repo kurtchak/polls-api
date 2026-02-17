@@ -124,7 +124,10 @@ public class CouncilMemberSyncService {
         for (CouncilMember existing : existingMembers) {
             String key = PollsUtils.toSimpleNameWithoutAccents(existing.getPolitician().getName());
             CouncilMember fresh = freshMap.get(key);
-            if (fresh == null) continue;
+            if (fresh == null) {
+                log.warn("No fresh match for existing member: {} (key: {})", PollsUtils.deAccent(existing.getPolitician().getName()), key);
+                continue;
+            }
 
             if (enrichMember(existing, fresh)) {
                 enriched++;
@@ -179,10 +182,13 @@ public class CouncilMemberSyncService {
         }
 
         if (updated) {
-            log.debug("Enriched member: {} (email: {}, phone: {}, club: {})",
+            log.info("Enriched member: {} (email: {}, phone: {}, club: {})",
                     PollsUtils.deAccent(existingPol.getName()), existingPol.getEmail(),
                     existingPol.getPhone(),
                     existing.getClubMember() != null ? existing.getClubMember().getClub().getName() : "none");
+        } else {
+            log.info("No new data for member: {} (fresh email: {}, fresh phone: {})",
+                    PollsUtils.deAccent(existingPol.getName()), freshPol.getEmail(), freshPol.getPhone());
         }
 
         return updated;
