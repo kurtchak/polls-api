@@ -1,6 +1,6 @@
 package org.blackbell.polls.sync;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class SyncStatusDTO {
     private boolean running;
@@ -9,8 +9,8 @@ public class SyncStatusDTO {
     private String currentPhase;
     private int totalMeetings;
     private int processedMeetings;
-    private Date startedAt;
-    private Date lastCompletedAt;
+    private Instant startedAt;
+    private Instant lastCompletedAt;
 
     public boolean isRunning() {
         return running;
@@ -60,19 +60,19 @@ public class SyncStatusDTO {
         this.processedMeetings = processedMeetings;
     }
 
-    public Date getStartedAt() {
+    public Instant getStartedAt() {
         return startedAt;
     }
 
-    public void setStartedAt(Date startedAt) {
+    public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
     }
 
-    public Date getLastCompletedAt() {
+    public Instant getLastCompletedAt() {
         return lastCompletedAt;
     }
 
-    public void setLastCompletedAt(Date lastCompletedAt) {
+    public void setLastCompletedAt(Instant lastCompletedAt) {
         this.lastCompletedAt = lastCompletedAt;
     }
 }

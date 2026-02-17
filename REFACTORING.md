@@ -51,9 +51,9 @@ Aplikácia polls-api prešla 9-ročným vývojom (2017-2026) s 3 fázami dormanc
 
 ## Fáza 4: Thread safety
 
-- [ ] **4.1** `SyncProgress`: pridať `synchronized` na `startSync()`, `endSync()`, `getStatus()`
-- [ ] **4.2** `SyncProgress`: nahradiť `volatile Date` → `AtomicReference<Instant>` (Date je mutable)
-- [ ] **4.3** `SyncProgress`: overiť konzistenciu snapshot v `getStatus()`
+- [x] **4.1** `SyncProgress`: pridať `synchronized` na `startSync()`, `finishSync()`, `startTown()`, `startSeason()`, `getStatus()`
+- [x] **4.2** `SyncProgress` + `SyncStatusDTO`: nahradiť `volatile Date` → `Instant` (immutable, synchronized stráži prístup)
+- [x] **4.3** `SyncProgress`: konzistentný snapshot v `getStatus()` vďaka `synchronized`
 
 ---
 

@@ -2,23 +2,23 @@ package org.blackbell.polls.sync;
 
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class SyncProgress {
-    private volatile boolean running;
-    private volatile String currentTown;
-    private volatile String currentSeason;
-    private volatile String currentPhase;
-    private volatile Date startedAt;
-    private volatile Date lastCompletedAt;
+    private boolean running;
+    private String currentTown;
+    private String currentSeason;
+    private String currentPhase;
+    private Instant startedAt;
+    private Instant lastCompletedAt;
     private final AtomicInteger totalMeetings = new AtomicInteger(0);
     private final AtomicInteger processedMeetings = new AtomicInteger(0);
 
-    public void startSync() {
+    public synchronized void startSync() {
         running = true;
-        startedAt = new Date();
+        startedAt = Instant.now();
         currentTown = null;
         currentSeason = null;
         currentPhase = "seasons";
@@ -26,20 +26,20 @@ public class SyncProgress {
         processedMeetings.set(0);
     }
 
-    public void finishSync() {
+    public synchronized void finishSync() {
         running = false;
-        lastCompletedAt = new Date();
+        lastCompletedAt = Instant.now();
         currentTown = null;
         currentSeason = null;
         currentPhase = null;
     }
 
-    public void startTown(String townRef) {
+    public synchronized void startTown(String townRef) {
         currentTown = townRef;
         currentPhase = "members";
     }
 
-    public void startSeason(String townRef, String seasonRef, int meetingsCount) {
+    public synchronized void startSeason(String townRef, String seasonRef, int meetingsCount) {
         currentTown = townRef;
         currentSeason = seasonRef;
         currentPhase = "meetings";
@@ -51,7 +51,7 @@ public class SyncProgress {
         processedMeetings.incrementAndGet();
     }
 
-    public SyncStatusDTO getStatus() {
+    public synchronized SyncStatusDTO getStatus() {
         SyncStatusDTO dto = new SyncStatusDTO();
         dto.setRunning(running);
         dto.setCurrentTown(currentTown);
