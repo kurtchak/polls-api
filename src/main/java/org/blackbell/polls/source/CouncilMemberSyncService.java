@@ -148,11 +148,15 @@ public class CouncilMemberSyncService {
             resolvePartyReferences(fresh, existingParties);
         }
 
-        // Build lookup by normalized name
+        // Build lookup by normalized name + reversed name order
         Map<String, CouncilMember> freshMap = new HashMap<>();
         for (CouncilMember fresh : freshMembers) {
             String key = PollsUtils.toSimpleNameWithoutAccents(fresh.getPolitician().getName());
             freshMap.put(key, fresh);
+            String[] parts = key.split("\\s", 2);
+            if (parts.length == 2) {
+                freshMap.put(parts[1] + " " + parts[0], fresh);
+            }
         }
 
         int enriched = 0;
