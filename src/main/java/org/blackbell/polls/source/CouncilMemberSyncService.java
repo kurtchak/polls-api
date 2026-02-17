@@ -5,9 +5,11 @@ import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.model.relate.ClubMember;
+import org.blackbell.polls.domain.model.relate.ClubParty;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 import org.blackbell.polls.domain.repositories.CouncilMemberRepository;
 import org.blackbell.polls.domain.repositories.InstitutionRepository;
+import org.blackbell.polls.domain.repositories.PartyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class CouncilMemberSyncService {
     private final DataSourceResolver resolver;
     private final CouncilMemberRepository councilMemberRepository;
     private final InstitutionRepository institutionRepository;
+    private final PartyRepository partyRepository;
     private final SyncCacheManager cacheManager;
     private final PoliticianMatchingService politicianMatchingService;
 
@@ -33,11 +36,13 @@ public class CouncilMemberSyncService {
     public CouncilMemberSyncService(DataSourceResolver resolver,
                                     CouncilMemberRepository councilMemberRepository,
                                     InstitutionRepository institutionRepository,
+                                    PartyRepository partyRepository,
                                     SyncCacheManager cacheManager,
                                     PoliticianMatchingService politicianMatchingService) {
         this.resolver = resolver;
         this.councilMemberRepository = councilMemberRepository;
         this.institutionRepository = institutionRepository;
+        this.partyRepository = partyRepository;
         this.cacheManager = cacheManager;
         this.politicianMatchingService = politicianMatchingService;
     }
@@ -112,6 +117,15 @@ public class CouncilMemberSyncService {
                 di -> di.loadMembers(town, cacheManager.getSeason(seasonRef), townCouncil));
 
         if (freshMembers == null || freshMembers.isEmpty()) return;
+
+        // Load existing parties to avoid duplicate key violations on Party.ref (unique)
+        Map<String, Party> existingParties = new HashMap<>();
+        partyRepository.findAll().forEach(p -> existingParties.put(p.getRef(), p));
+
+        // Replace transient Party refs with managed entities in all fresh members
+        for (CouncilMember fresh : freshMembers) {
+            resolvePartyReferences(fresh, existingParties);
+        }
 
         // Build lookup by normalized name
         Map<String, CouncilMember> freshMap = new HashMap<>();
@@ -192,6 +206,41 @@ public class CouncilMemberSyncService {
         }
 
         return updated;
+    }
+
+    /**
+     * Replace transient Party references in a freshly scraped member with managed entities from DB.
+     * Prevents duplicate key violations on Party.ref (unique) during cascade persist.
+     */
+    private void resolvePartyReferences(CouncilMember fresh, Map<String, Party> existingParties) {
+        // Fix parties in PartyNominees
+        Politician pol = fresh.getPolitician();
+        if (pol.getPartyNominees() != null) {
+            for (PartyNominee pn : pol.getPartyNominees()) {
+                if (pn.getParty() != null) {
+                    Party managed = existingParties.get(pn.getParty().getRef());
+                    if (managed != null) {
+                        pn.setParty(managed);
+                    }
+                }
+            }
+        }
+
+        // Fix parties in ClubParties (Club → ClubParty → Party cascade)
+        if (fresh.getClubMembers() != null) {
+            for (ClubMember cm : fresh.getClubMembers()) {
+                if (cm.getClub() != null && cm.getClub().getClubParties() != null) {
+                    for (ClubParty cp : cm.getClub().getClubParties()) {
+                        if (cp.getParty() != null) {
+                            Party managed = existingParties.get(cp.getParty().getRef());
+                            if (managed != null) {
+                                cp.setParty(managed);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
