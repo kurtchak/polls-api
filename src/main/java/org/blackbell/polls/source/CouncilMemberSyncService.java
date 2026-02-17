@@ -124,6 +124,18 @@ public class CouncilMemberSyncService {
 
         if (freshMembers == null || freshMembers.isEmpty()) return;
 
+        // Check if fresh data actually contains detail info (email/phone/club).
+        // Data sources like DM API return basic member info only — no point enriching.
+        boolean hasDetailData = freshMembers.stream().anyMatch(m ->
+                m.getPolitician().getEmail() != null
+                || m.getPolitician().getPhone() != null
+                || (m.getClubMembers() != null && !m.getClubMembers().isEmpty()));
+        if (!hasDetailData) {
+            log.info("Fresh data has no detail info for {} season {} — skipping enrichment",
+                    town.getRef(), seasonRef);
+            return;
+        }
+
         // Load existing parties to avoid duplicate key violations on Party.ref (unique)
         Map<String, Party> existingParties = new HashMap<>();
         partyRepository.findAll().forEach(p -> existingParties.put(p.getRef(), p));
