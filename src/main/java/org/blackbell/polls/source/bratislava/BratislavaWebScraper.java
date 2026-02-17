@@ -489,7 +489,7 @@ public class BratislavaWebScraper {
             Vote vote = new Vote();
             vote.setVoted(choice);
             vote.setVoterName(voterName);
-            // CouncilMember will be matched later in SyncAgent.createMissingMembersFromVotes()
+            // CouncilMember will be matched later in PoliticianMatchingService.createMissingMembersFromVotes()
             votes.add(vote);
         }
     }

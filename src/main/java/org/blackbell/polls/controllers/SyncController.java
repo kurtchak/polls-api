@@ -1,6 +1,6 @@
 package org.blackbell.polls.controllers;
 
-import org.blackbell.polls.source.SyncAgent;
+import org.blackbell.polls.source.SyncOrchestrator;
 import org.blackbell.polls.sync.SyncProgress;
 import org.blackbell.polls.sync.SyncStatusDTO;
 import org.springframework.http.ResponseEntity;
@@ -12,11 +12,11 @@ import java.util.Map;
 public class SyncController {
 
     private final SyncProgress syncProgress;
-    private final SyncAgent syncAgent;
+    private final SyncOrchestrator syncOrchestrator;
 
-    public SyncController(SyncProgress syncProgress, SyncAgent syncAgent) {
+    public SyncController(SyncProgress syncProgress, SyncOrchestrator syncOrchestrator) {
         this.syncProgress = syncProgress;
-        this.syncAgent = syncAgent;
+        this.syncOrchestrator = syncOrchestrator;
     }
 
     @GetMapping("/sync/status")
@@ -31,8 +31,8 @@ public class SyncController {
 
     @PostMapping("/sync/trigger/{town}")
     public ResponseEntity<Map<String, String>> triggerSync(@PathVariable(required = false) String town) {
-        boolean alreadyRunning = syncAgent.isRunning();
-        syncAgent.triggerSync(town);
+        boolean alreadyRunning = syncOrchestrator.isRunning();
+        syncOrchestrator.triggerSync(town);
         String target = town != null ? town : "all towns";
         String status = alreadyRunning ? "queued" : "started";
         String message = alreadyRunning
