@@ -64,7 +64,7 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
      * Fix orphan members that were saved without town_id or institution_id.
      * Uses native SQL because these columns have updatable=false in JPA mapping.
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE council_member SET town_id = :townId, institution_id = :instId " +
                    "WHERE season_id = :seasonId AND town_id IS NULL",
            nativeQuery = true)

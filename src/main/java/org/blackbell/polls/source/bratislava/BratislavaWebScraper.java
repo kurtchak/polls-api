@@ -195,26 +195,31 @@ public class BratislavaWebScraper {
 
     /**
      * Parse detail fields from the member detail page container.
-     * Iterates &lt;p&gt; elements looking for labeled fields like Telefón, E-mail, etc.
+     * All fields are in a single {@code <p>} separated by {@code <br>} tags.
+     * Club info is in a nested {@code <div>} inside the {@code <p>}.
      */
     private void parseDetailFields(CouncilMember member, Element container, Map<String, Party> partiesMap) {
         Politician politician = member.getPolitician();
 
-        // Try to decode Cloudflare-obfuscated email
+        // Decode Cloudflare-obfuscated email
         String email = decodeCloudflareEmail(container);
         if (email != null) {
             politician.setEmail(email);
         }
 
-        // Parse labeled fields from <p> elements
-        Elements paragraphs = container.select("p");
-        for (Element p : paragraphs) {
-            Element strong = p.selectFirst("strong");
+        // All fields are in a single <p> with <br> separators
+        Element p = container.selectFirst("p");
+        if (p == null) return;
+
+        // Split inner HTML by <br> to get individual field lines
+        String[] lines = p.html().split("<br\\s*/?>");
+        for (String line : lines) {
+            Document lineDoc = Jsoup.parseBodyFragment(line.trim());
+            Element strong = lineDoc.selectFirst("strong");
             if (strong == null) continue;
 
             String label = strong.text().trim();
-            // Get the text after the <strong> label
-            String value = p.text().replace(label, "").trim();
+            String value = lineDoc.body().text().replace(label, "").trim();
 
             if (label.startsWith("Kandidoval") && !value.isEmpty()) {
                 parsePartyNominations(member, value, partiesMap);
@@ -222,16 +227,17 @@ public class BratislavaWebScraper {
                 member.setDescription("Volebný obvod: " + value);
             } else if (label.startsWith("Telefón") && !value.isEmpty()) {
                 politician.setPhone(value);
-            } else if (label.startsWith("E-mail") || label.startsWith("Email")) {
-                // Email might already be decoded from Cloudflare, but try plain text too
-                if (politician.getEmail() == null && !value.isEmpty()) {
-                    politician.setEmail(value);
-                }
+            } else if ((label.startsWith("E-mail") || label.startsWith("Email"))
+                    && politician.getEmail() == null && !value.isEmpty()) {
+                politician.setEmail(value);
             }
         }
 
-        // Parse club info
-        parseClubInfo(member, container, partiesMap);
+        // Club info is in a nested <div> inside the <p>
+        Element clubDiv = p.selectFirst("div");
+        if (clubDiv != null) {
+            parseClubInfo(member, clubDiv, partiesMap);
+        }
     }
 
     /**
@@ -293,34 +299,32 @@ public class BratislavaWebScraper {
     }
 
     /**
-     * Parse club info from the detail page container.
-     * Looks for text matching "Poslanecký klub: ClubName - funkcia" pattern.
+     * Parse club info from the nested {@code <div>} element.
+     * The div contains lines like "Poslanecký klub: Team Bratislava, PS, SaS - podpredsedníčka"
+     * separated by {@code <br>} tags.
      */
-    private void parseClubInfo(CouncilMember member, Element container, Map<String, Party> partiesMap) {
-        // Search all text nodes for club pattern
-        String fullText = container.text();
+    private void parseClubInfo(CouncilMember member, Element clubDiv, Map<String, Party> partiesMap) {
+        String[] lines = clubDiv.html().split("<br\\s*/?>");
+        for (String line : lines) {
+            String text = Jsoup.parse(line.trim()).text().trim();
+            if (!text.contains("Poslanecký klub")) continue;
 
-        Matcher clubMatcher = CLUB_PATTERN.matcher(fullText);
-        if (clubMatcher.find()) {
-            String clubName = clubMatcher.group(1).trim();
-            ClubFunction clubFunction = parseClubFunction(clubMatcher.group(2));
-            addClubMembership(member, clubName, clubFunction, partiesMap);
-            return;
-        }
+            Matcher clubMatcher = CLUB_PATTERN.matcher(text);
+            if (clubMatcher.find()) {
+                String clubName = clubMatcher.group(1).trim();
+                ClubFunction clubFunction = parseClubFunction(clubMatcher.group(2));
+                addClubMembership(member, clubName, clubFunction, partiesMap);
+                return;
+            }
 
-        // Fallback: club name without function
-        Matcher nameOnlyMatcher = CLUB_NAME_ONLY_PATTERN.matcher(fullText);
-        if (nameOnlyMatcher.find()) {
-            String clubName = nameOnlyMatcher.group(1).trim();
-            // Remove trailing content after common delimiters that aren't part of the club name
-            if (clubName.contains("Volebný obvod")) {
-                clubName = clubName.substring(0, clubName.indexOf("Volebný obvod")).trim();
-            }
-            if (clubName.contains("Kandidoval")) {
-                clubName = clubName.substring(0, clubName.indexOf("Kandidoval")).trim();
-            }
-            if (!clubName.isEmpty()) {
-                addClubMembership(member, clubName, ClubFunction.MEMBER, partiesMap);
+            // Fallback: club name without function
+            Matcher nameOnlyMatcher = CLUB_NAME_ONLY_PATTERN.matcher(text);
+            if (nameOnlyMatcher.find()) {
+                String clubName = nameOnlyMatcher.group(1).trim();
+                if (!clubName.isEmpty()) {
+                    addClubMembership(member, clubName, ClubFunction.MEMBER, partiesMap);
+                }
+                return;
             }
         }
     }
