@@ -97,12 +97,16 @@ public class CouncilMemberSyncService {
 
     /**
      * Check if existing members need enrichment (e.g. loaded with basic info only, missing email/club).
-     * Triggers when any member is missing email or club membership.
+     * Uses noneMatch: triggers only when zero members have a given field,
+     * meaning initial enrichment hasn't been done yet. Members that legitimately
+     * lack a club (e.g. primátor) won't cause repeated re-enrichment.
      */
     private boolean membersNeedEnrichment(Set<CouncilMember> members) {
-        return members.stream()
-                .anyMatch(m -> m.getPolitician().getEmail() == null
-                        || m.getClubMembers() == null || m.getClubMembers().isEmpty());
+        boolean noEmails = members.stream()
+                .noneMatch(m -> m.getPolitician().getEmail() != null);
+        boolean noClubs = members.stream()
+                .noneMatch(m -> m.getClubMembers() != null && !m.getClubMembers().isEmpty());
+        return noEmails || noClubs;
     }
 
     /**
