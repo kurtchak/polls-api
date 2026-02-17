@@ -59,14 +59,14 @@ Aplikácia polls-api prešla 9-ročným vývojom (2017-2026) s 3 fázami dormanc
 
 ## Fáza 5: Service layer
 
-- [ ] **5.1** Vytvoriť `PollService` — extrahuje business logiku z `PollsController` (filtrovanie, markAsIrrelevant)
-- [ ] **5.2** Vytvoriť `MeetingService` — extrahuje z `MeetingsController`
-- [ ] **5.3** Vytvoriť `MemberService` — extrahuje z `MembersController`
-- [ ] **5.4** Vytvoriť `ClubService` — extrahuje z `ClubsController`
-- [ ] **5.5** Vytvoriť `PartyService` — extrahuje z `PartiesController`
-- [ ] **5.6** Vytvoriť `PoliticianService` — extrahuje z `PoliticiansController`
-- [ ] **5.7** Vytvoriť `SeasonService` — extrahuje z `SeasonsController`
-- [ ] **5.8** Zjednodušiť controllery — len request mapping + delegácia na service
+- [x] **5.1** Vytvoriť `PollService` — extrahuje business logiku z `PollsController` (filtrovanie, markAsIrrelevant)
+- [x] **5.2** Vytvoriť `MeetingService` — extrahuje z `MeetingsController`
+- [x] **5.3** Vytvoriť `MemberService` — extrahuje z `MembersController`
+- [x] **5.4** Vytvoriť `ClubService` — extrahuje z `ClubsController`
+- [x] **5.5** Vytvoriť `PartyService` — extrahuje z `PartiesController`
+- [x] **5.6** Vytvoriť `PoliticianService` — extrahuje z `PoliticiansController`
+- [x] **5.7** Vytvoriť `SeasonService` — extrahuje z `SeasonsController`
+- [x] **5.8** Zjednodušiť controllery — len request mapping + delegácia na service
 
 ---
 
