@@ -22,7 +22,7 @@ public class Constants {
     public static final DateFormat FULLDATE_WITH_T_FORMAT;
 
     public static final String[] TITLES = new String[]{"MBA", "MPH", "Phd.", "PhDr.", "PhD.", "PaedDr.", "RNDr.", "Ing.", "Mgr.", "JUDr.", "MUDr.", "doc.", "Csc."};
-    public static final String TITLE_RE = "(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr";
+    public static final String TITLE_RE = "(\\w+\\.)|MPH|MBA|DBA|Mgr|PhDr|\\bet\\b";
     public static final Pattern TITLE_PATTERN = Pattern.compile(Constants.TITLE_RE);
 
     public static final Marker MarkerSync = MarkerFactory.getMarker("SYNC");
