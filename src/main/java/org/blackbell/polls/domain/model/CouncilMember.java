@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.api.serializers.CouncilMemberSerializer;
 import org.blackbell.polls.domain.api.serializers.PoliticianClubSerializer;
-import org.blackbell.polls.domain.api.serializers.SeasonPropertySerializer;
 import org.blackbell.polls.domain.model.common.EntityWithReference;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
@@ -48,7 +47,6 @@ public class CouncilMember extends EntityWithReference {
     @JsonView(value = Views.CouncilMember.class)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id", insertable = true, updatable = false)
-    @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
 
     @JsonView(value = Views.CouncilMember.class)

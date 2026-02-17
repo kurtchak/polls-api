@@ -1,12 +1,10 @@
 package org.blackbell.polls.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.blackbell.polls.domain.api.Views;
-import org.blackbell.polls.domain.api.serializers.InstitutionPropertySerializer;
-import org.blackbell.polls.domain.api.serializers.SeasonPropertySerializer;
-import org.blackbell.polls.domain.api.serializers.TownPropertySerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 
 import jakarta.persistence.*;
@@ -24,19 +22,16 @@ public class Meeting extends NamedEntity {
 
     private String extId;
 
-    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @JsonIgnore
     @ManyToOne @JoinColumn(name = "season_id")
-    @JsonSerialize(using = SeasonPropertySerializer.class)
     private Season season;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @JsonIgnore
     @ManyToOne @JoinColumn(name = "town_id")
-    @JsonSerialize(using = TownPropertySerializer.class)
     private Town town;
 
-    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonIgnore
     @ManyToOne @JoinColumn(name = "institution_id")
-    @JsonSerialize(using = InstitutionPropertySerializer.class)
     private Institution institution;
 
     @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.CouncilMember.class, Views.AgendaItem.class})
@@ -68,24 +63,45 @@ public class Meeting extends NamedEntity {
         return name;
     }
 
+    @JsonIgnore
     public Season getSeason() {
         return season;
+    }
+
+    @JsonView(value = {Views.Meetings.class, Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @JsonProperty("season")
+    public String getSeasonName() {
+        return season != null ? season.getName() : null;
     }
 
     public void setSeason(Season season) {
         this.season = season;
     }
 
+    @JsonIgnore
     public Town getTown() {
         return town;
+    }
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.AgendaItem.class})
+    @JsonProperty("town")
+    public String getTownRef() {
+        return town != null ? town.getRef() : null;
     }
 
     public void setTown(Town town) {
         this.town = town;
     }
 
+    @JsonIgnore
     public Institution getInstitution() {
         return institution;
+    }
+
+    @JsonView(value = {Views.Meeting.class, Views.Poll.class, Views.CouncilMember.class, Views.AgendaItem.class})
+    @JsonProperty("institution")
+    public String getInstitutionType() {
+        return institution != null ? institution.getType().name() : null;
     }
 
     public void setInstitution(Institution institution) {
