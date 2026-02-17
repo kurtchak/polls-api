@@ -206,6 +206,14 @@ public class Meeting extends NamedEntity {
         return !hasUnmatchedVotes();
     }
 
+    @JsonIgnore
+    public String getIncompleteReason() {
+        if (syncError != null) return "sync error: " + syncError;
+        if (agendaItems == null || agendaItems.isEmpty()) return "no agenda items";
+        if (hasPolls() && hasUnmatchedVotes()) return "unmatched votes";
+        return null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
