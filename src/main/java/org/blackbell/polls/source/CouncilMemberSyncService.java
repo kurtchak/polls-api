@@ -50,6 +50,18 @@ public class CouncilMemberSyncService {
         cacheManager.loadPoliticiansMap(town);
 
         for (String seasonRef : cacheManager.getSeasonsRefs()) {
+            // Fix orphan members saved without town/institution (updatable=false bypassed via native SQL)
+            Season season = cacheManager.getSeason(seasonRef);
+            if (season != null && townCouncil != null) {
+                int fixed = councilMemberRepository.fixOrphanMembers(
+                        town.getId(), season.getId(), townCouncil.getId());
+                if (fixed > 0) {
+                    log.info("Fixed {} orphan members (null town) for {} season {}",
+                            fixed, town.getRef(), seasonRef);
+                    councilMemberRepository.flush();
+                }
+            }
+
             Set<CouncilMember> existingMembers = councilMemberRepository
                     .getByTownAndSeasonAndInstitution(
                             town.getRef(),
