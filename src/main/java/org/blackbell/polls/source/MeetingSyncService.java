@@ -133,7 +133,14 @@ public class MeetingSyncService {
         try {
             loadMeeting(meeting, dataImport);
             meeting.setSyncError(null);
-            meeting.setSyncComplete(meeting.isComplete());
+            boolean complete = meeting.isComplete();
+            meeting.setSyncComplete(complete);
+            if (!complete) {
+                log.info(Constants.MarkerSync, "Meeting '{}' incomplete: syncError={}, hasAgenda={}, hasPolls={}, hasUnmatchedVotes={}",
+                        meeting.getName(), meeting.getSyncError() != null,
+                        meeting.getAgendaItems() != null && !meeting.getAgendaItems().isEmpty(),
+                        meeting.hasPolls(), meeting.hasUnmatchedVotes());
+            }
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage(), e);
             meeting.setSyncError(e.getMessage());

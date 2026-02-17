@@ -110,6 +110,7 @@ public class SyncOrchestrator {
 
     private void syncTown(Town town) {
         syncProgress.startTown(town.getRef());
+        councilMemberSyncService.resetMembersMap();
         seasonSyncService.syncSeasons(town);
         councilMemberSyncService.syncCouncilMembers(town);
 

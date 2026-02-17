@@ -194,12 +194,15 @@ public class Meeting extends NamedEntity {
     }
 
     /**
-     * A meeting is complete if it has agenda items with polls that have matched votes
-     * (no unmatched votes and no sync errors).
+     * A meeting is complete if:
+     * - No sync error
+     * - Has agenda items (empty agenda = failed sync)
+     * - Either has no polls (informational meeting) or has polls with all votes matched
      */
     public boolean isComplete() {
         if (syncError != null) return false;
-        if (!hasPolls()) return false;
+        if (agendaItems == null || agendaItems.isEmpty()) return false;
+        if (!hasPolls()) return true;
         return !hasUnmatchedVotes();
     }
 
