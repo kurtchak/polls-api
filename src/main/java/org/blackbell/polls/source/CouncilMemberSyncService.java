@@ -4,6 +4,8 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
+import org.blackbell.polls.domain.model.relate.ClubMember;
+import org.blackbell.polls.domain.model.relate.PartyNominee;
 import org.blackbell.polls.domain.repositories.CouncilMemberRepository;
 import org.blackbell.polls.domain.repositories.InstitutionRepository;
 import org.slf4j.Logger;
@@ -56,7 +58,12 @@ public class CouncilMemberSyncService {
 
             log.info("COUNCIL MEMBERS for {} season {}: {}", town.getRef(), seasonRef, existingMembers.size());
 
-            if (!existingMembers.isEmpty()) continue;
+            if (!existingMembers.isEmpty()) {
+                if (membersNeedEnrichment(existingMembers)) {
+                    enrichExistingMembers(existingMembers, town, seasonRef, townCouncil);
+                }
+                continue;
+            }
 
             List<CouncilMember> newMembers = resolver.resolveAndLoad(town, seasonRef,
                     InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
@@ -69,6 +76,104 @@ public class CouncilMemberSyncService {
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
+    }
+
+    /**
+     * Check if existing members need enrichment (e.g. loaded with basic info only, missing email/club).
+     */
+    private boolean membersNeedEnrichment(Set<CouncilMember> members) {
+        return members.stream()
+                .noneMatch(m -> m.getPolitician().getEmail() != null);
+    }
+
+    /**
+     * Re-scrape fresh member data and merge detail info into existing managed entities.
+     * Enriches: email, phone, description, club membership, party nominations.
+     */
+    private void enrichExistingMembers(Set<CouncilMember> existingMembers, Town town,
+                                       String seasonRef, Institution townCouncil) {
+        log.info("Enriching {} members for {} season {} (no emails found)",
+                existingMembers.size(), town.getRef(), seasonRef);
+
+        List<CouncilMember> freshMembers = resolver.resolveAndLoad(town, seasonRef,
+                InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
+                di -> di.loadMembers(town, cacheManager.getSeason(seasonRef), townCouncil));
+
+        if (freshMembers == null || freshMembers.isEmpty()) return;
+
+        // Build lookup by normalized name
+        Map<String, CouncilMember> freshMap = new HashMap<>();
+        for (CouncilMember fresh : freshMembers) {
+            String key = PollsUtils.toSimpleNameWithoutAccents(fresh.getPolitician().getName());
+            freshMap.put(key, fresh);
+        }
+
+        int enriched = 0;
+        for (CouncilMember existing : existingMembers) {
+            String key = PollsUtils.toSimpleNameWithoutAccents(existing.getPolitician().getName());
+            CouncilMember fresh = freshMap.get(key);
+            if (fresh == null) continue;
+
+            if (enrichMember(existing, fresh)) {
+                enriched++;
+            }
+        }
+
+        log.info("Enriched {}/{} members for {} season {}",
+                enriched, existingMembers.size(), town.getRef(), seasonRef);
+    }
+
+    /**
+     * Merge detail fields from a freshly scraped member into an existing managed entity.
+     * Only fills in fields that are missing on the existing member.
+     */
+    private boolean enrichMember(CouncilMember existing, CouncilMember fresh) {
+        Politician existingPol = existing.getPolitician();
+        Politician freshPol = fresh.getPolitician();
+        boolean updated = false;
+
+        if (existingPol.getEmail() == null && freshPol.getEmail() != null) {
+            existingPol.setEmail(freshPol.getEmail());
+            updated = true;
+        }
+        if (existingPol.getPhone() == null && freshPol.getPhone() != null) {
+            existingPol.setPhone(freshPol.getPhone());
+            updated = true;
+        }
+
+        // Overwrite party text with district info from detail page
+        if (fresh.getDescription() != null && fresh.getDescription().startsWith("Volebný obvod")) {
+            existing.setDescription(fresh.getDescription());
+            updated = true;
+        }
+
+        // Add club membership if missing
+        if ((existing.getClubMembers() == null || existing.getClubMembers().isEmpty())
+                && fresh.getClubMembers() != null && !fresh.getClubMembers().isEmpty()) {
+            for (ClubMember cm : fresh.getClubMembers()) {
+                cm.setCouncilMember(existing);
+                existing.addClubMember(cm);
+            }
+            updated = true;
+        }
+
+        // Add party nominations if missing
+        if ((existingPol.getPartyNominees() == null || existingPol.getPartyNominees().isEmpty())
+                && freshPol.getPartyNominees() != null && !freshPol.getPartyNominees().isEmpty()) {
+            for (PartyNominee pn : freshPol.getPartyNominees()) {
+                existingPol.addPartyNominee(pn);
+            }
+            updated = true;
+        }
+
+        if (updated) {
+            log.debug("Enriched member: {} (email: {}, phone: {}, club: {})",
+                    PollsUtils.deAccent(existingPol.getName()), existingPol.getEmail(),
+                    existingPol.getPhone(),
+                    existing.getClubMember() != null ? existing.getClubMember().getClub().getName() : "none");
+        }
+
+        return updated;
     }
 
     /**
