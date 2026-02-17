@@ -3,8 +3,12 @@ package org.blackbell.polls.source.bratislava;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
+import org.blackbell.polls.domain.model.enums.ClubFunction;
 import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.VoteChoice;
+import org.blackbell.polls.domain.model.relate.ClubMember;
+import org.blackbell.polls.domain.model.relate.ClubParty;
+import org.blackbell.polls.domain.model.relate.PartyNominee;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,6 +22,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.blackbell.polls.common.PollsUtils.*;
 
@@ -49,14 +55,28 @@ public class BratislavaWebScraper {
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
+    // "Poslanecký klub: Team Bratislava, PS, SaS - podpredsedníčka"
+    private static final Pattern CLUB_PATTERN = Pattern.compile(
+            "Poslanecký klub:?\\s*(.+?)\\s*-\\s*(predsed(?:a|níčka)|podpredsed(?:a|níčka)|člen(?:ka)?)\\s*$",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    // Fallback without function
+    private static final Pattern CLUB_NAME_ONLY_PATTERN = Pattern.compile(
+            "Poslanecký klub:?\\s+(.+)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    private final Map<String, Club> clubsMap = new HashMap<>();
+
     // --- Members scraping ---
 
     /**
      * Scrape council members from the static members page.
+     * Fetches detail pages for each member to get email, phone, club, party nominations.
      */
-    public List<CouncilMember> scrapeMembers(Season season) {
+    public List<CouncilMember> scrapeMembers(Town town, Season season, Institution institution) {
         log.info("Scraping Bratislava 2022-2026 council members from {}", MEMBERS_URL);
         List<CouncilMember> members = new ArrayList<>();
+        Map<String, Party> partiesMap = new HashMap<>();
+        clubsMap.clear();
 
         try {
             Document doc = fetchDocument(MEMBERS_URL);
@@ -65,7 +85,7 @@ public class BratislavaWebScraper {
             log.info("Found {} member elements", memberDivs.size());
             for (Element memberDiv : memberDivs) {
                 try {
-                    CouncilMember member = parseMemberElement(memberDiv, season);
+                    CouncilMember member = parseMemberElement(memberDiv, town, season, institution, partiesMap);
                     if (member != null) {
                         members.add(member);
                     }
@@ -82,7 +102,8 @@ public class BratislavaWebScraper {
         return members;
     }
 
-    private CouncilMember parseMemberElement(Element memberDiv, Season season) {
+    private CouncilMember parseMemberElement(Element memberDiv, Town town, Season season,
+                                               Institution institution, Map<String, Party> partiesMap) {
         // Name from h3.title
         Element nameEl = memberDiv.selectFirst("h3.title");
         if (nameEl == null) return null;
@@ -107,14 +128,16 @@ public class BratislavaWebScraper {
             partyInfo = partyEl.text().trim();
         }
 
-        // ExtId from detail link URL
+        // ExtId and detail URL from detail link
         String extId = null;
+        String detailUrl = null;
         Element detailLink = memberDiv.selectFirst("figure a[href]");
         if (detailLink != null) {
             String href = detailLink.attr("href");
             // URL pattern: /212609-sk/antalova-plavuchova-lenka/
             if (href.matches(".*/\\d+-sk/.*")) {
                 extId = href.replaceAll(".*/?(\\d+)-sk/.*", "$1");
+                detailUrl = href.startsWith("http") ? href : BASE_URL + href;
             }
         }
 
@@ -131,10 +154,236 @@ public class BratislavaWebScraper {
         member.setRef(generateUniqueKeyReference());
         member.setPolitician(politician);
         member.setSeason(season);
+        member.setTown(town);
+        member.setInstitution(institution);
         member.setDescription(partyInfo);
 
-        log.debug("Parsed Bratislava member: {} (party: {})", deAccent(politician.getName()), partyInfo);
+        // Fetch detail page for email, phone, club, party nominations
+        if (detailUrl != null) {
+            parseMemberDetailPage(member, detailUrl, partiesMap);
+        }
+
+        log.debug("Parsed Bratislava member: {} (party: {}, email: {}, club: {})",
+                deAccent(politician.getName()), partyInfo, politician.getEmail(),
+                member.getClubMember() != null ? member.getClubMember().getClub().getName() : "none");
         return member;
+    }
+
+    /**
+     * Fetch and parse a member's detail page for email, phone, club, party nominations, district.
+     */
+    private void parseMemberDetailPage(CouncilMember member, String detailUrl, Map<String, Party> partiesMap) {
+        try {
+            log.info("Fetching member detail page: {}", detailUrl);
+            Document doc = fetchDocument(detailUrl);
+
+            Element container = doc.selectFirst(".details");
+            if (container == null) {
+                container = doc.selectFirst(".field-items");
+            }
+            if (container == null) {
+                container = doc.body();
+            }
+
+            if (container != null) {
+                parseDetailFields(member, container, partiesMap);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to fetch detail page for {}: {}", deAccent(member.getPolitician().getName()), e.getMessage());
+        }
+    }
+
+    /**
+     * Parse detail fields from the member detail page container.
+     * Iterates &lt;p&gt; elements looking for labeled fields like Telefón, E-mail, etc.
+     */
+    private void parseDetailFields(CouncilMember member, Element container, Map<String, Party> partiesMap) {
+        Politician politician = member.getPolitician();
+
+        // Try to decode Cloudflare-obfuscated email
+        String email = decodeCloudflareEmail(container);
+        if (email != null) {
+            politician.setEmail(email);
+        }
+
+        // Parse labeled fields from <p> elements
+        Elements paragraphs = container.select("p");
+        for (Element p : paragraphs) {
+            Element strong = p.selectFirst("strong");
+            if (strong == null) continue;
+
+            String label = strong.text().trim();
+            // Get the text after the <strong> label
+            String value = p.text().replace(label, "").trim();
+
+            if (label.startsWith("Kandidoval") && !value.isEmpty()) {
+                parsePartyNominations(member, value, partiesMap);
+            } else if (label.startsWith("Volebný obvod") && !value.isEmpty()) {
+                member.setDescription("Volebný obvod: " + value);
+            } else if (label.startsWith("Telefón") && !value.isEmpty()) {
+                politician.setPhone(value);
+            } else if (label.startsWith("E-mail") || label.startsWith("Email")) {
+                // Email might already be decoded from Cloudflare, but try plain text too
+                if (politician.getEmail() == null && !value.isEmpty()) {
+                    politician.setEmail(value);
+                }
+            }
+        }
+
+        // Parse club info
+        parseClubInfo(member, container, partiesMap);
+    }
+
+    /**
+     * Decode Cloudflare-obfuscated email from data-cfemail attribute.
+     * Cloudflare uses XOR encoding: first byte is the key, remaining bytes are XOR'd with it.
+     */
+    private String decodeCloudflareEmail(Element container) {
+        Element cfEmail = container.selectFirst("[data-cfemail]");
+        if (cfEmail == null) return null;
+
+        String encoded = cfEmail.attr("data-cfemail");
+        if (encoded.isEmpty() || encoded.length() < 4) return null;
+
+        try {
+            int key = Integer.parseInt(encoded.substring(0, 2), 16);
+            StringBuilder decoded = new StringBuilder();
+            for (int i = 2; i < encoded.length(); i += 2) {
+                int charCode = Integer.parseInt(encoded.substring(i, i + 2), 16) ^ key;
+                decoded.append((char) charCode);
+            }
+            String email = decoded.toString();
+            log.debug("Decoded Cloudflare email: {}", email);
+            return email;
+        } catch (NumberFormatException e) {
+            log.warn("Failed to decode Cloudflare email: {}", encoded);
+            return null;
+        }
+    }
+
+    /**
+     * Parse party nominations from "Kandidoval(a) za:" text.
+     * Creates Party + PartyNominee entities (pattern from PresovCouncilMemberCrawlerV2).
+     */
+    private void parsePartyNominations(CouncilMember member, String text, Map<String, Party> partiesMap) {
+        String partyString = text.trim();
+        if (partyString.isEmpty()) return;
+
+        List<String> partyNames = PollsUtils.splitCleanAndTrim(partyString);
+        for (String partyName : partyNames) {
+            if (partyName.isEmpty()) continue;
+
+            Party party = partiesMap.get(partyName);
+            if (party == null) {
+                party = new Party();
+                party.setRef(partyName);
+                party.setName(partyName);
+                partiesMap.put(partyName, party);
+                log.info("Created new party: {}", partyName);
+            }
+
+            PartyNominee nominee = new PartyNominee();
+            nominee.setParty(party);
+            nominee.setSeason(member.getSeason());
+            nominee.setTown(member.getTown());
+            member.getPolitician().addPartyNominee(nominee);
+
+            log.debug("Added party nomination: {} -> {}", deAccent(member.getPolitician().getName()), partyName);
+        }
+    }
+
+    /**
+     * Parse club info from the detail page container.
+     * Looks for text matching "Poslanecký klub: ClubName - funkcia" pattern.
+     */
+    private void parseClubInfo(CouncilMember member, Element container, Map<String, Party> partiesMap) {
+        // Search all text nodes for club pattern
+        String fullText = container.text();
+
+        Matcher clubMatcher = CLUB_PATTERN.matcher(fullText);
+        if (clubMatcher.find()) {
+            String clubName = clubMatcher.group(1).trim();
+            ClubFunction clubFunction = parseClubFunction(clubMatcher.group(2));
+            addClubMembership(member, clubName, clubFunction, partiesMap);
+            return;
+        }
+
+        // Fallback: club name without function
+        Matcher nameOnlyMatcher = CLUB_NAME_ONLY_PATTERN.matcher(fullText);
+        if (nameOnlyMatcher.find()) {
+            String clubName = nameOnlyMatcher.group(1).trim();
+            // Remove trailing content after common delimiters that aren't part of the club name
+            if (clubName.contains("Volebný obvod")) {
+                clubName = clubName.substring(0, clubName.indexOf("Volebný obvod")).trim();
+            }
+            if (clubName.contains("Kandidoval")) {
+                clubName = clubName.substring(0, clubName.indexOf("Kandidoval")).trim();
+            }
+            if (!clubName.isEmpty()) {
+                addClubMembership(member, clubName, ClubFunction.MEMBER, partiesMap);
+            }
+        }
+    }
+
+    /**
+     * Add club membership to the council member (pattern from PresovCouncilMemberCrawlerV2).
+     */
+    private void addClubMembership(CouncilMember member, String clubName, ClubFunction clubFunction,
+                                   Map<String, Party> partiesMap) {
+        Club club = clubsMap.get(clubName);
+        if (club == null) {
+            club = new Club();
+            club.setRef(generateUniqueKeyReference());
+            club.setName(clubName);
+            club.setTown(member.getTown());
+            club.setSeason(member.getSeason());
+
+            // Extract party names from club name and create ClubParty relationships
+            String[] parts = clubName.split("\\s*,\\s*");
+            for (String part : parts) {
+                String partyName = part.trim();
+                if (partyName.isEmpty()) continue;
+
+                Party party = partiesMap.get(partyName);
+                if (party == null) {
+                    party = new Party();
+                    party.setRef(partyName);
+                    party.setName(partyName);
+                    partiesMap.put(partyName, party);
+                    log.info("Created new party from club: {}", partyName);
+                }
+
+                ClubParty clubParty = new ClubParty();
+                clubParty.setParty(party);
+                clubParty.setSeason(member.getSeason());
+                clubParty.setClub(club);
+                club.addClubParty(clubParty);
+            }
+
+            clubsMap.put(clubName, club);
+            log.info("Created new club: {}", clubName);
+        }
+
+        ClubMember clubMember = new ClubMember();
+        clubMember.setClub(club);
+        clubMember.setCouncilMember(member);
+        clubMember.setClubFunction(clubFunction);
+
+        club.addClubMember(clubMember);
+        member.addClubMember(clubMember);
+
+        log.debug("Added {} as {} of club: {}",
+                deAccent(member.getPolitician().getName()), clubFunction, clubName);
+    }
+
+    private ClubFunction parseClubFunction(String text) {
+        String lower = text.toLowerCase();
+        if (lower.contains("podpredsed")) {
+            return ClubFunction.VICECHAIRMAN;
+        } else if (lower.contains("predsed")) {
+            return ClubFunction.CHAIRMAN;
+        }
+        return ClubFunction.MEMBER;
     }
 
     // --- Meeting list scraping ---

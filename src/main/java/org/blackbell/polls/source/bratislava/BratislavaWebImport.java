@@ -60,7 +60,7 @@ public class BratislavaWebImport implements DataImport {
 
     @Override
     public List<CouncilMember> loadMembers(Town town, Season season, Institution institution) {
-        return webScraper.scrapeMembers(season);
+        return webScraper.scrapeMembers(town, season, institution);
     }
 
     /**
