@@ -21,8 +21,8 @@ Aplikácia polls-api prešla 9-ročným vývojom (2017-2026) s 3 fázami dormanc
   - [ ] `DMParser:130` — `//TODO: members...`
   - [ ] `DMParser:232` — `//TODO: use stable reference`
   - [ ] `CouncilMember:39` — `//TODO: get rid of clubMembers list`
-  - [ ] `SyncAgent:421` — `//TODO:` komisia sync
-  - [ ] `SyncAgent:697` — `//TODO: preco vracia empty set?`
+  - [x] ~~`SyncAgent:421` — `//TODO:` komisia sync~~ (SyncAgent zmazaný, logika v MeetingSyncService)
+  - [x] ~~`SyncAgent:697` — `//TODO: preco vracia empty set?`~~ (SyncAgent zmazaný, metóda neexistuje)
 
 ---
 
@@ -70,16 +70,16 @@ Aplikácia polls-api prešla 9-ročným vývojom (2017-2026) s 3 fázami dormanc
 
 ---
 
-## Fáza 6: Rozbiť SyncAgent (722 riadkov → ~6 tried)
+## Fáza 6: Rozbiť SyncAgent (697 riadkov → 6 tried)
 
-- [ ] **6.1** Vytvoriť `SyncCacheManager` — extrahuje loadTownsMap, loadSeasonsMap, loadPartiesMap, loadPoliticiansMap
-- [ ] **6.2** Vytvoriť `SeasonSyncService` — extrahuje syncSeasons()
-- [ ] **6.3** Vytvoriť `CouncilMemberSyncService` — extrahuje syncCouncilMembers() + politician matching
-- [ ] **6.4** Vytvoriť `MeetingSyncService` — extrahuje syncSeasonMeetings() + syncSingleMeeting()
-- [ ] **6.5** Vytvoriť `PoliticianMatchingService` — extrahuje findPoliticianByName, createMissingMembers
-- [ ] **6.6** Premenovať SyncAgent → `SyncOrchestrator` — len scheduling + orchestrácia (~100 riadkov)
-- [ ] **6.7** Odstrániť `@Lazy self` self-injection — transakcie na service metódach
-- [ ] **6.8** Vytvoriť `DataImportFactory` @Component alebo `Map<Source, DataImport>` beans namiesto `new DMImport()`
+- [x] **6.1** Vytvoriť `SyncCacheManager` — extrahuje loadTownsMap, loadSeasonsMap, loadPartiesMap, loadPoliticiansMap
+- [x] **6.2** Vytvoriť `SeasonSyncService` — extrahuje syncSeasons()
+- [x] **6.3** Vytvoriť `CouncilMemberSyncService` — extrahuje syncCouncilMembers()
+- [x] **6.4** Vytvoriť `MeetingSyncService` — extrahuje syncSeasonMeetings() + syncSingleMeeting(), TransactionTemplate pre per-meeting txn
+- [x] **6.5** Vytvoriť `PoliticianMatchingService` — extrahuje findPoliticianByName, reuseExistingPoliticians, createMissingMembers
+- [x] **6.6** Premenovať SyncAgent → `SyncOrchestrator` — len scheduling + orchestrácia (~127 riadkov)
+- [x] **6.7** Odstrániť `@Lazy self` self-injection — transakcie na service metódach + TransactionTemplate
+- [x] **6.8** ~~Vytvoriť `DataImportFactory`~~ — `DataSourceResolver` už obsahuje `Map<Source, DataImport>` registry + `resolveAndLoad`/`resolveAndAggregate` helper metódy
 
 ---
 
