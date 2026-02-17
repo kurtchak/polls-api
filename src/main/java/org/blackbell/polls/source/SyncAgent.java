@@ -433,7 +433,7 @@ public class SyncAgent {
                     try {
                         self.syncSingleMeeting(meeting, detailsImport);
                     } catch (Exception e) {
-                        log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), e.getMessage());
+                        log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), e.getMessage(), e);
                     } finally {
                         syncProgress.meetingProcessed();
                     }
@@ -472,30 +472,16 @@ public class SyncAgent {
             if (existing.getSyncError() != null) {
                 log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
                         meeting.getName(), existing.getSyncError());
-            } else if (existing.getAgendaItems() != null && !existing.getAgendaItems().isEmpty()) {
-                // Check if polls have individual votes WITH matched council members
-                boolean hasVotes = existing.getAgendaItems().stream()
-                        .filter(ai -> ai.getPolls() != null)
-                        .flatMap(ai -> ai.getPolls().stream())
-                        .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
-                if (hasVotes) {
-                    boolean hasUnmatchedVotes = existing.getAgendaItems().stream()
-                            .filter(ai -> ai.getPolls() != null)
-                            .flatMap(ai -> ai.getPolls().stream())
-                            .filter(p -> p.getVotes() != null)
-                            .flatMap(p -> p.getVotes().stream())
-                            .anyMatch(v -> v.getCouncilMember() == null);
-                    if (!hasUnmatchedVotes) {
-                        // Mark as complete for future fast skip
-                        existing.setSyncComplete(true);
-                        meetingRepository.save(existing);
-                        log.debug(Constants.MarkerSync, "Marked meeting as syncComplete: {}", meeting.getName());
-                        return;
-                    }
-                    log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
-                } else {
-                    log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
-                }
+            } else if (existing.isComplete()) {
+                // Mark as complete for future fast skip
+                existing.setSyncComplete(true);
+                meetingRepository.save(existing);
+                log.debug(Constants.MarkerSync, "Marked meeting as syncComplete: {}", meeting.getName());
+                return;
+            } else if (existing.hasVotes() && existing.hasUnmatchedVotes()) {
+                log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
+            } else if (!existing.hasVotes() && existing.hasPolls()) {
+                log.info(Constants.MarkerSync, "Re-loading meeting without individual votes: {}", meeting.getName());
             } else {
                 log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
             }
@@ -508,7 +494,7 @@ public class SyncAgent {
             // Check if newly loaded meeting is complete
             meeting.setSyncComplete(meeting.isComplete());
         } catch (Exception e) {
-            log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage());
+            log.error(Constants.MarkerSync, "Error loading meeting '{}': {}", meeting.getName(), e.getMessage(), e);
             meeting.setSyncError(e.getMessage());
             meeting.setSyncComplete(false);
         }

@@ -156,23 +156,35 @@ public class Meeting extends NamedEntity {
         attachments.add(attachment);
     }
 
+    public boolean hasPolls() {
+        return agendaItems != null && agendaItems.stream()
+                .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
+    }
+
+    public boolean hasVotes() {
+        return agendaItems != null && agendaItems.stream()
+                .filter(ai -> ai.getPolls() != null)
+                .flatMap(ai -> ai.getPolls().stream())
+                .anyMatch(p -> p.getVotes() != null && !p.getVotes().isEmpty());
+    }
+
+    public boolean hasUnmatchedVotes() {
+        return agendaItems != null && agendaItems.stream()
+                .filter(ai -> ai.getPolls() != null)
+                .flatMap(ai -> ai.getPolls().stream())
+                .filter(p -> p.getVotes() != null)
+                .flatMap(p -> p.getVotes().stream())
+                .anyMatch(v -> v.getCouncilMember() == null);
+    }
+
     /**
      * A meeting is complete if it has agenda items with polls that have matched votes
      * (no unmatched votes and no sync errors).
      */
     public boolean isComplete() {
         if (syncError != null) return false;
-        if (agendaItems == null || agendaItems.isEmpty()) return false;
-        boolean hasPolls = agendaItems.stream()
-                .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
-        if (!hasPolls) return false;
-        boolean hasUnmatched = agendaItems.stream()
-                .filter(ai -> ai.getPolls() != null)
-                .flatMap(ai -> ai.getPolls().stream())
-                .filter(p -> p.getVotes() != null)
-                .flatMap(p -> p.getVotes().stream())
-                .anyMatch(v -> v.getCouncilMember() == null);
-        return !hasUnmatched;
+        if (!hasPolls()) return false;
+        return !hasUnmatchedVotes();
     }
 
     @Override
