@@ -129,6 +129,7 @@ public class DataSourceResolver {
             case "BratislavaArcGisImport" -> Source.BA_ARCGIS;
             case "BratislavaWebImport" -> Source.BA_WEB;
             case "PresovMemberImport" -> Source.PRESOV_WEB;
+            case "PopradMemberImport" -> Source.POPRAD_WEB;
             default -> {
                 log.warn("Unknown DataImport class: {}, mapping to OTHER", className);
                 yield Source.OTHER;

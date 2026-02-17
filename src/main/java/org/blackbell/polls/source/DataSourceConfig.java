@@ -95,7 +95,13 @@ public class DataSourceConfig {
         // Ostatné cez DM (explicitne, aj keď by fallback fungoval)
         r.add(new SourceRule("presov", null, null, null, Source.DM));
 
-        // --- Košice, Poprad --- (len DM, pokryté fallbackom)
+        // --- Poprad ---
+        // 2022-2026: members cez web scraper (DM nemá túto sezónu)
+        r.add(new SourceRule("poprad", "2022-2026", null, DataOperation.MEMBERS, Source.POPRAD_WEB));
+        // Ostatné cez DM (staršie sezóny 2014-2018, 2018-2022)
+        r.add(new SourceRule("poprad", null, null, null, Source.DM));
+
+        // --- Košice --- (len DM, pokryté fallbackom)
         // Niet explicitných pravidiel → fallback na DM
 
         return r;
