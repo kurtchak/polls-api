@@ -43,6 +43,7 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Seeding database with initial data...");
 
         fixSourceCheckConstraints();
+        backfillDataSources();
         seedTowns();
         seedInstitutions();
 
@@ -82,6 +83,76 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Updated source check constraints for unified Source enum values");
         } catch (Exception e) {
             log.warn("Could not update source check constraints: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Backfill data_source na existujúcich záznamoch kde je NULL.
+     * Mapovanie vychádza z DataSourceConfig pravidiel:
+     *   - Bratislava 2022-2026 → BA_WEB, staršie sezóny → BA_ARCGIS
+     *   - Prešov members → PRESOV_WEB, ostatné → DM
+     *   - Poprad 2022-2026 members → POPRAD_WEB, ostatné → DM
+     *   - Košice → DM (fallback)
+     */
+    private void backfillDataSources() {
+        try {
+            int total = 0;
+
+            // --- Season (shared across towns, no town FK → use DM as safe default) ---
+            int seasons = entityManager.createNativeQuery(
+                    "UPDATE season SET data_source = 'DM' WHERE data_source IS NULL").executeUpdate();
+            total += seasons;
+
+            // --- Meeting: Bratislava 2022-2026 → BA_WEB ---
+            int baMeetingsWeb = entityManager.createNativeQuery(
+                    "UPDATE meeting SET data_source = 'BA_WEB' WHERE data_source IS NULL" +
+                    " AND town_id = (SELECT id FROM town WHERE ref = 'bratislava')" +
+                    " AND season_id IN (SELECT id FROM season WHERE ref = '2022-2026')").executeUpdate();
+            total += baMeetingsWeb;
+
+            // --- Meeting: Bratislava 2014-2018, 2018-2022 → BA_ARCGIS ---
+            int baMeetingsArcgis = entityManager.createNativeQuery(
+                    "UPDATE meeting SET data_source = 'BA_ARCGIS' WHERE data_source IS NULL" +
+                    " AND town_id = (SELECT id FROM town WHERE ref = 'bratislava')" +
+                    " AND season_id IN (SELECT id FROM season WHERE ref IN ('2014-2018', '2018-2022'))").executeUpdate();
+            total += baMeetingsArcgis;
+
+            // --- Meeting: all remaining → DM ---
+            int dmMeetings = entityManager.createNativeQuery(
+                    "UPDATE meeting SET data_source = 'DM' WHERE data_source IS NULL").executeUpdate();
+            total += dmMeetings;
+
+            // --- CouncilMember: Bratislava all seasons → BA_WEB (enrichment source) ---
+            int baMembers = entityManager.createNativeQuery(
+                    "UPDATE council_member SET data_source = 'BA_WEB' WHERE data_source IS NULL" +
+                    " AND town_id = (SELECT id FROM town WHERE ref = 'bratislava')").executeUpdate();
+            total += baMembers;
+
+            // --- CouncilMember: Prešov → PRESOV_WEB ---
+            int presovMembers = entityManager.createNativeQuery(
+                    "UPDATE council_member SET data_source = 'PRESOV_WEB' WHERE data_source IS NULL" +
+                    " AND town_id = (SELECT id FROM town WHERE ref = 'presov')").executeUpdate();
+            total += presovMembers;
+
+            // --- CouncilMember: Poprad 2022-2026 → POPRAD_WEB ---
+            int popradMembers = entityManager.createNativeQuery(
+                    "UPDATE council_member SET data_source = 'POPRAD_WEB' WHERE data_source IS NULL" +
+                    " AND town_id = (SELECT id FROM town WHERE ref = 'poprad')" +
+                    " AND season_id IN (SELECT id FROM season WHERE ref = '2022-2026')").executeUpdate();
+            total += popradMembers;
+
+            // --- CouncilMember: all remaining → DM ---
+            int dmMembers = entityManager.createNativeQuery(
+                    "UPDATE council_member SET data_source = 'DM' WHERE data_source IS NULL").executeUpdate();
+            total += dmMembers;
+
+            if (total > 0) {
+                log.info("Backfilled data_source on {} records (seasons: {}, meetings: BA_WEB={} BA_ARCGIS={} DM={}, members: BA_WEB={} PRESOV_WEB={} POPRAD_WEB={} DM={})",
+                        total, seasons, baMeetingsWeb, baMeetingsArcgis, dmMeetings,
+                        baMembers, presovMembers, popradMembers, dmMembers);
+            }
+        } catch (Exception e) {
+            log.warn("Could not backfill data_source: {}", e.getMessage());
         }
     }
 
