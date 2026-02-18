@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Log &mdash; Admin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+
+        nav { background: #1a1a2e; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
+        nav h1 { font-size: 18px; font-weight: 600; }
+        nav .tabs { display: flex; gap: 4px; }
+        nav .tabs button {
+            background: transparent; color: #aaa; border: none; padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 14px; transition: all .15s;
+        }
+        nav .tabs button:hover { color: #fff; background: rgba(255,255,255,.1); }
+        nav .tabs button.active { color: #fff; background: rgba(255,255,255,.15); font-weight: 600; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+        .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .filters select, .filters input {
+            padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; background: #fff;
+        }
+        .filters label { font-size: 13px; color: #666; font-weight: 500; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px; overflow: hidden; }
+        .card-header { padding: 16px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .card-body { padding: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #fafafa; text-align: left; padding: 10px 16px; font-weight: 600; color: #555; border-bottom: 1px solid #eee; white-space: nowrap; }
+        td { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-success { background: #e6f4ea; color: #1e7e34; }
+        .badge-error { background: #fce8e8; color: #c62828; }
+        .badge-source { background: #e3f2fd; color: #1565c0; }
+        .badge-op { background: #f3e5f5; color: #7b1fa2; }
+        .badge-count { background: #fff3e0; color: #e65100; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .summary-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 20px; }
+        .summary-card h3 { font-size: 14px; color: #666; margin-bottom: 12px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-row .label { color: #555; }
+        .summary-row .value { font-weight: 600; }
+
+        .empty { padding: 40px; text-align: center; color: #999; font-size: 14px; }
+        .loading { padding: 40px; text-align: center; color: #666; }
+
+        .duration { color: #888; font-size: 12px; }
+        .error-msg { color: #c62828; font-size: 12px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .error-msg:hover { white-space: normal; }
+        .timestamp { color: #888; font-size: 12px; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>Polls Admin</h1>
+        <div class="tabs">
+            <button class="active" data-tab="data-sources">Zdroje dat</button>
+            <button data-tab="sync-log">Sync Log</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Data Sources Tab -->
+        <div id="tab-data-sources">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Mesto</label>
+                    <select id="ds-town-filter">
+                        <option value="">Vsetky mesta</option>
+                    </select>
+                </div>
+            </div>
+            <div id="data-sources-content" class="loading">Nacitavam...</div>
+        </div>
+
+        <!-- Sync Log Tab -->
+        <div id="tab-sync-log" style="display:none">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Mesto</label>
+                    <select id="sl-town-filter">
+                        <option value="">Vsetky mesta</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sezona</label>
+                    <select id="sl-season-filter">
+                        <option value="">Vsetky</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Operacia</label>
+                    <select id="sl-op-filter">
+                        <option value="">Vsetky</option>
+                        <option value="SEASONS">SEASONS</option>
+                        <option value="MEETINGS">MEETINGS</option>
+                        <option value="MEETING_DETAILS">MEETING_DETAILS</option>
+                        <option value="POLL_DETAILS">POLL_DETAILS</option>
+                        <option value="MEMBERS">MEMBERS</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Vysledok</label>
+                    <select id="sl-result-filter">
+                        <option value="">Vsetky</option>
+                        <option value="true">Uspech</option>
+                        <option value="false">Chyba</option>
+                    </select>
+                </div>
+            </div>
+            <div id="sync-log-content" class="loading">Nacitavam...</div>
+        </div>
+    </div>
+
+<script>
+const API = window.location.origin;
+
+// --- Tab switching ---
+document.querySelectorAll('nav .tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('nav .tabs button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-data-sources').style.display = btn.dataset.tab === 'data-sources' ? '' : 'none';
+        document.getElementById('tab-sync-log').style.display = btn.dataset.tab === 'sync-log' ? '' : 'none';
+    });
+});
+
+// --- Fetch helpers ---
+async function fetchJson(path) {
+    const res = await fetch(API + path);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.json();
+}
+
+function badge(text, cls) {
+    return `<span class="badge badge-${cls}">${text || '—'}</span>`;
+}
+
+function formatTs(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleDateString('sk') + ' ' + d.toLocaleTimeString('sk');
+}
+
+// --- Data Sources Tab ---
+let dsData = null;
+
+async function loadDataSources() {
+    try {
+        dsData = await fetchJson('/admin/data-sources');
+        const towns = [...new Set([
+            ...dsData.seasons.map(r => r.town),
+            ...dsData.meetings.map(r => r.town),
+            ...dsData.members.map(r => r.town),
+            ...dsData.polls.map(r => r.town)
+        ])].filter(Boolean).sort();
+        populateSelect('ds-town-filter', towns);
+        renderDataSources();
+    } catch (e) {
+        document.getElementById('data-sources-content').innerHTML =
+            `<div class="empty">Chyba pri nacitavani: ${e.message}<br>Spustite sync pre naplnenie dat.</div>`;
+    }
+}
+
+function renderDataSources() {
+    const townFilter = document.getElementById('ds-town-filter').value;
+    const filter = r => !townFilter || r.town === townFilter;
+
+    const seasons = dsData.seasons.filter(filter);
+    const meetings = dsData.meetings.filter(filter);
+    const members = dsData.members.filter(filter);
+    const polls = dsData.polls.filter(filter);
+
+    // Build per-town summary
+    const towns = [...new Set([
+        ...seasons.map(r => r.town), ...meetings.map(r => r.town),
+        ...members.map(r => r.town), ...polls.map(r => r.town)
+    ])].filter(Boolean).sort();
+
+    if (towns.length === 0) {
+        document.getElementById('data-sources-content').innerHTML =
+            '<div class="empty">Ziadne data. Spustite synchronizaciu.</div>';
+        return;
+    }
+
+    let html = '';
+    for (const town of towns) {
+        const tSeasons = seasons.filter(r => r.town === town);
+        const tMeetings = meetings.filter(r => r.town === town);
+        const tMembers = members.filter(r => r.town === town);
+        const tPolls = polls.filter(r => r.town === town);
+
+        const allSeasons = [...new Set([
+            ...tSeasons.map(r => r.season), ...tMeetings.map(r => r.season),
+            ...tMembers.map(r => r.season), ...tPolls.map(r => r.season)
+        ])].filter(Boolean).sort();
+
+        html += `<div class="card">
+            <div class="card-header">${capitalize(town)}</div>
+            <div class="card-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sezona</th>
+                            <th>Sezony (zdroj)</th>
+                            <th>Zasadnutia</th>
+                            <th>Poslanci</th>
+                            <th>Hlasovania</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        for (const season of allSeasons) {
+            const sSrc = tSeasons.find(r => r.season === season);
+            const mRows = tMeetings.filter(r => r.season === season);
+            const cmRows = tMembers.filter(r => r.season === season);
+            const pRows = tPolls.filter(r => r.season === season);
+
+            html += `<tr>
+                <td><strong>${season}</strong></td>
+                <td>${sSrc ? badge(sSrc.source, 'source') : '—'}</td>
+                <td>${mRows.map(r => `${badge(r.source, 'source')} <strong>${r.count}</strong>`).join('<br>') || '—'}</td>
+                <td>${cmRows.map(r => `${badge(r.source, 'source')} <strong>${r.count}</strong>`).join('<br>') || '—'}</td>
+                <td>${pRows.map(r => `${badge(r.source, 'source')} <strong>${r.count}</strong>`).join('<br>') || '—'}</td>
+            </tr>`;
+        }
+
+        html += `</tbody></table></div></div>`;
+    }
+
+    document.getElementById('data-sources-content').innerHTML = html;
+}
+
+document.getElementById('ds-town-filter').addEventListener('change', renderDataSources);
+
+// --- Sync Log Tab ---
+let slData = null;
+
+async function loadSyncLog() {
+    try {
+        slData = await fetchJson('/admin/sync-log');
+        const towns = [...new Set(slData.map(r => r.townRef))].filter(Boolean).sort();
+        const seasons = [...new Set(slData.map(r => r.seasonRef))].filter(Boolean).sort();
+        populateSelect('sl-town-filter', towns);
+        populateSelect('sl-season-filter', seasons);
+        renderSyncLog();
+    } catch (e) {
+        document.getElementById('sync-log-content').innerHTML =
+            `<div class="empty">Chyba pri nacitavani: ${e.message}<br>Spustite sync pre naplnenie dat.</div>`;
+    }
+}
+
+function renderSyncLog() {
+    const townFilter = document.getElementById('sl-town-filter').value;
+    const seasonFilter = document.getElementById('sl-season-filter').value;
+    const opFilter = document.getElementById('sl-op-filter').value;
+    const resultFilter = document.getElementById('sl-result-filter').value;
+
+    let filtered = slData;
+    if (townFilter) filtered = filtered.filter(r => r.townRef === townFilter);
+    if (seasonFilter) filtered = filtered.filter(r => r.seasonRef === seasonFilter);
+    if (opFilter) filtered = filtered.filter(r => r.operation === opFilter);
+    if (resultFilter) filtered = filtered.filter(r => String(r.success) === resultFilter);
+
+    // Sort by timestamp descending
+    filtered.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+    if (filtered.length === 0) {
+        document.getElementById('sync-log-content').innerHTML =
+            '<div class="empty">Ziadne zaznamy. Spustite synchronizaciu alebo zmente filtre.</div>';
+        return;
+    }
+
+    let html = `<div class="card">
+        <div class="card-header">Sync Log (${filtered.length} zaznamov)</div>
+        <div class="card-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cas</th>
+                        <th>Mesto</th>
+                        <th>Sezona</th>
+                        <th>Operacia</th>
+                        <th>Zdroj</th>
+                        <th>Vysledok</th>
+                        <th>Zaznamy</th>
+                        <th>Trvanie</th>
+                        <th>Chyba</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+    for (const r of filtered) {
+        html += `<tr>
+            <td class="timestamp">${formatTs(r.timestamp)}</td>
+            <td><strong>${r.townRef || '—'}</strong></td>
+            <td>${r.seasonRef || '—'}</td>
+            <td>${badge(r.operation, 'op')}</td>
+            <td>${badge(r.source, 'source')}</td>
+            <td>${r.success ? badge('OK', 'success') : badge('CHYBA', 'error')}</td>
+            <td>${r.success ? `<strong>${r.recordCount}</strong>` : '—'}</td>
+            <td class="duration">${r.durationMs}ms</td>
+            <td>${r.errorMessage ? `<span class="error-msg" title="${escHtml(r.errorMessage)}">${escHtml(r.errorMessage)}</span>` : ''}</td>
+        </tr>`;
+    }
+
+    html += '</tbody></table></div></div>';
+    document.getElementById('sync-log-content').innerHTML = html;
+}
+
+['sl-town-filter', 'sl-season-filter', 'sl-op-filter', 'sl-result-filter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderSyncLog);
+});
+
+// --- Helpers ---
+function populateSelect(id, values) {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    // Keep first option (all)
+    while (sel.options.length > 1) sel.remove(1);
+    for (const v of values) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+    }
+    sel.value = current;
+}
+
+function capitalize(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+
+function escHtml(s) {
+    return s ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+}
+
+// --- Init ---
+loadDataSources();
+loadSyncLog();
+</script>
+</body>
+</html>
