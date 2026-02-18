@@ -48,8 +48,6 @@ public class BratislavaWebScraper {
     private static final String BASE_URL = "https://zastupitelstvo.bratislava.sk";
     private static final String MEMBERS_URL_TEMPLATE = BASE_URL + "/mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-%s/";
     private static final String SESSIONS_URL = BASE_URL + "/zasadnutia/";
-    private static final String MZ_ORGAN_PARAM = "Mestské zastupiteľstvo hlavného mesta SR Bratislavy (2022 - 2026)";
-    private static final String MZ_SLUG_PREFIX = "mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-2022-2026-zasadnutie";
     private static final int TIMEOUT_MS = 30_000;
     private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
 
@@ -402,12 +400,17 @@ public class BratislavaWebScraper {
      * Only returns meetings for "Mestské zastupiteľstvo" (filters out commissions and city council board).
      */
     public List<Meeting> scrapeMeetingList(Town town, Season season, Institution institution) {
-        log.info("Scraping Bratislava 2022-2026 meeting list");
+        String seasonRef = season.getRef();
+        String seasonSpaced = seasonRef.replace("-", " - "); // "2022-2026" → "2022 - 2026"
+        String organParam = "Mestské zastupiteľstvo hlavného mesta SR Bratislavy (" + seasonSpaced + ")";
+        String slugPrefix = "mestske-zastupitelstvo-hlavneho-mesta-sr-bratislavy-" + seasonRef + "-zasadnutie";
+
+        log.info("Scraping Bratislava {} meeting list (organ={})", seasonRef, organParam);
         List<Meeting> meetings = new ArrayList<>();
 
         try {
             for (int page = 0; page <= 20; page++) { // safety limit
-                String url = SESSIONS_URL + "?organ=" + urlEncode(MZ_ORGAN_PARAM) + "&page=" + page;
+                String url = SESSIONS_URL + "?organ=" + urlEncode(organParam) + "&page=" + page;
                 log.debug("Fetching sessions page {}: {}", page, url);
 
                 Document doc = fetchDocument(url);
@@ -418,7 +421,6 @@ public class BratislavaWebScraper {
                     break;
                 }
 
-                boolean foundMzMeeting = false;
                 for (Element row : rows) {
                     Elements cells = row.select("td");
                     if (cells.size() < 2) continue;
@@ -429,11 +431,10 @@ public class BratislavaWebScraper {
                     String meetingName = nameLink.text().trim();
                     String meetingUrl = nameLink.attr("href");
 
-                    // Filter for MZ meetings only (skip commissions, city council board, etc.)
-                    if (!meetingUrl.contains(MZ_SLUG_PREFIX)) {
+                    // Filter for MZ meetings of this season only
+                    if (!meetingUrl.contains(slugPrefix)) {
                         continue;
                     }
-                    foundMzMeeting = true;
 
                     // Parse date
                     String dateText = cells.get(0).text().trim();
@@ -475,7 +476,7 @@ public class BratislavaWebScraper {
                 }
             }
 
-            log.info("Scraped {} Bratislava MZ meetings for 2022-2026", meetings.size());
+            log.info("Scraped {} Bratislava MZ meetings for {}", meetings.size(), seasonRef);
         } catch (IOException e) {
             log.error("Failed to scrape Bratislava meeting list: {}", e.getMessage());
         }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Import module for Bratislava web scraping (2022-2026 season).
+ * Import module for Bratislava web scraping (all seasons from zastupitelstvo.bratislava.sk).
  * Delegates to BratislavaWebScraper for actual scraping.
  */
 @Component
@@ -22,7 +22,10 @@ public class BratislavaWebImport implements DataImport {
 
     private static final Logger log = LoggerFactory.getLogger(BratislavaWebImport.class);
 
-    private static final String WEB_SEASON = "2022-2026";
+    /** Seasons known to exist on zastupitelstvo.bratislava.sk */
+    private static final List<String> KNOWN_SEASONS = List.of(
+            "2002-2006", "2006-2010", "2010-2014", "2014-2018", "2018-2022", "2022-2026"
+    );
 
     private final BratislavaWebScraper webScraper;
 
@@ -37,12 +40,13 @@ public class BratislavaWebImport implements DataImport {
 
     @Override
     public List<Season> loadSeasons(Town town) throws Exception {
-        log.info("Loading web season for Bratislava...");
-        Season webSeason = new Season();
-        webSeason.setRef(WEB_SEASON);
-        webSeason.setName(WEB_SEASON);
-        log.info("Added Bratislava season: {} (web scraping)", WEB_SEASON);
-        return List.of(webSeason);
+        log.info("Loading web seasons for Bratislava...");
+        return KNOWN_SEASONS.stream().map(ref -> {
+            Season s = new Season();
+            s.setRef(ref);
+            s.setName(ref);
+            return s;
+        }).toList();
     }
 
     @Override
