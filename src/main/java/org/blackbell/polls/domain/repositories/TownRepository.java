@@ -14,4 +14,7 @@ import org.springframework.stereotype.Repository;
 public interface TownRepository extends JpaRepository<Town, Long> {
     @Query(value = "select t from Town t where t.ref = :ref")
     Town findByRef(@Param(value = "ref") String town);
+
+    @Query("SELECT t FROM Town t LEFT JOIN FETCH t.seasons WHERE t.ref = :ref")
+    Town findByRefWithSeasons(@Param("ref") String ref);
 }

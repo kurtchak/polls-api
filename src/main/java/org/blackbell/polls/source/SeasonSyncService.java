@@ -4,6 +4,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.repositories.SeasonRepository;
+import org.blackbell.polls.domain.repositories.TownRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,21 +21,25 @@ public class SeasonSyncService {
 
     private final DataSourceResolver resolver;
     private final SeasonRepository seasonRepository;
+    private final TownRepository townRepository;
     private final SyncCacheManager cacheManager;
 
     public SeasonSyncService(DataSourceResolver resolver, SeasonRepository seasonRepository,
-                             SyncCacheManager cacheManager) {
+                             TownRepository townRepository, SyncCacheManager cacheManager) {
         this.resolver = resolver;
         this.seasonRepository = seasonRepository;
+        this.townRepository = townRepository;
         this.cacheManager = cacheManager;
     }
 
     @Transactional
     public void syncSeasons(Town town) {
         try {
+            Town managedTown = townRepository.findByRefWithSeasons(town.getRef());
+
             List<DataSourceResolver.SourcedItem<Season>> sourcedSeasons =
-                    resolver.resolveAndAggregate(town, DataOperation.SEASONS,
-                            di -> di.loadSeasons(town));
+                    resolver.resolveAndAggregate(managedTown, DataOperation.SEASONS,
+                            di -> di.loadSeasons(managedTown));
             log.info(Constants.MarkerSync, "RETRIEVED SEASONS: {}", sourcedSeasons);
 
             List<Season> formerSeasons = seasonRepository.findAll();
@@ -49,8 +54,17 @@ public class SeasonSyncService {
                         seasonRepository.save(season);
                     });
 
-            // Refresh seasons cache after saving new ones
+            // Link synced seasons to this town
+            for (DataSourceResolver.SourcedItem<Season> si : sourcedSeasons) {
+                Season managed = seasonRepository.findByRef(si.item().getRef());
+                if (managed != null) {
+                    managedTown.addSeason(managed);
+                }
+            }
+
+            // Refresh caches
             cacheManager.resetSeasonsMap();
+            cacheManager.resetTownsMap();
         } catch (Exception e) {
             log.error(Constants.MarkerSync, "An error occured during the {}s seasons synchronization.", town.getName(), e);
         }

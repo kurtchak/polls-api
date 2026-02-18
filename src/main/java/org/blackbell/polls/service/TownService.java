@@ -1,6 +1,8 @@
 package org.blackbell.polls.service;
 
+import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
+import org.blackbell.polls.domain.repositories.SeasonRepository;
 import org.blackbell.polls.domain.repositories.TownRepository;
 import org.blackbell.polls.source.Source;
 import org.slf4j.Logger;
@@ -14,10 +16,14 @@ import java.util.List;
 public class TownService {
     private static final Logger log = LoggerFactory.getLogger(TownService.class);
 
-    private final TownRepository townRepository;
+    private static final String CURRENT_SEASON = "2022-2026";
 
-    public TownService(TownRepository townRepository) {
+    private final TownRepository townRepository;
+    private final SeasonRepository seasonRepository;
+
+    public TownService(TownRepository townRepository, SeasonRepository seasonRepository) {
         this.townRepository = townRepository;
+        this.seasonRepository = seasonRepository;
     }
 
     public List<Town> getAllTowns() {
@@ -34,8 +40,19 @@ public class TownService {
         town.setRef(ref);
         town.setName(name);
         town.setSource(source != null ? Source.valueOf(source) : Source.DM);
+
+        // Link current season
+        Season currentSeason = seasonRepository.findByRef(CURRENT_SEASON);
+        if (currentSeason == null) {
+            currentSeason = new Season();
+            currentSeason.setRef(CURRENT_SEASON);
+            currentSeason.setName(CURRENT_SEASON);
+            seasonRepository.save(currentSeason);
+        }
+        town.addSeason(currentSeason);
+
         townRepository.save(town);
-        log.info("Added new town: {}", town);
+        log.info("Added new town: {} with season {}", town, CURRENT_SEASON);
         return town;
     }
 }

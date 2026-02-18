@@ -46,6 +46,7 @@ public class DataSeeder implements CommandLineRunner {
         backfillDataSources();
         seedTowns();
         seedInstitutions();
+        backfillTownSeasons();
 
         log.info("Database seeding completed.");
     }
@@ -194,6 +195,39 @@ public class DataSeeder implements CommandLineRunner {
             poprad.setSource(Source.DM);
             townRepository.save(poprad);
             log.info("Created town: {}", poprad);
+        }
+    }
+
+    /**
+     * Backfill town_season join table from existing meetings.
+     * Links each town to the seasons for which it has meetings,
+     * plus ensures the current season (2022-2026) is linked for all towns.
+     */
+    private void backfillTownSeasons() {
+        try {
+            // Link towns to seasons based on existing meetings
+            int fromMeetings = entityManager.createNativeQuery(
+                    "INSERT INTO town_season (town_id, season_id) " +
+                    "SELECT DISTINCT m.town_id, m.season_id FROM meeting m " +
+                    "WHERE m.town_id IS NOT NULL AND m.season_id IS NOT NULL " +
+                    "AND NOT EXISTS (SELECT 1 FROM town_season ts " +
+                    "WHERE ts.town_id = m.town_id AND ts.season_id = m.season_id)"
+            ).executeUpdate();
+
+            // Ensure current season is linked for all towns
+            int currentSeason = entityManager.createNativeQuery(
+                    "INSERT INTO town_season (town_id, season_id) " +
+                    "SELECT t.id, s.id FROM town t, season s " +
+                    "WHERE s.ref = '2022-2026' " +
+                    "AND NOT EXISTS (SELECT 1 FROM town_season ts " +
+                    "WHERE ts.town_id = t.id AND ts.season_id = s.id)"
+            ).executeUpdate();
+
+            if (fromMeetings > 0 || currentSeason > 0) {
+                log.info("Backfilled town_season links: {} from meetings, {} current season", fromMeetings, currentSeason);
+            }
+        } catch (Exception e) {
+            log.warn("Could not backfill town_season: {}", e.getMessage());
         }
     }
 

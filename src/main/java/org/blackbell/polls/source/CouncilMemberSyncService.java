@@ -4,6 +4,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
+import java.util.Set;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.ClubParty;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
@@ -48,13 +49,14 @@ public class CouncilMemberSyncService {
     }
 
     @Transactional
-    public void syncCouncilMembers(Town town) {
+    public void syncCouncilMembers(Town town, Set<Season> seasons) {
         log.info(Constants.MarkerSync, "syncCouncilMembers...");
         Institution townCouncil = institutionRepository.findByType(InstitutionType.ZASTUPITELSTVO);
 
         cacheManager.loadPoliticiansMap(town);
 
-        for (String seasonRef : cacheManager.getSeasonsRefs()) {
+        for (Season seasonObj : seasons) {
+            String seasonRef = seasonObj.getRef();
             // Fix orphan members saved without town/institution (updatable=false bypassed via native SQL)
             Season season = cacheManager.getSeason(seasonRef);
             if (season != null && townCouncil != null) {

@@ -6,13 +6,17 @@ import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.blackbell.polls.domain.repositories.SeasonRepository;
+import org.blackbell.polls.domain.repositories.TownRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class SeasonDiscoveryService {
@@ -20,23 +24,29 @@ public class SeasonDiscoveryService {
     private static final Logger log = LoggerFactory.getLogger(SeasonDiscoveryService.class);
 
     private final SeasonRepository seasonRepository;
+    private final TownRepository townRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingSyncService meetingSyncService;
     private final SyncCacheManager cacheManager;
+    private final TransactionTemplate txTemplate;
 
     public SeasonDiscoveryService(SeasonRepository seasonRepository,
+                                  TownRepository townRepository,
                                   MeetingRepository meetingRepository,
                                   MeetingSyncService meetingSyncService,
-                                  SyncCacheManager cacheManager) {
+                                  SyncCacheManager cacheManager,
+                                  PlatformTransactionManager txManager) {
         this.seasonRepository = seasonRepository;
+        this.townRepository = townRepository;
         this.meetingRepository = meetingRepository;
         this.meetingSyncService = meetingSyncService;
         this.cacheManager = cacheManager;
+        this.txTemplate = new TransactionTemplate(txManager);
     }
 
     public record DiscoveryResult(String status, String seasonRef, long meetingCount, String message) {
         static DiscoveryResult noSeasons() {
-            return new DiscoveryResult("error", null, 0, "Žiadne sezóny v databáze");
+            return new DiscoveryResult("error", null, 0, "Žiadne sezóny pre toto mesto");
         }
 
         static DiscoveryResult cannotCalculate(String oldest) {
@@ -46,7 +56,7 @@ public class SeasonDiscoveryService {
 
         static DiscoveryResult alreadyExists(String ref) {
             return new DiscoveryResult("exists", ref, 0,
-                    "Sezóna " + ref + " už existuje");
+                    "Sezóna " + ref + " už existuje pre toto mesto");
         }
 
         static DiscoveryResult found(String ref, long meetings) {
@@ -61,9 +71,16 @@ public class SeasonDiscoveryService {
     }
 
     public DiscoveryResult discoverOlderSeason(Town town) {
-        List<Season> allSeasons = seasonRepository.findAll();
+        // Load town with its seasons
+        Town managedTown = txTemplate.execute(status -> {
+            Town t = townRepository.findByRefWithSeasons(town.getRef());
+            t.getSeasons().size(); // force init
+            return t;
+        });
 
-        Season oldest = allSeasons.stream()
+        Set<Season> townSeasons = managedTown.getSeasons();
+
+        Season oldest = townSeasons.stream()
                 .min(Comparator.comparing(Season::getRef))
                 .orElse(null);
 
@@ -72,27 +89,41 @@ public class SeasonDiscoveryService {
         String prevRef = calculatePreviousSeason(oldest.getRef());
         if (prevRef == null) return DiscoveryResult.cannotCalculate(oldest.getRef());
 
-        boolean exists = allSeasons.stream().anyMatch(s -> s.getRef().equals(prevRef));
-        if (exists) return DiscoveryResult.alreadyExists(prevRef);
+        // Check if town already has this season
+        if (townSeasons.stream().anyMatch(s -> s.getRef().equals(prevRef))) {
+            return DiscoveryResult.alreadyExists(prevRef);
+        }
 
-        // Create the new season
-        Season newSeason = new Season();
-        newSeason.setRef(prevRef);
-        newSeason.setName(prevRef);
-        seasonRepository.save(newSeason);
-        log.info("Created new season: {}", prevRef);
+        // Find or create season in global table
+        Season season = txTemplate.execute(status -> {
+            Season existing = seasonRepository.findByRef(prevRef);
+            if (existing != null) return existing;
+            Season newSeason = new Season();
+            newSeason.setRef(prevRef);
+            newSeason.setName(prevRef);
+            seasonRepository.save(newSeason);
+            log.info("Created new season: {}", prevRef);
+            return newSeason;
+        });
 
         // Reset cache so the new season is visible
         cacheManager.resetSeasonsMap();
 
         // Try to sync meetings for this season
         Map<InstitutionType, List<Institution>> institutionsMap = cacheManager.loadInstitutionsMap();
-        meetingSyncService.syncSeasonMeetings(town, newSeason, institutionsMap);
+        meetingSyncService.syncSeasonMeetings(managedTown, season, institutionsMap);
 
         // Check results
         long meetingCount = meetingRepository.countMeetingsByTownAndSeason(town.getRef(), prevRef);
 
         if (meetingCount > 0) {
+            // Link season to town
+            txTemplate.executeWithoutResult(status -> {
+                Town t = townRepository.findByRefWithSeasons(town.getRef());
+                Season s = seasonRepository.findByRef(prevRef);
+                t.addSeason(s);
+            });
+            cacheManager.resetTownsMap();
             return DiscoveryResult.found(prevRef, meetingCount);
         } else {
             return DiscoveryResult.notFound(prevRef);

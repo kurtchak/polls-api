@@ -1,6 +1,7 @@
 package org.blackbell.polls.source;
 
 import org.blackbell.polls.common.Constants;
+import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.repositories.TownRepository;
 import org.blackbell.polls.sync.SyncProgress;
@@ -112,15 +113,28 @@ public class SyncOrchestrator {
         syncProgress.startTown(town.getRef());
         councilMemberSyncService.resetMembersMap();
         seasonSyncService.syncSeasons(town);
-        councilMemberSyncService.syncCouncilMembers(town);
 
-        cacheManager.getSeasonsRefs().forEach(seasonRef ->
-                meetingSyncService.syncSeasonMeetings(town, cacheManager.getSeason(seasonRef),
-                        cacheManager.getInstitutionsMap()));
+        // Reload town with linked seasons (after season sync)
+        Town freshTown = txTemplate.execute(status -> {
+            Town t = townRepository.findByRefWithSeasons(town.getRef());
+            t.getSeasons().size(); // force init
+            return t;
+        });
+
+        Set<Season> townSeasons = freshTown.getSeasons();
+        log.info(Constants.MarkerSync, "{}: syncing {} seasons: {}", town.getRef(),
+                townSeasons.size(), townSeasons.stream().map(Season::getRef).toList());
+
+        councilMemberSyncService.syncCouncilMembers(town, townSeasons);
+
+        for (Season season : townSeasons) {
+            meetingSyncService.syncSeasonMeetings(town, season, cacheManager.getInstitutionsMap());
+        }
 
         txTemplate.executeWithoutResult(status -> {
-            town.setLastSyncDate(new Date());
-            townRepository.save(town);
+            Town t = townRepository.findByRef(town.getRef());
+            t.setLastSyncDate(new Date());
+            townRepository.save(t);
         });
         log.info("Updated lastSyncDate for town: {}", town.getName());
         log.info(Constants.MarkerSync, "Synchronization finished for town: {}", town.getRef());
