@@ -3,9 +3,9 @@ package org.blackbell.polls.domain.model;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
+import org.blackbell.polls.source.Source;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 
 /**
  * Created by Ján Korčák on 18.2.2017.
@@ -17,12 +17,23 @@ public class Season extends NamedEntity {
     @Column(length = 500)
     private String syncError;
 
+    @Enumerated(EnumType.STRING)
+    private Source dataSource;
+
     public String getSyncError() {
         return syncError;
     }
 
     public void setSyncError(String syncError) {
         this.syncError = syncError;
+    }
+
+    public Source getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(Source dataSource) {
+        this.dataSource = dataSource;
     }
 
     @JsonView(value = {Views.Seasons.class, Views.Poll.class, Views.CouncilMember.class, Views.Towns.class, Views.Club.class})

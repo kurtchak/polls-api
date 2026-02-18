@@ -5,6 +5,7 @@ import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
 import org.blackbell.polls.domain.model.enums.VoteChoice;
 import org.blackbell.polls.source.DataImport;
+import org.blackbell.polls.source.Source;
 import org.blackbell.polls.source.bratislava.api.ArcGisVoteRecord;
 import org.blackbell.polls.source.bratislava.api.BratislavaServiceClient;
 import org.slf4j.Logger;
@@ -29,6 +30,11 @@ public class BratislavaArcGisImport implements DataImport {
             7, "2014-2018",
             8, "2018-2022"
     );
+
+    @Override
+    public Source getSource() {
+        return Source.BA_ARCGIS;
+    }
 
     @Override
     public List<Season> loadSeasons(Town town) throws Exception {

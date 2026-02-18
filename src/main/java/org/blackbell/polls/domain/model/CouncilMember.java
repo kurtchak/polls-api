@@ -9,6 +9,7 @@ import org.blackbell.polls.domain.api.serializers.CouncilMemberSerializer;
 import org.blackbell.polls.domain.api.serializers.PoliticianClubSerializer;
 import org.blackbell.polls.domain.model.common.EntityWithReference;
 import org.blackbell.polls.domain.model.relate.ClubMember;
+import org.blackbell.polls.source.Source;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
 
 import jakarta.persistence.*;
@@ -63,6 +64,9 @@ public class CouncilMember extends EntityWithReference {
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "politician_id")
     private Politician politician;
+
+    @Enumerated(EnumType.STRING)
+    private Source dataSource;
 
     @JsonView(value = {Views.CouncilMembers.class, Views.CouncilMember.class, Views.PartyNominees.class})
     private String description;
@@ -139,6 +143,14 @@ public class CouncilMember extends EntityWithReference {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Source getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(Source dataSource) {
+        this.dataSource = dataSource;
     }
 
 //    public Set<Vote> getVotes() {

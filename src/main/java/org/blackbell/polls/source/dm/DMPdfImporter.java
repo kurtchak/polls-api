@@ -3,8 +3,8 @@ package org.blackbell.polls.source.dm;
 import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
-import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.VoteChoice;
+import org.blackbell.polls.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public class DMPdfImporter {
             Poll poll = new Poll();
             poll.setRef(PollsUtils.generateUniqueKeyReference());
             poll.setName(record.description != null ? record.description : "Hlasovanie " + record.voteNumber);
-            poll.setDataSource(DataSourceType.DM_PDF);
+            poll.setDataSource(Source.DM_PDF);
             poll.setVoters(record.present);
 
             VotesCount vc = new VotesCount();

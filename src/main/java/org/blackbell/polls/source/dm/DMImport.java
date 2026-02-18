@@ -2,6 +2,7 @@ package org.blackbell.polls.source.dm;
 
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.source.DataImport;
+import org.blackbell.polls.source.Source;
 import org.blackbell.polls.source.dm.api.DMServiceClient;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,11 @@ public class DMImport implements DataImport {
 
     public DMImport(DMServiceClient dmServiceClient) {
         this.dmServiceClient = dmServiceClient;
+    }
+
+    @Override
+    public Source getSource() {
+        return Source.DM;
     }
 
     @Override

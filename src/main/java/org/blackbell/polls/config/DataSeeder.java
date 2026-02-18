@@ -61,15 +61,25 @@ public class DataSeeder implements CommandLineRunner {
                 log.info("Migrated {} town(s) from BA_OPENDATA to BA_ARCGIS", migrated);
             }
             entityManager.createNativeQuery(
-                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'DM_PDF', 'OTHER'))").executeUpdate();
+                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
 
-            // --- Poll data_source constraint ---
+            // --- Poll data_source: migrate old DataSourceType values to Source values ---
             entityManager.createNativeQuery(
                     "ALTER TABLE poll DROP CONSTRAINT IF EXISTS poll_data_source_check").executeUpdate();
+            int dmMigrated = entityManager.createNativeQuery(
+                    "UPDATE poll SET data_source = 'DM' WHERE data_source = 'DM_API'").executeUpdate();
+            if (dmMigrated > 0) {
+                log.info("Migrated {} poll(s) from DM_API to DM", dmMigrated);
+            }
+            int baMigrated = entityManager.createNativeQuery(
+                    "UPDATE poll SET data_source = 'BA_ARCGIS' WHERE data_source = 'BA_API'").executeUpdate();
+            if (baMigrated > 0) {
+                log.info("Migrated {} poll(s) from BA_API to BA_ARCGIS", baMigrated);
+            }
             entityManager.createNativeQuery(
-                    "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM_API', 'DM_PDF', 'BA_API', 'BA_WEB', 'MANUAL'))").executeUpdate();
+                    "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
 
-            log.info("Updated source check constraints for new enum values");
+            log.info("Updated source check constraints for unified Source enum values");
         } catch (Exception e) {
             log.warn("Could not update source check constraints: {}", e.getMessage());
         }

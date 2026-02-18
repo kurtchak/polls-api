@@ -10,5 +10,6 @@ public enum Source {
     BA_WEB,       // Bratislava web scraping (2022-2026)
     PRESOV_WEB,   // Prešov web scraping (members)
     POPRAD_WEB,   // Poprad web scraping (members)
+    MANUAL,       // Manuálne zadané dáta
     OTHER;
 }

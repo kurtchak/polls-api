@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.model.common.NamedEntity;
+import org.blackbell.polls.source.Source;
 
 import jakarta.persistence.*;
 import java.util.Date;
@@ -52,6 +53,9 @@ public class Meeting extends NamedEntity {
 
     @Column(columnDefinition = "boolean default false")
     private boolean syncComplete;
+
+    @Enumerated(EnumType.STRING)
+    private Source dataSource;
 
     @JsonView(value = {Views.Meetings.class, Views.Poll.class, Views.Polls.class, Views.Votes.class, Views.AgendaItem.class})
     public String getRef() {
@@ -154,6 +158,14 @@ public class Meeting extends NamedEntity {
 
     public void setSyncComplete(boolean syncComplete) {
         this.syncComplete = syncComplete;
+    }
+
+    public Source getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(Source dataSource) {
+        this.dataSource = dataSource;
     }
 
     public void addAgendaItem(AgendaItem agendaItem) {

@@ -82,14 +82,20 @@ public class CouncilMemberSyncService {
                 continue;
             }
 
-            List<CouncilMember> newMembers = resolver.resolveAndLoad(town, seasonRef,
-                    InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
+            DataSourceResolver.SourcedResult<List<CouncilMember>> result = resolver.resolveAndLoad(
+                    town, seasonRef, InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
                     di -> di.loadMembers(town, cacheManager.getSeason(seasonRef), townCouncil));
 
-            if (newMembers != null && !newMembers.isEmpty()) {
+            if (result != null && result.data() != null && !result.data().isEmpty()) {
+                List<CouncilMember> newMembers = result.data();
+                Source membersSource = result.source();
+                for (CouncilMember member : newMembers) {
+                    member.setDataSource(membersSource);
+                }
                 politicianMatchingService.reuseExistingPoliticians(newMembers, town, townCouncil);
                 councilMemberRepository.saveAll(newMembers);
-                log.info("Saved {} council members for {} season {}", newMembers.size(), town.getRef(), seasonRef);
+                log.info("Saved {} council members for {} season {} (source: {})",
+                        newMembers.size(), town.getRef(), seasonRef, membersSource);
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
@@ -120,11 +126,12 @@ public class CouncilMemberSyncService {
         log.info("Enriching {} members for {} season {} (no emails found)",
                 existingMembers.size(), town.getRef(), seasonRef);
 
-        List<CouncilMember> freshMembers = resolver.resolveAndLoad(town, seasonRef,
-                InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
+        DataSourceResolver.SourcedResult<List<CouncilMember>> freshResult = resolver.resolveAndLoad(
+                town, seasonRef, InstitutionType.ZASTUPITELSTVO, DataOperation.MEMBERS,
                 di -> di.loadMembers(town, cacheManager.getSeason(seasonRef), townCouncil));
 
-        if (freshMembers == null || freshMembers.isEmpty()) return;
+        if (freshResult == null || freshResult.data() == null || freshResult.data().isEmpty()) return;
+        List<CouncilMember> freshMembers = freshResult.data();
 
         // Check if fresh data actually contains detail info (photo/email/phone/club).
         // Data sources like DM API return basic member info only — no point enriching.

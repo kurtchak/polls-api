@@ -2,7 +2,6 @@ package org.blackbell.polls.source;
 
 import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.domain.model.*;
-import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.blackbell.polls.domain.repositories.SeasonRepository;
@@ -71,13 +70,16 @@ public class MeetingSyncService {
         }
         log.info(Constants.MarkerSync, "{}:{}:{}: syncSeasonMeetings", town.getName(), season.getName(), institution.getName());
         try {
-            List<Meeting> meetings = resolver.resolveAndLoad(town, season.getRef(),
-                    institution.getType(), DataOperation.MEETINGS,
+            DataSourceResolver.SourcedResult<List<Meeting>> result = resolver.resolveAndLoad(
+                    town, season.getRef(), institution.getType(), DataOperation.MEETINGS,
                     di -> di.loadMeetings(town, season, institution));
-            if (meetings != null) {
+            if (result != null) {
+                List<Meeting> meetings = result.data();
+                Source meetingsSource = result.source();
                 DataImport detailsImport = resolveDetailImport(town, season, institution);
                 syncProgress.startSeason(town.getRef(), season.getRef(), meetings.size());
                 for (Meeting meeting : meetings) {
+                    meeting.setDataSource(meetingsSource);
                     try {
                         txTemplate.executeWithoutResult(status -> {
                             try {
@@ -165,7 +167,7 @@ public class MeetingSyncService {
                     if (item.getPolls() != null) {
                         for (Poll poll : item.getPolls()) {
                             if (poll.getDataSource() == null) {
-                                poll.setDataSource(DataSourceType.DM_API);
+                                poll.setDataSource(Source.DM);
                             }
                             log.debug(Constants.MarkerSync, ">> poll: {}", poll);
                             if (poll.getExtAgendaItemId() == null || poll.getExtPollRouteId() == null) {

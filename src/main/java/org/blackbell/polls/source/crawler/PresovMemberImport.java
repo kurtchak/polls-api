@@ -3,6 +3,7 @@ package org.blackbell.polls.source.crawler;
 import org.blackbell.polls.config.CrawlerProperties;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.source.DataImport;
+import org.blackbell.polls.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,11 @@ public class PresovMemberImport implements DataImport {
 
     public PresovMemberImport(CrawlerProperties crawlerProperties) {
         this.crawlerProperties = crawlerProperties;
+    }
+
+    @Override
+    public Source getSource() {
+        return Source.PRESOV_WEB;
     }
 
     @Override

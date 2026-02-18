@@ -20,10 +20,16 @@ public class DataSourceResolver {
 
     private final DataSourceConfig config;
     private final Map<Source, DataImport> registry;
+    private final SyncLogService syncLogService;
 
-    public DataSourceResolver(DataSourceConfig config, List<DataImport> allImports) {
+    public record SourcedResult<T>(T data, Source source) {}
+    public record SourcedItem<T>(T item, Source source) {}
+
+    public DataSourceResolver(DataSourceConfig config, List<DataImport> allImports,
+                              SyncLogService syncLogService) {
         this.config = config;
         this.registry = buildRegistry(allImports);
+        this.syncLogService = syncLogService;
         log.info("DataSourceResolver initialized with {} source mappings: {}",
                 registry.size(), registry.keySet());
     }
@@ -61,12 +67,11 @@ public class DataSourceResolver {
     }
 
     private Map<Source, DataImport> buildRegistry(List<DataImport> allImports) {
-        // Map each DataImport implementation to its Source
         return allImports.stream()
                 .collect(Collectors.toMap(
-                        this::sourceFor,
+                        di -> di.getSource(),
                         di -> di,
-                        (a, b) -> a // in case of duplicates, keep first
+                        (a, b) -> a
                 ));
     }
 
@@ -78,23 +83,33 @@ public class DataSourceResolver {
     }
 
     /**
-     * FIRST WINS: skúsi zdroje v poradí, vráti prvý úspešný výsledok.
+     * FIRST WINS: skúsi zdroje v poradí, vráti prvý úspešný výsledok s informáciou o zdroji.
      */
-    public <T> T resolveAndLoad(Town town, String seasonRef,
+    public <T> SourcedResult<T> resolveAndLoad(Town town, String seasonRef,
             InstitutionType inst, DataOperation op,
             CheckedFunction<DataImport, T> loader) {
         List<DataImport> imports = resolve(town, seasonRef, inst, op);
         for (DataImport di : imports) {
+            long start = System.currentTimeMillis();
             try {
                 T result = loader.apply(di);
+                long duration = System.currentTimeMillis() - start;
                 if (result != null && !(result instanceof Collection<?> c && c.isEmpty())) {
+                    int count = result instanceof Collection<?> col ? col.size() : 1;
                     log.info("Source {} provided data for {}/{}/{}",
-                        di.getClass().getSimpleName(), town.getRef(), seasonRef, op);
-                    return result;
+                        di.getSource(), town.getRef(), seasonRef, op);
+                    syncLogService.logSuccess(town.getRef(), seasonRef, inst, op,
+                            di.getSource(), count, duration);
+                    return new SourcedResult<>(result, di.getSource());
                 }
+                syncLogService.logSuccess(town.getRef(), seasonRef, inst, op,
+                        di.getSource(), 0, duration);
             } catch (Exception e) {
+                long duration = System.currentTimeMillis() - start;
                 log.warn("Source {} failed for {}/{}/{}: {}",
-                    di.getClass().getSimpleName(), town.getRef(), seasonRef, op, e.getMessage());
+                    di.getSource(), town.getRef(), seasonRef, op, e.getMessage());
+                syncLogService.logFailure(town.getRef(), seasonRef, inst, op,
+                        di.getSource(), e.getMessage(), duration);
             }
         }
         log.error("No data source provided data for {}/{}/{}", town.getRef(), seasonRef, op);
@@ -102,38 +117,37 @@ public class DataSourceResolver {
     }
 
     /**
-     * AGGREGATE: zozbiera výsledky zo všetkých zdrojov (pre sezóny).
+     * AGGREGATE: zozbiera výsledky zo všetkých zdrojov (pre sezóny) s informáciou o zdroji.
      */
-    public <T> List<T> resolveAndAggregate(Town town, DataOperation op,
+    public <T> List<SourcedItem<T>> resolveAndAggregate(Town town, DataOperation op,
             CheckedFunction<DataImport, List<T>> loader) {
-        List<T> aggregated = new ArrayList<>();
+        List<SourcedItem<T>> aggregated = new ArrayList<>();
         for (DataImport di : allForTown(town)) {
+            long start = System.currentTimeMillis();
             try {
                 List<T> result = loader.apply(di);
-                if (result != null) aggregated.addAll(result);
+                long duration = System.currentTimeMillis() - start;
+                if (result != null && !result.isEmpty()) {
+                    for (T item : result) {
+                        aggregated.add(new SourcedItem<>(item, di.getSource()));
+                    }
+                    syncLogService.logSuccess(town.getRef(), null, null, op,
+                            di.getSource(), result.size(), duration);
+                } else {
+                    syncLogService.logSuccess(town.getRef(), null, null, op,
+                            di.getSource(), 0, duration);
+                }
             } catch (Exception e) {
+                long duration = System.currentTimeMillis() - start;
                 log.warn("Source {} failed for {}/{}: {}",
-                    di.getClass().getSimpleName(), town.getRef(), op, e.getMessage());
+                    di.getSource(), town.getRef(), op, e.getMessage());
+                syncLogService.logFailure(town.getRef(), null, null, op,
+                        di.getSource(), e.getMessage(), duration);
             }
         }
         if (aggregated.isEmpty()) {
             log.error("No source provided {} for town {}", op, town.getRef());
         }
         return aggregated;
-    }
-
-    private Source sourceFor(DataImport di) {
-        String className = di.getClass().getSimpleName();
-        return switch (className) {
-            case "DMImport" -> Source.DM;
-            case "BratislavaArcGisImport" -> Source.BA_ARCGIS;
-            case "BratislavaWebImport" -> Source.BA_WEB;
-            case "PresovMemberImport" -> Source.PRESOV_WEB;
-            case "PopradMemberImport" -> Source.POPRAD_WEB;
-            default -> {
-                log.warn("Unknown DataImport class: {}, mapping to OTHER", className);
-                yield Source.OTHER;
-            }
-        };
     }
 }

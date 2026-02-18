@@ -7,8 +7,8 @@ import org.blackbell.polls.domain.api.Views;
 import org.blackbell.polls.domain.api.serializers.VoteListSerializer;
 import org.blackbell.polls.domain.model.common.NamedEntity;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
-import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.MajorityType;
+import org.blackbell.polls.source.Source;
 import org.blackbell.polls.domain.model.enums.VoteResult;
 
 import jakarta.persistence.*;
@@ -43,7 +43,7 @@ public class Poll extends NamedEntity {
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Enumerated(EnumType.STRING)
-    private DataSourceType dataSource;
+    private Source dataSource;
 
     @JsonView(value = {Views.Poll.class, Views.Polls.class, Views.AgendaItem.class})
     @Embedded
@@ -122,11 +122,11 @@ public class Poll extends NamedEntity {
         this.votes = votes;
     }
 
-    public DataSourceType getDataSource() {
+    public Source getDataSource() {
         return dataSource;
     }
 
-    public void setDataSource(DataSourceType dataSource) {
+    public void setDataSource(Source dataSource) {
         this.dataSource = dataSource;
     }
 

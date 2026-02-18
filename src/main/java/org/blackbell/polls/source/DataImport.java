@@ -10,6 +10,8 @@ import java.util.Map;
  */
 public interface DataImport {
 
+    Source getSource();
+
     List<Season> loadSeasons(Town town) throws Exception;
 
     List<Meeting> loadMeetings(Town town, Season season, Institution institution) throws Exception;

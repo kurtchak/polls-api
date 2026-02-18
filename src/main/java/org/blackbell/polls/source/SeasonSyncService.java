@@ -32,17 +32,20 @@ public class SeasonSyncService {
     @Transactional
     public void syncSeasons(Town town) {
         try {
-            List<Season> retrievedSeasons = resolver.resolveAndAggregate(town, DataOperation.SEASONS,
-                    di -> di.loadSeasons(town));
-            log.info(Constants.MarkerSync, "RETRIEVED SEASONS: {}", retrievedSeasons);
+            List<DataSourceResolver.SourcedItem<Season>> sourcedSeasons =
+                    resolver.resolveAndAggregate(town, DataOperation.SEASONS,
+                            di -> di.loadSeasons(town));
+            log.info(Constants.MarkerSync, "RETRIEVED SEASONS: {}", sourcedSeasons);
 
             List<Season> formerSeasons = seasonRepository.findAll();
             log.info(Constants.MarkerSync, "FORMER SEASONS: {}", formerSeasons);
 
-            retrievedSeasons.stream()
-                    .filter(season -> !formerSeasons.contains(season))
-                    .forEach(season -> {
-                        log.info("Adding new season: {}", season);
+            sourcedSeasons.stream()
+                    .filter(si -> !formerSeasons.contains(si.item()))
+                    .forEach(si -> {
+                        Season season = si.item();
+                        season.setDataSource(si.source());
+                        log.info("Adding new season: {} (source: {})", season, si.source());
                         seasonRepository.save(season);
                     });
 

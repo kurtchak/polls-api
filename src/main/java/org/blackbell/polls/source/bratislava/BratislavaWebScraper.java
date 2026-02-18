@@ -4,8 +4,8 @@ import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.embeddable.VotesCount;
 import org.blackbell.polls.domain.model.enums.ClubFunction;
-import org.blackbell.polls.domain.model.enums.DataSourceType;
 import org.blackbell.polls.domain.model.enums.VoteChoice;
+import org.blackbell.polls.source.Source;
 import org.blackbell.polls.domain.model.relate.ClubMember;
 import org.blackbell.polls.domain.model.relate.ClubParty;
 import org.blackbell.polls.domain.model.relate.PartyNominee;
@@ -635,7 +635,7 @@ public class BratislavaWebScraper {
                     Poll poll = parseVotingPanel(panelHeading, agendaItem.getName());
                     if (poll != null) {
                         poll.setExtAgendaItemId("ba-web:" + bodTypId);
-                        poll.setDataSource(DataSourceType.BA_WEB);
+                        poll.setDataSource(Source.BA_WEB);
                         agendaItem.addPoll(poll);
                     }
                 } catch (Exception e) {
