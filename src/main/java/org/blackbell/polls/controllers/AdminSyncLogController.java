@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,18 +79,21 @@ public class AdminSyncLogController {
                 " ORDER BY t.ref, s.ref").getResultList();
 
         return Map.of(
-                "seasons", seasonStats.stream().map(r -> Map.of(
-                        "town", str(r[0]), "season", str(r[1]), "source", str(r[2]))).toList(),
-                "meetings", meetingStats.stream().map(r -> Map.of(
-                        "town", str(r[0]), "season", str(r[1]), "source", str(r[2]), "count", ((Number) r[3]).longValue())).toList(),
-                "members", memberStats.stream().map(r -> Map.of(
-                        "town", str(r[0]), "season", str(r[1]), "source", str(r[2]), "count", ((Number) r[3]).longValue())).toList(),
-                "polls", pollStats.stream().map(r -> Map.of(
-                        "town", str(r[0]), "season", str(r[1]), "source", str(r[2]), "count", ((Number) r[3]).longValue())).toList()
+                "seasons", seasonStats.stream().map(r -> row(r[0], r[1], r[2], null)).toList(),
+                "meetings", meetingStats.stream().map(r -> row(r[0], r[1], r[2], r[3])).toList(),
+                "members", memberStats.stream().map(r -> row(r[0], r[1], r[2], r[3])).toList(),
+                "polls", pollStats.stream().map(r -> row(r[0], r[1], r[2], r[3])).toList()
         );
     }
 
-    private static String str(Object o) {
-        return o != null ? o.toString() : null;
+    private static Map<String, Object> row(Object town, Object season, Object source, Object count) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("town", town != null ? town.toString() : null);
+        map.put("season", season != null ? season.toString() : null);
+        map.put("source", source != null ? source.toString() : null);
+        if (count != null) {
+            map.put("count", ((Number) count).longValue());
+        }
+        return map;
     }
 }
