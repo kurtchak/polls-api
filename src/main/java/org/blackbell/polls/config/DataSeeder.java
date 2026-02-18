@@ -92,7 +92,7 @@ public class DataSeeder implements CommandLineRunner {
      *   - Bratislava 2022-2026 → BA_WEB, staršie sezóny → BA_ARCGIS
      *   - Prešov members → PRESOV_WEB, ostatné → DM
      *   - Poprad 2022-2026 members → POPRAD_WEB, ostatné → DM
-     *   - Košice → DM (fallback)
+     *   - Košice → removed (no data source)
      */
     private void backfillDataSources() {
         try {
@@ -166,13 +166,11 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Created town: {}", presov);
         }
 
-        if (townRepository.findByRef("kosice") == null) {
-            Town kosice = new Town();
-            kosice.setRef("kosice");
-            kosice.setName("Košice");
-            kosice.setSource(Source.DM);
-            townRepository.save(kosice);
-            log.info("Created town: {}", kosice);
+        // Remove Košice — no data source available yet
+        Town kosice = townRepository.findByRef("kosice");
+        if (kosice != null) {
+            townRepository.delete(kosice);
+            log.info("Removed town: kosice (no data source)");
         }
 
         Town bratislava = townRepository.findByRef("bratislava");

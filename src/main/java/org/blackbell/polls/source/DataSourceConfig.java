@@ -101,9 +101,6 @@ public class DataSourceConfig {
         // Ostatné cez DM (staršie sezóny 2014-2018, 2018-2022)
         r.add(new SourceRule("poprad", null, null, null, Source.DM));
 
-        // --- Košice --- (len DM, pokryté fallbackom)
-        // Niet explicitných pravidiel → fallback na DM
-
         return r;
     }
 }
