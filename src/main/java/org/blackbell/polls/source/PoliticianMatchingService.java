@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +62,15 @@ public class PoliticianMatchingService {
                 }
 
                 if (cm.getPolitician().getPartyNominees() != null) {
+                    // Ensure partyNominees is initialized — cached politician
+                    // may have a lazy proxy from a closed session
+                    try {
+                        if (existingPolitician.getPartyNominees() != null) {
+                            existingPolitician.getPartyNominees().size(); // force init
+                        }
+                    } catch (org.hibernate.LazyInitializationException e) {
+                        existingPolitician.setPartyNominees(new HashSet<>());
+                    }
                     for (var nominee : cm.getPolitician().getPartyNominees()) {
                         nominee.setPolitician(existingPolitician);
                         existingPolitician.addPartyNominee(nominee);
