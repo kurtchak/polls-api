@@ -65,8 +65,12 @@ public class KosiceScraper {
 
     /**
      * Scrape council members from the members page and their detail pages.
-     * The members page has a table with name + link + party affiliation,
-     * plus club groupings at the top (div.membership with h6 club names).
+     *
+     * HTML structure on kosice.sk:
+     * - Club sections: div.membership > h6 > strong (club name)
+     * - Chairman: span.small > strong (chairman name)
+     * - Members: div.members > div.assignRow > div.name > a[href*=poslanec] (name + link)
+     * - Party/email/photo/district are on individual detail pages
      */
     public List<CouncilMember> scrapeMembers(Town town, Season season, Institution institution) {
         String url = membersUrl.replace("{season}", season.getRef());
@@ -78,67 +82,73 @@ public class KosiceScraper {
         try {
             Document doc = fetchDocument(url);
 
-            // Parse club memberships from the top section
-            Map<String, String> memberClubMap = parseClubGroupings(doc, season, town);
+            // Members are grouped by club in div.membership sections
+            Set<String> seenSlugs = new HashSet<>();
+            Elements membershipDivs = doc.select("div.membership");
+            log.info("Found {} club sections", membershipDivs.size());
 
-            // Parse member table
-            Elements rows = doc.select("table.table tbody tr");
-            log.info("Found {} member rows", rows.size());
+            for (Element clubDiv : membershipDivs) {
+                // Club name from h6 > strong
+                Element h6 = clubDiv.selectFirst("h6 strong");
+                String clubName = h6 != null ? h6.text().trim() : null;
 
-            for (Element row : rows) {
-                try {
-                    Elements cells = row.select("td");
-                    if (cells.size() < 3) continue;
+                // Chairman name from span.small
+                Element chairmanSpan = clubDiv.selectFirst("span.small");
+                String chairmanText = chairmanSpan != null ? chairmanSpan.text() : "";
+                // Extract chairman name after "Predseda:" or "Predsedníčka:"
+                String chairmanName = chairmanText.replaceAll(".*?:\\s*", "").trim();
 
-                    Element nameLink = cells.get(1).selectFirst("a");
-                    if (nameLink == null) continue;
+                // Each member: div.assignRow > div.name > a
+                Elements assignRows = clubDiv.select("div.assignRow");
+                for (Element row : assignRows) {
+                    try {
+                        Element nameLink = row.selectFirst("div.name a[href*=poslanec]");
+                        if (nameLink == null) continue;
 
-                    String fullName = nameLink.text().trim();
-                    String href = nameLink.attr("href");
-                    String partyText = cells.get(2).text().trim();
+                        String fullName = nameLink.text().trim();
+                        String href = nameLink.attr("href");
 
-                    // Extract slug from URL
-                    Matcher slugMatcher = MEMBER_SLUG_PATTERN.matcher(href);
-                    String slug = slugMatcher.find() ? slugMatcher.group(1) : null;
+                        // Extract slug from URL
+                        Matcher slugMatcher = MEMBER_SLUG_PATTERN.matcher(href);
+                        String slug = slugMatcher.find() ? slugMatcher.group(1) : null;
 
-                    // Create base member
-                    Politician politician = new Politician();
-                    politician.setRef(generateUniqueKeyReference());
-                    politician.setName(toSimpleName(fullName));
-                    politician.setTitles(getTitles(fullName));
-                    politician.setExtId(slug);
+                        // Skip duplicates (member might appear in multiple sections)
+                        if (slug != null && !seenSlugs.add(slug)) continue;
 
-                    CouncilMember member = new CouncilMember();
-                    member.setRef(generateUniqueKeyReference());
-                    member.setPolitician(politician);
-                    member.setSeason(season);
-                    member.setTown(town);
-                    member.setInstitution(institution);
-                    member.setExtId(slug);
+                        // Create base member
+                        Politician politician = new Politician();
+                        politician.setRef(generateUniqueKeyReference());
+                        politician.setName(toSimpleName(fullName));
+                        politician.setTitles(getTitles(fullName));
+                        politician.setExtId(slug);
 
-                    // Add party nomination
-                    if (partyText != null && !partyText.isEmpty()) {
-                        addPartyNomination(member, partyText);
+                        CouncilMember member = new CouncilMember();
+                        member.setRef(generateUniqueKeyReference());
+                        member.setPolitician(politician);
+                        member.setSeason(season);
+                        member.setTown(town);
+                        member.setInstitution(institution);
+                        member.setExtId(slug);
+
+                        // Add club membership
+                        if (clubName != null && !clubName.isEmpty()) {
+                            boolean isChairman = toSimpleName(fullName).equals(toSimpleName(chairmanName));
+                            ClubFunction function = isChairman ? ClubFunction.CHAIRMAN : ClubFunction.MEMBER;
+                            addClubMembership(member, clubName, function);
+                        }
+
+                        // Fetch detail page for photo, email, party, district
+                        if (slug != null) {
+                            fetchMemberDetails(member, season.getRef(), slug);
+                        }
+
+                        members.add(member);
+                        log.debug("Parsed Košice member: {} (club: {})",
+                                deAccent(politician.getName()),
+                                clubName != null ? clubName : "none");
+                    } catch (Exception e) {
+                        log.warn("Error parsing Košice member row: {}", e.getMessage());
                     }
-
-                    // Add club from pre-parsed club groupings
-                    String nameKey = toSimpleName(fullName);
-                    String clubName = memberClubMap.get(nameKey);
-                    if (clubName != null) {
-                        addClubMembership(member, clubName, ClubFunction.MEMBER);
-                    }
-
-                    // Fetch detail page for photo, email, district, and more precise club info
-                    if (slug != null) {
-                        fetchMemberDetails(member, season.getRef(), slug);
-                    }
-
-                    members.add(member);
-                    log.debug("Parsed Košice member: {} (party: {}, club: {})",
-                            deAccent(politician.getName()), partyText,
-                            member.getClubMember() != null ? member.getClubMember().getClub().getName() : "none");
-                } catch (Exception e) {
-                    log.warn("Error parsing Košice member row: {}", e.getMessage());
                 }
             }
 
@@ -151,49 +161,13 @@ public class KosiceScraper {
     }
 
     /**
-     * Parse club groupings from div.membership sections at the top of the members page.
-     * Returns a map of member simple name -> club name.
-     */
-    private Map<String, String> parseClubGroupings(Document doc, Season season, Town town) {
-        Map<String, String> memberClubMap = new HashMap<>();
-
-        Elements membershipDivs = doc.select("div.membership");
-        if (membershipDivs.isEmpty()) {
-            // Try broader: find h6 elements followed by ol lists
-            Elements h6Elements = doc.select("h6");
-            for (Element h6 : h6Elements) {
-                String clubName = h6.text().trim();
-                if (clubName.isEmpty()) continue;
-
-                Element ol = h6.nextElementSibling();
-                if (ol != null && ol.tagName().equals("ol")) {
-                    for (Element li : ol.select("li")) {
-                        Element link = li.selectFirst("a");
-                        String name = link != null ? link.text().trim() : li.text().trim();
-                        memberClubMap.put(toSimpleName(name), clubName);
-                    }
-                }
-            }
-        } else {
-            for (Element div : membershipDivs) {
-                Element h6 = div.selectFirst("h6");
-                if (h6 == null) continue;
-                String clubName = h6.text().trim();
-
-                for (Element li : div.select("ol li")) {
-                    Element link = li.selectFirst("a");
-                    String name = link != null ? link.text().trim() : li.text().trim();
-                    memberClubMap.put(toSimpleName(name), clubName);
-                }
-            }
-        }
-
-        log.info("Parsed {} club assignments from groupings", memberClubMap.size());
-        return memberClubMap;
-    }
-
-    /**
-     * Fetch member detail page for additional info: photo, email, district, club+role.
+     * Fetch member detail page for photo, email, party, district.
+     *
+     * HTML structure:
+     * - Photo: img[src*=static.kosice.sk]
+     * - Email: span containing "e-mail:" text
+     * - Party: div.info containing "Kandidoval(a) za:" > span value
+     * - District: div.info containing "Volebný obvod:" text
      */
     private void fetchMemberDetails(CouncilMember member, String seasonRef, String slug) {
         String url = memberDetailUrl.replace("{season}", seasonRef).replace("{slug}", slug);
@@ -203,45 +177,47 @@ public class KosiceScraper {
             Politician politician = member.getPolitician();
 
             // Photo
-            Element imgEl = doc.selectFirst("img[src*=static.kosice.sk/member]");
+            Element imgEl = doc.selectFirst("img[src*=static.kosice.sk]");
             if (imgEl != null) {
                 politician.setPicture(imgEl.attr("src"));
             }
 
-            // Email
+            // Email — may be in a mailto link or as text "e-mail: xxx"
             Element emailLink = doc.selectFirst("a[href^=mailto:]");
             if (emailLink != null) {
                 politician.setEmail(emailLink.attr("href").replace("mailto:", ""));
-            }
-
-            // Info fields
-            Elements infoFields = doc.select("div.info.fix-span");
-            for (Element field : infoFields) {
-                Element labelEl = field.selectFirst("span");
-                if (labelEl == null) continue;
-                String label = labelEl.text().trim();
-                String value = field.text().replace(label, "").trim();
-
-                if (label.contains("Volebný obvod") && !value.isEmpty()) {
-                    member.setDescription("Volebný obvod: " + value);
+            } else {
+                // Fallback: look for text containing "e-mail:"
+                Elements spans = doc.select("span");
+                for (Element span : spans) {
+                    String text = span.text().trim();
+                    if (text.startsWith("e-mail:")) {
+                        String email = text.replace("e-mail:", "").trim();
+                        if (!email.isEmpty()) {
+                            politician.setEmail(email);
+                        }
+                        break;
+                    }
                 }
             }
 
-            // Club membership from #tab_membership
-            Elements membershipItems = doc.select("#tab_membership ul li");
-            for (Element item : membershipItems) {
-                String text = item.text().trim();
-                if (text.contains("Poslanecký klub")) {
-                    Element strong = item.selectFirst("strong");
-                    if (strong != null) {
-                        String clubName = strong.text().trim();
-                        String roleText = text.substring(text.lastIndexOf('-') + 1).trim().toLowerCase();
-                        ClubFunction function = parseClubFunction(roleText);
+            // Info fields: div.info containing label spans
+            Elements infoFields = doc.select("div.info");
+            for (Element field : infoFields) {
+                String text = field.text().trim();
 
-                        // Update club membership if not already set or different
-                        if (member.getClubMembers() == null || member.getClubMembers().isEmpty()) {
-                            addClubMembership(member, clubName, function);
-                        }
+                if (text.contains("Volebný obvod")) {
+                    String value = text.replaceAll(".*Volebný obvod:?\\s*", "").trim();
+                    if (!value.isEmpty()) {
+                        member.setDescription("Volebný obvod: " + value);
+                    }
+                }
+
+                if (text.contains("Kandidoval") && text.contains("za:")) {
+                    // "Kandidoval(a) za: SMER-SD" — extract party name
+                    String partyText = text.replaceAll(".*za:\\s*", "").trim();
+                    if (!partyText.isEmpty()) {
+                        addPartyNomination(member, partyText);
                     }
                 }
             }
