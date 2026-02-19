@@ -94,15 +94,16 @@ public class CouncilMemberSyncService {
                 for (CouncilMember member : newMembers) {
                     member.setDataSource(membersSource);
                 }
-                politicianMatchingService.reuseExistingPoliticians(newMembers, town, townCouncil);
-
-                // Resolve Party references to avoid duplicate key violations
+                // Resolve Party references BEFORE reuseExistingPoliticians —
+                // that method adds PartyNominees to managed politicians, so Party
+                // entities must already be managed to avoid duplicate key on auto-flush
                 Map<String, Party> existingParties = new HashMap<>();
                 partyRepository.findAll().forEach(p -> existingParties.put(p.getRef(), p));
                 for (CouncilMember member : newMembers) {
                     resolvePartyReferences(member, existingParties);
                 }
 
+                politicianMatchingService.reuseExistingPoliticians(newMembers, town, townCouncil);
                 councilMemberRepository.saveAll(newMembers);
                 log.info("Saved {} council members for {} season {} (source: {})",
                         newMembers.size(), town.getRef(), seasonRef, membersSource);
