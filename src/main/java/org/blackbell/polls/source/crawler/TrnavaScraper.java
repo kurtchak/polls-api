@@ -418,8 +418,8 @@ public class TrnavaScraper {
             vote.setPoll(poll);
         }
 
+        meeting.addAgendaItem(agendaItem);  // must be before addPoll — Poll.hashCode() needs agendaItem.meeting
         agendaItem.addPoll(poll);
-        meeting.addAgendaItem(agendaItem);
 
         log.debug("Parsed Trnava vote '{}': za={}, proti={}, zdržali={}, chýbali={}, nehlasovali={}",
                 agendaName, votesCount.getVotedFor(), votesCount.getVotedAgainst(),
