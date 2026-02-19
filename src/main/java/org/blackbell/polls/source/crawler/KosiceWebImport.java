@@ -66,7 +66,20 @@ public class KosiceWebImport implements DataImport {
         scraper.scrapeMeetingDetails(meeting);
         if (memberSlugToName != null && !memberSlugToName.isEmpty()) {
             ensureVotesLoaded(meeting.getSeason().getRef(), scraper);
+            String meetingId = meeting.getExtId().replace("kosice-web:", "");
+            long matchingRecords = cachedVoteRecords.values().stream()
+                    .flatMap(List::stream)
+                    .filter(r -> meetingId.equals(r.meetingId()))
+                    .count();
+            log.info("Building polls for meeting '{}' (id={}): {} matching vote records from cache",
+                    meeting.getName(), meetingId, matchingRecords);
             scraper.buildPollsFromMemberVotes(meeting, cachedVoteRecords, memberSlugToName);
+            boolean hasPolls = meeting.getAgendaItems() != null && meeting.getAgendaItems().stream()
+                    .anyMatch(ai -> ai.getPolls() != null && !ai.getPolls().isEmpty());
+            log.info("After buildPolls: meeting '{}' hasPolls={}", meeting.getName(), hasPolls);
+        } else {
+            log.warn("memberSlugToName is {} for meeting '{}' — skipping vote integration",
+                    memberSlugToName == null ? "null" : "empty", meeting.getName());
         }
     }
 
@@ -94,11 +107,19 @@ public class KosiceWebImport implements DataImport {
     }
 
     private void ensureVotesLoaded(String seasonRef, KosiceScraper scraper) {
-        if (cachedVoteRecords != null) return;
+        if (cachedVoteRecords != null) {
+            log.debug("Vote cache already loaded ({} members)", cachedVoteRecords.size());
+            return;
+        }
+        log.info("Starting vote scraping for {} member profiles...", memberSlugToName.size());
         cachedVoteRecords = new LinkedHashMap<>();
         for (String slug : memberSlugToName.keySet()) {
             List<KosiceScraper.MemberVoteRecord> records = scraper.scrapeMemberVotes(seasonRef, slug);
             cachedVoteRecords.put(slug, records);
+            if (!records.isEmpty()) {
+                log.debug("Member {}: {} vote records (first meetingId={})",
+                        slug, records.size(), records.get(0).meetingId());
+            }
         }
         log.info("Scraped {} vote records from {} members",
                 cachedVoteRecords.values().stream().mapToInt(List::size).sum(),
