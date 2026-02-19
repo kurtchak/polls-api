@@ -101,6 +101,29 @@ public class DataSourceConfig {
         // Ostatné cez DM (staršie sezóny 2014-2018, 2018-2022)
         r.add(new SourceRule("poprad", null, null, null, Source.DM));
 
+        // --- Trnava ---
+        // Plný web scraper: members + meetings + votes
+        r.add(new SourceRule("trnava", null, null, null, Source.TRNAVA_WEB));
+
+        // --- Košice ---
+        // Plný web scraper: members + meetings + votes z profilov
+        r.add(new SourceRule("kosice", null, null, null, Source.KOSICE_WEB));
+
+        // --- Nitra ---
+        // Fáza 1: members cez web scraper, meetings/votes zatiaľ nie (PDF)
+        r.add(new SourceRule("nitra", null, null, DataOperation.MEMBERS, Source.NITRA_WEB));
+        r.add(new SourceRule("nitra", null, null, DataOperation.SEASONS, Source.NITRA_WEB));
+
+        // --- Banská Bystrica ---
+        // Fáza 1: members only
+        r.add(new SourceRule("banska-bystrica", null, null, DataOperation.MEMBERS, Source.BB_WEB));
+        r.add(new SourceRule("banska-bystrica", null, null, DataOperation.SEASONS, Source.BB_WEB));
+
+        // --- Trenčín ---
+        // Fáza 1: members only
+        r.add(new SourceRule("trencin", null, null, DataOperation.MEMBERS, Source.TRENCIN_WEB));
+        r.add(new SourceRule("trencin", null, null, DataOperation.SEASONS, Source.TRENCIN_WEB));
+
         return r;
     }
 }

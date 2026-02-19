@@ -63,7 +63,7 @@ public class DataSeeder implements CommandLineRunner {
                 log.info("Migrated {} town(s) from BA_OPENDATA to BA_ARCGIS", migrated);
             }
             entityManager.createNativeQuery(
-                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
+                    "ALTER TABLE town ADD CONSTRAINT town_source_check CHECK (source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'TRNAVA_WEB', 'KOSICE_WEB', 'NITRA_WEB', 'BB_WEB', 'TRENCIN_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
 
             // --- Poll data_source: migrate old DataSourceType values to Source values ---
             entityManager.createNativeQuery(
@@ -79,7 +79,7 @@ public class DataSeeder implements CommandLineRunner {
                 log.info("Migrated {} poll(s) from BA_API to BA_ARCGIS", baMigrated);
             }
             entityManager.createNativeQuery(
-                    "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
+                    "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'TRNAVA_WEB', 'KOSICE_WEB', 'NITRA_WEB', 'BB_WEB', 'TRENCIN_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
 
             log.info("Updated source check constraints for unified Source enum values");
         } catch (Exception e) {
@@ -167,11 +167,19 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Created town: {}", presov);
         }
 
-        // Remove Košice — no data source available yet
+        // Košice — now has web scraper
         Town kosice = townRepository.findByRef("kosice");
-        if (kosice != null) {
-            townRepository.delete(kosice);
-            log.info("Removed town: kosice (no data source)");
+        if (kosice == null) {
+            kosice = new Town();
+            kosice.setRef("kosice");
+            kosice.setName("Košice");
+            kosice.setSource(Source.KOSICE_WEB);
+            townRepository.save(kosice);
+            log.info("Created town: {}", kosice);
+        } else if (kosice.getSource() != Source.KOSICE_WEB) {
+            kosice.setSource(Source.KOSICE_WEB);
+            townRepository.save(kosice);
+            log.info("Updated town source: {}", kosice);
         }
 
         Town bratislava = townRepository.findByRef("bratislava");
@@ -195,6 +203,46 @@ public class DataSeeder implements CommandLineRunner {
             poprad.setSource(Source.DM);
             townRepository.save(poprad);
             log.info("Created town: {}", poprad);
+        }
+
+        // Trnava
+        if (townRepository.findByRef("trnava") == null) {
+            Town trnava = new Town();
+            trnava.setRef("trnava");
+            trnava.setName("Trnava");
+            trnava.setSource(Source.TRNAVA_WEB);
+            townRepository.save(trnava);
+            log.info("Created town: {}", trnava);
+        }
+
+        // Nitra
+        if (townRepository.findByRef("nitra") == null) {
+            Town nitra = new Town();
+            nitra.setRef("nitra");
+            nitra.setName("Nitra");
+            nitra.setSource(Source.NITRA_WEB);
+            townRepository.save(nitra);
+            log.info("Created town: {}", nitra);
+        }
+
+        // Banská Bystrica
+        if (townRepository.findByRef("banska-bystrica") == null) {
+            Town bb = new Town();
+            bb.setRef("banska-bystrica");
+            bb.setName("Banská Bystrica");
+            bb.setSource(Source.BB_WEB);
+            townRepository.save(bb);
+            log.info("Created town: {}", bb);
+        }
+
+        // Trenčín
+        if (townRepository.findByRef("trencin") == null) {
+            Town trencin = new Town();
+            trencin.setRef("trencin");
+            trencin.setName("Trenčín");
+            trencin.setSource(Source.TRENCIN_WEB);
+            townRepository.save(trencin);
+            log.info("Created town: {}", trencin);
         }
     }
 
