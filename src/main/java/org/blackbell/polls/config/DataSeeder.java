@@ -81,6 +81,18 @@ public class DataSeeder implements CommandLineRunner {
             entityManager.createNativeQuery(
                     "ALTER TABLE poll ADD CONSTRAINT poll_data_source_check CHECK (data_source IN ('DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'TRNAVA_WEB', 'KOSICE_WEB', 'NITRA_WEB', 'BB_WEB', 'TRENCIN_WEB', 'MANUAL', 'OTHER'))").executeUpdate();
 
+            // --- All other tables with Source enum columns (Hibernate-generated check constraints) ---
+            String sourceValues = "'DM', 'DM_PDF', 'BA_ARCGIS', 'BA_WEB', 'PRESOV_WEB', 'POPRAD_WEB', 'TRNAVA_WEB', 'KOSICE_WEB', 'NITRA_WEB', 'BB_WEB', 'TRENCIN_WEB', 'MANUAL', 'OTHER'";
+            for (String table : new String[]{"sync_log", "council_member", "meeting", "season"}) {
+                String col = table.equals("sync_log") ? "source" : "data_source";
+                String constraintName = table + "_" + col + "_check";
+                entityManager.createNativeQuery(
+                        "ALTER TABLE " + table + " DROP CONSTRAINT IF EXISTS " + constraintName).executeUpdate();
+                entityManager.createNativeQuery(
+                        "ALTER TABLE " + table + " ADD CONSTRAINT " + constraintName +
+                        " CHECK (" + col + " IN (" + sourceValues + "))").executeUpdate();
+            }
+
             log.info("Updated source check constraints for unified Source enum values");
         } catch (Exception e) {
             log.warn("Could not update source check constraints: {}", e.getMessage());
