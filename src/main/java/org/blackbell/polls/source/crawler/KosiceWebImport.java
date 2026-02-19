@@ -28,6 +28,9 @@ public class KosiceWebImport implements DataImport {
 
     private final CrawlerProperties crawlerProperties;
 
+    private Map<String, String> memberSlugToName;
+    private Map<String, List<KosiceScraper.MemberVoteRecord>> cachedVoteRecords;
+
     public KosiceWebImport(CrawlerProperties crawlerProperties) {
         this.crawlerProperties = crawlerProperties;
     }
@@ -61,6 +64,10 @@ public class KosiceWebImport implements DataImport {
     public void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception {
         KosiceScraper scraper = createScraper();
         scraper.scrapeMeetingDetails(meeting);
+        if (memberSlugToName != null && !memberSlugToName.isEmpty()) {
+            ensureVotesLoaded(meeting.getSeason().getRef(), scraper);
+            scraper.buildPollsFromMemberVotes(meeting, cachedVoteRecords, memberSlugToName);
+        }
     }
 
     @Override
@@ -72,7 +79,30 @@ public class KosiceWebImport implements DataImport {
     public List<CouncilMember> loadMembers(Town town, Season season, Institution institution) {
         KosiceScraper scraper = createScraper();
         List<CouncilMember> members = scraper.scrapeMembers(town, season, institution);
-        return members != null && !members.isEmpty() ? members : null;
+        if (members != null && !members.isEmpty()) {
+            memberSlugToName = new LinkedHashMap<>();
+            for (CouncilMember m : members) {
+                if (m.getExtId() != null) {
+                    memberSlugToName.put(m.getExtId(), m.getPolitician().getName());
+                }
+            }
+            cachedVoteRecords = null;
+            log.info("Cached {} member slug→name mappings for vote scraping", memberSlugToName.size());
+            return members;
+        }
+        return null;
+    }
+
+    private void ensureVotesLoaded(String seasonRef, KosiceScraper scraper) {
+        if (cachedVoteRecords != null) return;
+        cachedVoteRecords = new LinkedHashMap<>();
+        for (String slug : memberSlugToName.keySet()) {
+            List<KosiceScraper.MemberVoteRecord> records = scraper.scrapeMemberVotes(seasonRef, slug);
+            cachedVoteRecords.put(slug, records);
+        }
+        log.info("Scraped {} vote records from {} members",
+                cachedVoteRecords.values().stream().mapToInt(List::size).sum(),
+                memberSlugToName.size());
     }
 
     private KosiceScraper createScraper() {

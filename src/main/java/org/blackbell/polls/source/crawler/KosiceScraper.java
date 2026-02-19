@@ -417,7 +417,7 @@ public class KosiceScraper {
      */
     public void buildPollsFromMemberVotes(Meeting meeting,
                                           Map<String, List<MemberVoteRecord>> votesByKey,
-                                          Map<String, CouncilMember> membersBySlug) {
+                                          Map<String, String> memberNames) {
         String meetingId = meeting.getExtId().replace("kosice-web:", "");
 
         // Get all vote keys for this meeting
@@ -451,12 +451,11 @@ public class KosiceScraper {
                 String memberSlug = mv.getKey();
                 MemberVoteRecord record = mv.getValue();
 
-                CouncilMember member = membersBySlug.get(memberSlug);
+                String memberName = memberNames.get(memberSlug);
 
                 Vote vote = new Vote();
                 vote.setVoted(record.choice());
-                vote.setVoterName(member != null ? member.getPolitician().getName() : memberSlug);
-                vote.setCouncilMember(member);
+                vote.setVoterName(memberName != null ? memberName : memberSlug);
                 votes.add(vote);
 
                 switch (record.choice()) {
