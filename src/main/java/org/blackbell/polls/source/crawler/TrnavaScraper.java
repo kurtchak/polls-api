@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.blackbell.polls.common.PollsUtils.*;
 
@@ -39,12 +37,6 @@ public class TrnavaScraper {
     private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
     private static final SimpleDateFormat DATE_FORMAT_DOT = new SimpleDateFormat("d. M. yyyy");
     private static final SimpleDateFormat DATE_FORMAT_DOT2 = new SimpleDateFormat("dd.MM.yyyy");
-
-    private static final Pattern VOTE_PATTERN = Pattern.compile(
-            "(.+?)\\s+\\[(Za|Proti|Zdržal\\(a\\) sa|Chýbal\\(a\\)|Nehlasoval\\(a\\))\\]");
-
-    private static final Pattern SUMMARY_PATTERN = Pattern.compile(
-            "Za:\\s*(\\d+).*?Proti:\\s*(\\d+).*?Zdržal\\(a\\) sa:\\s*(\\d+).*?Chýbal\\(a\\):\\s*(\\d+).*?Nehlasoval\\(a\\):\\s*(\\d+)");
 
     private final String membersUrl;
     private final String meetingsUrl;
@@ -284,7 +276,14 @@ public class TrnavaScraper {
 
     /**
      * Scrape meeting details including agenda items and voting data.
-     * The voting data is in accordion sections with individual votes as text.
+     *
+     * HTML structure on trnava.sk/zasadnutie/{id}:
+     * - Voting tab: div.tab-pane#nav-1-1-default-hor-left--hlasovanie
+     * - Accordion container: div#accordion-hlasovanie
+     * - Heading: div#accordion-hlasovanie-heading-{id} > h5 > a > span (title)
+     * - Body: div#accordion-hlasovanie-body-{id}.collapse > div.u-accordion__body > div.row
+     * - Each vote: div.col-12.col-lg-6 > span.name + span.vote (e.g. "[Za]")
+     * - Summary: div.summary > i elements (e.g. "Za: 20", "Proti: 2")
      */
     public void scrapeMeetingDetails(Meeting meeting) {
         String meetingId = meeting.getExtId().replace("trnava-web:", "");
@@ -294,48 +293,87 @@ public class TrnavaScraper {
         try {
             Document doc = fetchDocument(url);
 
-            // Parse agenda items - look for numbered items in the program tab
-            Elements agendaElements = doc.select("[id^=accordion-hlasovanie-body-]");
+            // Find voting accordion body sections by ID pattern
+            Elements votingSections = doc.select("div[id^=accordion-hlasovanie-body-]");
+            log.info("Found {} voting sections for meeting '{}'", votingSections.size(), meeting.getName());
 
-            if (agendaElements.isEmpty()) {
-                // Try broader approach - find all voting accordion sections
-                agendaElements = doc.select("div[id*=hlasovanie]");
-            }
-
-            log.info("Found {} voting sections for meeting '{}'", agendaElements.size(), meeting.getName());
-
-            // Create a single aggregate agenda item for each voting section
-            // or try to match them to program items
-            Elements programItems = doc.select("div[id^=accordion-] h4, div[id^=accordion-] h5, " +
-                    "div.accordion-item h4, div.accordion-item h5");
-
-            // Parse voting sections
-            for (Element votingSection : agendaElements) {
+            for (Element votingSection : votingSections) {
                 String sectionId = votingSection.id();
-                // accordion-hlasovanie-body-6391
                 String voteId = sectionId.replace("accordion-hlasovanie-body-", "");
 
-                // Find the heading for this section
-                String headingId = sectionId.replace("-body-", "-heading-");
-                Element heading = doc.getElementById(headingId);
-                if (heading == null) {
-                    // Try parent or sibling
-                    heading = votingSection.previousElementSibling();
+                // Extract heading text from the corresponding heading div
+                Element headingDiv = doc.getElementById("accordion-hlasovanie-heading-" + voteId);
+                String agendaName = "Hlasovanie " + voteId;
+                if (headingDiv != null) {
+                    // Get the title span, excluding the control icon span
+                    Element titleSpan = headingDiv.selectFirst("h5 a span:not(.u-accordion__control-icon)");
+                    if (titleSpan != null) {
+                        agendaName = titleSpan.text().trim();
+                    } else {
+                        agendaName = headingDiv.text().trim();
+                    }
                 }
 
-                String agendaName = heading != null ? heading.text().trim() : "Hlasovanie " + voteId;
+                // Parse individual votes using structured CSS selectors (span.name + span.vote)
+                Set<Vote> votes = new HashSet<>();
+                Elements nameElements = votingSection.select("span.name");
+                for (Element nameEl : nameElements) {
+                    String voterName = nameEl.text().trim();
+                    if (voterName.isEmpty()) continue;
 
-                // Parse votes from the section text
-                String sectionText = votingSection.text();
-                parseVotingSection(meeting, agendaName, voteId, sectionText);
-            }
+                    // Find the corresponding span.vote — next sibling or within same parent
+                    Element voteEl = nameEl.nextElementSibling();
+                    if (voteEl == null || !voteEl.hasClass("vote")) {
+                        Element parent = nameEl.parent();
+                        if (parent != null) {
+                            voteEl = parent.selectFirst("span.vote");
+                        }
+                    }
 
-            // If no accordion sections found, try parsing the entire voting tab
-            if (agendaElements.isEmpty()) {
-                Element votingTab = doc.selectFirst("[data-tab-target*=hlasovanie], #hlasovanie, .tab-pane:has([id*=hlasovanie])");
-                if (votingTab != null) {
-                    parseVotingTab(meeting, votingTab);
+                    String voteText = voteEl != null
+                            ? voteEl.text().replaceAll("[\\[\\]]", "").trim()
+                            : "Nehlasoval(a)";
+
+                    Vote vote = new Vote();
+                    vote.setVoterName(voterName);
+                    vote.setVoted(parseVoteChoice(voteText));
+                    votes.add(vote);
                 }
+
+                if (votes.isEmpty()) {
+                    log.debug("No votes found in section: {}", agendaName);
+                    continue;
+                }
+
+                // Parse summary from div.summary > i elements
+                VotesCount votesCount = parseSummary(votingSection, votes);
+
+                // Create agenda item and poll
+                AgendaItem agendaItem = new AgendaItem();
+                agendaItem.setName(agendaName);
+                agendaItem.setRef(generateUniqueKeyReference());
+                agendaItem.setExtId("trnava:" + voteId);
+
+                Poll poll = new Poll();
+                poll.setRef(generateUniqueKeyReference());
+                poll.setName(agendaName);
+                poll.setExtAgendaItemId("trnava:" + voteId);
+                poll.setVoters(votes.size());
+                poll.setVotesCount(votesCount);
+                poll.setVotes(votes);
+                poll.setDataSource(Source.TRNAVA_WEB);
+
+                for (Vote vote : votes) {
+                    vote.setPoll(poll);
+                }
+
+                // Must set meeting on agenda item before adding poll (Poll.hashCode chain)
+                meeting.addAgendaItem(agendaItem);
+                agendaItem.addPoll(poll);
+
+                log.debug("Parsed Trnava vote '{}': {} voters, za={}, proti={}, zdržali={}, chýbali={}, nehlasovali={}",
+                        agendaName, votes.size(), votesCount.getVotedFor(), votesCount.getVotedAgainst(),
+                        votesCount.getAbstain(), votesCount.getAbsent(), votesCount.getNotVoted());
             }
 
             int agendaCount = meeting.getAgendaItems() != null ? meeting.getAgendaItems().size() : 0;
@@ -353,40 +391,34 @@ public class TrnavaScraper {
     }
 
     /**
-     * Parse a voting section text that contains lines like "Name [Za]" and a summary line.
+     * Parse vote summary from div.summary > i elements (e.g. "Za: 20", "Proti: 2").
+     * Falls back to counting individual votes if summary div is not found.
      */
-    private void parseVotingSection(Meeting meeting, String agendaName, String voteId, String sectionText) {
-        Set<Vote> votes = new HashSet<>();
-
-        Matcher voteMatcher = VOTE_PATTERN.matcher(sectionText);
-        while (voteMatcher.find()) {
-            String voterName = voteMatcher.group(1).trim();
-            String voteStr = voteMatcher.group(2);
-
-            VoteChoice choice = parseVoteChoice(voteStr);
-
-            Vote vote = new Vote();
-            vote.setVoted(choice);
-            vote.setVoterName(voterName);
-            votes.add(vote);
-        }
-
-        if (votes.isEmpty()) {
-            log.debug("No votes found in section: {}", agendaName);
-            return;
-        }
-
-        // Parse summary
+    private VotesCount parseSummary(Element votingSection, Set<Vote> votes) {
         VotesCount votesCount = new VotesCount();
-        Matcher summaryMatcher = SUMMARY_PATTERN.matcher(sectionText);
-        if (summaryMatcher.find()) {
-            votesCount.setVotedFor(Integer.parseInt(summaryMatcher.group(1)));
-            votesCount.setVotedAgainst(Integer.parseInt(summaryMatcher.group(2)));
-            votesCount.setAbstain(Integer.parseInt(summaryMatcher.group(3)));
-            votesCount.setAbsent(Integer.parseInt(summaryMatcher.group(4)));
-            votesCount.setNotVoted(Integer.parseInt(summaryMatcher.group(5)));
+        Element summaryDiv = votingSection.selectFirst("div.summary");
+
+        if (summaryDiv != null) {
+            for (Element i : summaryDiv.select("i")) {
+                String text = i.text().trim();
+                String[] parts = text.split(":\\s*", 2);
+                if (parts.length == 2) {
+                    try {
+                        int count = Integer.parseInt(parts[1].trim());
+                        switch (parts[0].trim()) {
+                            case "Za" -> votesCount.setVotedFor(count);
+                            case "Proti" -> votesCount.setVotedAgainst(count);
+                            case "Zdržal(a) sa" -> votesCount.setAbstain(count);
+                            case "Chýbal(a)" -> votesCount.setAbsent(count);
+                            case "Nehlasoval(a)" -> votesCount.setNotVoted(count);
+                        }
+                    } catch (NumberFormatException e) {
+                        log.warn("Could not parse summary count: '{}'", text);
+                    }
+                }
+            }
         } else {
-            // Count from votes
+            // Fallback: count from individual votes
             for (Vote vote : votes) {
                 switch (vote.getVoted()) {
                     case VOTED_FOR -> votesCount.setVotedFor(votesCount.getVotedFor() + 1);
@@ -398,53 +430,7 @@ public class TrnavaScraper {
             }
         }
 
-        // Create agenda item
-        AgendaItem agendaItem = new AgendaItem();
-        agendaItem.setName(agendaName);
-        agendaItem.setRef(generateUniqueKeyReference());
-        agendaItem.setExtId("trnava:" + voteId);
-
-        // Create poll
-        Poll poll = new Poll();
-        poll.setRef(generateUniqueKeyReference());
-        poll.setName(agendaName);
-        poll.setExtAgendaItemId("trnava:" + voteId);
-        poll.setVoters(votes.size());
-        poll.setVotesCount(votesCount);
-        poll.setVotes(votes);
-        poll.setDataSource(Source.TRNAVA_WEB);
-
-        for (Vote vote : votes) {
-            vote.setPoll(poll);
-        }
-
-        meeting.addAgendaItem(agendaItem);  // must be before addPoll — Poll.hashCode() needs agendaItem.meeting
-        agendaItem.addPoll(poll);
-
-        log.debug("Parsed Trnava vote '{}': za={}, proti={}, zdržali={}, chýbali={}, nehlasovali={}",
-                agendaName, votesCount.getVotedFor(), votesCount.getVotedAgainst(),
-                votesCount.getAbstain(), votesCount.getAbsent(), votesCount.getNotVoted());
-    }
-
-    /**
-     * Fallback: parse the entire voting tab to find all voting sections.
-     */
-    private void parseVotingTab(Meeting meeting, Element votingTab) {
-        // Split by headings or numbered sections
-        Elements headings = votingTab.select("h4, h5, h3, .accordion-header, [id^=accordion-hlasovanie-heading]");
-
-        for (Element heading : headings) {
-            String agendaName = heading.text().trim();
-            if (agendaName.isEmpty()) continue;
-
-            // Find the body content after this heading
-            Element body = heading.nextElementSibling();
-            if (body != null) {
-                String bodyText = body.text();
-                String voteId = heading.id() != null ? heading.id().replaceAll(".*-(\\d+)$", "$1") : generateUniqueKeyReference();
-                parseVotingSection(meeting, agendaName, voteId, bodyText);
-            }
-        }
+        return votesCount;
     }
 
     private VoteChoice parseVoteChoice(String text) {
