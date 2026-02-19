@@ -117,11 +117,13 @@ public class MeetingSyncService {
             if (existing.getSyncError() != null) {
                 log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
                         meeting.getName(), existing.getSyncError());
-            } else if (existing.isComplete()) {
+            } else if (existing.isComplete() && existing.hasPolls()) {
                 existing.setSyncComplete(true);
                 meetingRepository.save(existing);
                 log.debug(Constants.MarkerSync, "Marked meeting as syncComplete: {}", meeting.getName());
                 return;
+            } else if (existing.isComplete() && !existing.hasPolls()) {
+                log.info(Constants.MarkerSync, "Re-loading meeting without polls: {}", meeting.getName());
             } else if (existing.hasVotes() && existing.hasUnmatchedVotes()) {
                 log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
             } else if (!existing.hasVotes() && existing.hasPolls()) {
