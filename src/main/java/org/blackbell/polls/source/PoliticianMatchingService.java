@@ -48,6 +48,14 @@ public class PoliticianMatchingService {
             Politician existingPolitician = politiciansMap != null ? politiciansMap.get(politicianKey) : null;
 
             if (existingPolitician != null) {
+                // Re-fetch to ensure managed in current transaction
+                // (may be detached from a previous town's sync)
+                if (existingPolitician.getId() != 0) {
+                    existingPolitician = politicianRepository.findById(existingPolitician.getId())
+                            .orElse(existingPolitician);
+                    cacheManager.putPolitician(politicianKey, existingPolitician);
+                }
+
                 log.info("Reusing existing politician: {} (ID: {})",
                         PollsUtils.deAccent(existingPolitician.getName()), existingPolitician.getId());
 
