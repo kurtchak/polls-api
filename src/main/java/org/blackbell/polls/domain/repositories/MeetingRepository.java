@@ -4,6 +4,7 @@ import org.blackbell.polls.domain.model.Meeting;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -78,4 +79,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     @Query("SELECT COUNT(m) FROM Meeting m " +
             "WHERE m.town.ref = :townRef AND m.season.ref = :seasonRef")
     long countMeetingsByTownAndSeason(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
+
+    @Modifying
+    @Query("UPDATE Meeting m SET m.syncComplete = false " +
+            "WHERE m.town.ref = :townRef AND m.season.ref = :seasonRef")
+    int resetSyncComplete(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
 }

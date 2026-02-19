@@ -1,11 +1,11 @@
 package org.blackbell.polls.controllers;
 
 import org.blackbell.polls.domain.model.SyncLog;
+import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.blackbell.polls.domain.repositories.SyncLogRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -18,12 +18,14 @@ import java.util.Map;
 public class AdminSyncLogController {
 
     private final SyncLogRepository syncLogRepository;
+    private final MeetingRepository meetingRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public AdminSyncLogController(SyncLogRepository syncLogRepository) {
+    public AdminSyncLogController(SyncLogRepository syncLogRepository, MeetingRepository meetingRepository) {
         this.syncLogRepository = syncLogRepository;
+        this.meetingRepository = meetingRepository;
     }
 
     @GetMapping("/sync-log")
@@ -39,6 +41,17 @@ public class AdminSyncLogController {
     @GetMapping("/sync-log/{town}/{season}")
     public List<SyncLog> getByTownAndSeason(@PathVariable String town, @PathVariable String season) {
         return syncLogRepository.findByTownRefAndSeasonRefOrderByTimestampDesc(town, season);
+    }
+
+    @Transactional
+    @PostMapping("/reset-meetings/{town}/{season}")
+    public ResponseEntity<Map<String, Object>> resetMeetings(@PathVariable String town, @PathVariable String season) {
+        int updated = meetingRepository.resetSyncComplete(town, season);
+        return ResponseEntity.ok(Map.of(
+                "town", town,
+                "season", season,
+                "meetingsReset", updated
+        ));
     }
 
     @SuppressWarnings("unchecked")

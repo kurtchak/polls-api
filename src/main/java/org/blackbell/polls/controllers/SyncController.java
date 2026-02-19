@@ -40,4 +40,16 @@ public class SyncController {
                 : "Synchronization started for " + target;
         return ResponseEntity.ok(Map.of("status", status, "message", message));
     }
+
+    @PostMapping("/sync/trigger/{town}/{season}")
+    public ResponseEntity<Map<String, String>> triggerSync(@PathVariable String town, @PathVariable String season) {
+        boolean alreadyRunning = syncOrchestrator.isRunning();
+        syncOrchestrator.triggerSync(town, season);
+        String target = town + "/" + season;
+        String status = alreadyRunning ? "queued" : "started";
+        String message = alreadyRunning
+                ? "Sync already running, " + target + " queued after current sync"
+                : "Synchronization started for " + target;
+        return ResponseEntity.ok(Map.of("status", status, "message", message));
+    }
 }

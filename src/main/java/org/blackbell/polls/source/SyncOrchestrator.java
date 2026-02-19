@@ -56,6 +56,11 @@ public class SyncOrchestrator {
 
     @Async
     public synchronized void triggerSync(String townRef) {
+        triggerSync(townRef, null);
+    }
+
+    @Async
+    public synchronized void triggerSync(String townRef, String seasonRef) {
         if (townRef != null) {
             cacheManager.resetTownsMap();
             Town town = cacheManager.getTown(townRef);
@@ -63,7 +68,11 @@ public class SyncOrchestrator {
                 log.warn(Constants.MarkerSync, "Town not found: {}", townRef);
                 return;
             }
-            syncSingleTown(town);
+            if (seasonRef != null) {
+                syncSingleTownSeason(town, seasonRef);
+            } else {
+                syncSingleTown(town);
+            }
         } else {
             syncAll();
         }
@@ -106,6 +115,47 @@ public class SyncOrchestrator {
         } finally {
             syncProgress.finishSync();
             log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
+        }
+    }
+
+    private void syncSingleTownSeason(Town town, String seasonRef) {
+        cacheManager.loadInstitutionsMap();
+        log.info(Constants.MarkerSync, "Manual sync started for town: {}, season: {}", town.getRef(), seasonRef);
+        syncProgress.startSync();
+
+        try {
+            syncProgress.startTown(town.getRef());
+            councilMemberSyncService.resetMembersMap();
+            cacheManager.resetSeasonsMap();
+            seasonSyncService.syncSeasons(town);
+
+            Town freshTown = txTemplate.execute(status -> {
+                Town t = townRepository.findByRefWithSeasons(town.getRef());
+                t.getSeasons().size();
+                return t;
+            });
+
+            Season targetSeason = freshTown.getSeasons().stream()
+                    .filter(s -> s.getRef().equals(seasonRef))
+                    .findFirst().orElse(null);
+
+            if (targetSeason == null) {
+                log.warn(Constants.MarkerSync, "Season {} not found for town {}", seasonRef, town.getRef());
+                return;
+            }
+
+            councilMemberSyncService.syncCouncilMembers(town, Set.of(targetSeason));
+            meetingSyncService.syncSeasonMeetings(town, targetSeason, cacheManager.getInstitutionsMap());
+
+            txTemplate.executeWithoutResult(status -> {
+                Town t = townRepository.findByRef(town.getRef());
+                t.setLastSyncDate(new Date());
+                townRepository.save(t);
+            });
+            log.info("Updated lastSyncDate for town: {}", town.getName());
+            log.info(Constants.MarkerSync, "Manual sync finished for town: {}, season: {}", town.getRef(), seasonRef);
+        } finally {
+            syncProgress.finishSync();
         }
     }
 
