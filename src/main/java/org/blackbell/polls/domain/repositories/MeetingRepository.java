@@ -81,7 +81,7 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     long countMeetingsByTownAndSeason(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
 
     @Modifying
-    @Query("UPDATE Meeting m SET m.syncComplete = false " +
+    @Query("UPDATE Meeting m SET m.syncComplete = false, m.syncRetryCount = 0, m.syncError = null " +
             "WHERE m.town.ref = :townRef AND m.season.ref = :seasonRef")
     int resetSyncComplete(@Param("townRef") String townRef, @Param("seasonRef") String seasonRef);
 }
