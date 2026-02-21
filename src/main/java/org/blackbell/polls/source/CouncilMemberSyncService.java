@@ -11,6 +11,7 @@ import org.blackbell.polls.domain.model.relate.PartyNominee;
 import org.blackbell.polls.domain.repositories.CouncilMemberRepository;
 import org.blackbell.polls.domain.repositories.InstitutionRepository;
 import org.blackbell.polls.domain.repositories.PartyRepository;
+import org.blackbell.polls.sync.SyncEventBroadcaster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,7 @@ public class CouncilMemberSyncService {
     private final PartyRepository partyRepository;
     private final SyncCacheManager cacheManager;
     private final PoliticianMatchingService politicianMatchingService;
+    private final SyncEventBroadcaster eventBroadcaster;
 
     private Map<String, Map<String, CouncilMember>> allMembersMap;
 
@@ -39,13 +41,15 @@ public class CouncilMemberSyncService {
                                     InstitutionRepository institutionRepository,
                                     PartyRepository partyRepository,
                                     SyncCacheManager cacheManager,
-                                    PoliticianMatchingService politicianMatchingService) {
+                                    PoliticianMatchingService politicianMatchingService,
+                                    SyncEventBroadcaster eventBroadcaster) {
         this.resolver = resolver;
         this.councilMemberRepository = councilMemberRepository;
         this.institutionRepository = institutionRepository;
         this.partyRepository = partyRepository;
         this.cacheManager = cacheManager;
         this.politicianMatchingService = politicianMatchingService;
+        this.eventBroadcaster = eventBroadcaster;
     }
 
     @Transactional
@@ -107,6 +111,8 @@ public class CouncilMemberSyncService {
                 councilMemberRepository.saveAll(newMembers);
                 log.info("Saved {} council members for {} season {} (source: {})",
                         newMembers.size(), town.getRef(), seasonRef, membersSource);
+                eventBroadcaster.emit("SUCCESS", town.getRef(), seasonRef, "members",
+                        "Loaded " + newMembers.size() + " council members");
             }
         }
         log.info(Constants.MarkerSync, "Council Members Sync finished");
@@ -193,6 +199,10 @@ public class CouncilMemberSyncService {
 
         log.info("Enriched {}/{} members for {} season {}",
                 enriched, existingMembers.size(), town.getRef(), seasonRef);
+        if (enriched > 0) {
+            eventBroadcaster.emit("INFO", town.getRef(), seasonRef, "members",
+                    "Enriched " + enriched + " members with details");
+        }
     }
 
     /**

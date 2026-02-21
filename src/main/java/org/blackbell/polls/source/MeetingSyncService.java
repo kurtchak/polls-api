@@ -6,6 +6,7 @@ import org.blackbell.polls.domain.model.enums.InstitutionType;
 import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.blackbell.polls.domain.repositories.SeasonRepository;
 import org.blackbell.polls.source.dm.DMPdfImporter;
+import org.blackbell.polls.sync.SyncEventBroadcaster;
 import org.blackbell.polls.sync.SyncProgress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public class MeetingSyncService {
     private final CouncilMemberSyncService councilMemberSyncService;
     private final PoliticianMatchingService politicianMatchingService;
     private final SyncProgress syncProgress;
+    private final SyncEventBroadcaster eventBroadcaster;
     private final SyncCacheManager cacheManager;
     private final TransactionTemplate txTemplate;
 
@@ -40,6 +42,7 @@ public class MeetingSyncService {
                               CouncilMemberSyncService councilMemberSyncService,
                               PoliticianMatchingService politicianMatchingService,
                               SyncProgress syncProgress,
+                              SyncEventBroadcaster eventBroadcaster,
                               SyncCacheManager cacheManager,
                               PlatformTransactionManager txManager) {
         this.resolver = resolver;
@@ -48,6 +51,7 @@ public class MeetingSyncService {
         this.councilMemberSyncService = councilMemberSyncService;
         this.politicianMatchingService = politicianMatchingService;
         this.syncProgress = syncProgress;
+        this.eventBroadcaster = eventBroadcaster;
         this.cacheManager = cacheManager;
         this.txTemplate = new TransactionTemplate(txManager);
     }
@@ -55,6 +59,7 @@ public class MeetingSyncService {
     public void syncSeasonMeetings(Town town, Season season, Map<InstitutionType, List<Institution>> institutionsMap) {
         if (isHistoricalSeason(season) && isSeasonFullySynced(town, season)) {
             log.info(Constants.MarkerSync, "{}: Skipping fully synced historical season {}", town.getName(), season.getRef());
+            eventBroadcaster.emit("INFO", town.getRef(), season.getRef(), "meetings", "Skipping fully synced historical season");
             return;
         }
         log.info(Constants.MarkerSync, "{}: syncSeasonMeetings {}", town.getName(), season.getRef());
@@ -91,6 +96,8 @@ public class MeetingSyncService {
                     } catch (Exception e) {
                         Throwable cause = e.getCause() != null ? e.getCause() : e;
                         log.error(Constants.MarkerSync, "Failed to sync meeting '{}': {}", meeting.getName(), cause.getMessage(), cause);
+                        eventBroadcaster.emit("ERROR", town.getRef(), season.getRef(), "meeting",
+                                "Meeting '" + meeting.getName() + "' failed: " + cause.getMessage());
                     } finally {
                         syncProgress.meetingProcessed();
                     }
@@ -123,6 +130,9 @@ public class MeetingSyncService {
                 meetingRepository.save(existing);
                 log.info(Constants.MarkerSync, "Giving up on meeting without polls after {} retries: {}",
                         existing.getSyncRetryCount(), meeting.getName());
+                eventBroadcaster.emit("WARN", meeting.getTown().getRef(),
+                        meeting.getSeason() != null ? meeting.getSeason().getRef() : null,
+                        "meeting", "Gave up on '" + meeting.getName() + "' after " + existing.getSyncRetryCount() + " retries");
                 return;
             } else if (existing.isComplete()) {
                 existing.setSyncComplete(true);
@@ -157,6 +167,19 @@ public class MeetingSyncService {
             meeting.setSyncComplete(false);
         }
         meetingRepository.save(meeting);
+
+        if (meeting.getSyncError() == null) {
+            long pollCount = meeting.getAgendaItems() != null
+                    ? meeting.getAgendaItems().stream().mapToLong(ai -> ai.getPolls() != null ? ai.getPolls().size() : 0).sum()
+                    : 0;
+            eventBroadcaster.emit("SUCCESS", meeting.getTown().getRef(),
+                    meeting.getSeason() != null ? meeting.getSeason().getRef() : null,
+                    "meeting", "Meeting '" + meeting.getName() + "' synced: " + pollCount + " polls");
+        } else {
+            eventBroadcaster.emit("ERROR", meeting.getTown().getRef(),
+                    meeting.getSeason() != null ? meeting.getSeason().getRef() : null,
+                    "meeting", "Meeting '" + meeting.getName() + "' error: " + meeting.getSyncError());
+        }
     }
 
     private void loadMeeting(Meeting meeting, DataImport dataImport) throws Exception {

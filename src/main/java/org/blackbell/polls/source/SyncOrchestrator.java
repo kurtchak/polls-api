@@ -4,6 +4,7 @@ import org.blackbell.polls.common.Constants;
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.repositories.TownRepository;
+import org.blackbell.polls.sync.SyncEventBroadcaster;
 import org.blackbell.polls.sync.SyncProgress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ public class SyncOrchestrator {
     private final MeetingSyncService meetingSyncService;
     private final SyncCacheManager cacheManager;
     private final SyncProgress syncProgress;
+    private final SyncEventBroadcaster eventBroadcaster;
     private final TownRepository townRepository;
     private final TransactionTemplate txTemplate;
 
@@ -38,6 +40,7 @@ public class SyncOrchestrator {
                             MeetingSyncService meetingSyncService,
                             SyncCacheManager cacheManager,
                             SyncProgress syncProgress,
+                            SyncEventBroadcaster eventBroadcaster,
                             TownRepository townRepository,
                             PlatformTransactionManager txManager) {
         this.seasonSyncService = seasonSyncService;
@@ -45,6 +48,7 @@ public class SyncOrchestrator {
         this.meetingSyncService = meetingSyncService;
         this.cacheManager = cacheManager;
         this.syncProgress = syncProgress;
+        this.eventBroadcaster = eventBroadcaster;
         this.townRepository = townRepository;
         this.txTemplate = new TransactionTemplate(txManager);
     }
@@ -87,19 +91,24 @@ public class SyncOrchestrator {
         cacheManager.loadInstitutionsMap();
         log.info(Constants.MarkerSync, "Synchronization started");
         syncProgress.startSync();
+        eventBroadcaster.emit("INFO", "start", "Synchronization started for " + townsRefs.size() + " towns");
 
         if (townsRefs.isEmpty()) {
             log.info(Constants.MarkerSync, "No town to sync");
         }
 
+        long startMs = System.currentTimeMillis();
         try {
             townsRefs.forEach(townRef -> {
                 log.info("town: {}", townRef);
                 Town town = cacheManager.getTown(townRef);
+                eventBroadcaster.emit("INFO", townRef, "start", "Starting sync for " + townRef);
                 syncTown(town);
             });
         } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
             syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", "complete", "Synchronization completed in " + durationSec + "s");
             log.info(Constants.MarkerSync, "Synchronization finished");
         }
     }
@@ -108,12 +117,16 @@ public class SyncOrchestrator {
         cacheManager.loadInstitutionsMap();
         log.info(Constants.MarkerSync, "Manual sync started for town: {}", town.getRef());
         syncProgress.startSync();
+        eventBroadcaster.emit("INFO", town.getRef(), "start", "Manual sync started for " + town.getRef());
 
+        long startMs = System.currentTimeMillis();
         try {
             cacheManager.resetSeasonsMap();
             syncTown(town);
         } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
             syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", town.getRef(), "complete", "Sync completed for " + town.getRef() + " in " + durationSec + "s");
             log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
         }
     }
@@ -122,7 +135,9 @@ public class SyncOrchestrator {
         cacheManager.loadInstitutionsMap();
         log.info(Constants.MarkerSync, "Manual sync started for town: {}, season: {}", town.getRef(), seasonRef);
         syncProgress.startSync();
+        eventBroadcaster.emit("INFO", town.getRef(), seasonRef, "start", "Manual sync started for " + town.getRef() + "/" + seasonRef);
 
+        long startMs = System.currentTimeMillis();
         try {
             syncProgress.startTown(town.getRef());
             councilMemberSyncService.resetMembersMap();
@@ -155,7 +170,9 @@ public class SyncOrchestrator {
             log.info("Updated lastSyncDate for town: {}", town.getName());
             log.info(Constants.MarkerSync, "Manual sync finished for town: {}, season: {}", town.getRef(), seasonRef);
         } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
             syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", town.getRef(), seasonRef, "complete", "Sync completed for " + town.getRef() + "/" + seasonRef + " in " + durationSec + "s");
         }
     }
 

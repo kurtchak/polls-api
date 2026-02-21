@@ -5,6 +5,7 @@ import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
 import org.blackbell.polls.domain.repositories.SeasonRepository;
 import org.blackbell.polls.domain.repositories.TownRepository;
+import org.blackbell.polls.sync.SyncEventBroadcaster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -23,13 +24,16 @@ public class SeasonSyncService {
     private final SeasonRepository seasonRepository;
     private final TownRepository townRepository;
     private final SyncCacheManager cacheManager;
+    private final SyncEventBroadcaster eventBroadcaster;
 
     public SeasonSyncService(DataSourceResolver resolver, SeasonRepository seasonRepository,
-                             TownRepository townRepository, SyncCacheManager cacheManager) {
+                             TownRepository townRepository, SyncCacheManager cacheManager,
+                             SyncEventBroadcaster eventBroadcaster) {
         this.resolver = resolver;
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
         this.cacheManager = cacheManager;
+        this.eventBroadcaster = eventBroadcaster;
     }
 
     @Transactional
@@ -41,6 +45,8 @@ public class SeasonSyncService {
                     resolver.resolveAndAggregate(managedTown, DataOperation.SEASONS,
                             di -> di.loadSeasons(managedTown));
             log.info(Constants.MarkerSync, "RETRIEVED SEASONS: {}", sourcedSeasons);
+            eventBroadcaster.emit("SUCCESS", managedTown.getRef(), "seasons",
+                    "Found " + sourcedSeasons.size() + " seasons");
 
             List<Season> formerSeasons = seasonRepository.findAll();
             log.info(Constants.MarkerSync, "FORMER SEASONS: {}", formerSeasons);
