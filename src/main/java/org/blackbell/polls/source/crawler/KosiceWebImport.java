@@ -4,6 +4,7 @@ import org.blackbell.polls.common.PollsUtils;
 import org.blackbell.polls.config.CrawlerProperties;
 import org.blackbell.polls.domain.model.*;
 import org.blackbell.polls.domain.model.enums.InstitutionType;
+import org.blackbell.polls.domain.repositories.CouncilMemberRepository;
 import org.blackbell.polls.source.DataImport;
 import org.blackbell.polls.source.Source;
 import org.slf4j.Logger;
@@ -27,12 +28,16 @@ public class KosiceWebImport implements DataImport {
     private static final List<String> KNOWN_SEASONS = List.of("2022-2026");
 
     private final CrawlerProperties crawlerProperties;
+    private final CouncilMemberRepository councilMemberRepository;
 
+    private String currentSeasonRef;
     private Map<String, String> memberSlugToName;
     private Map<String, List<KosiceScraper.MemberVoteRecord>> cachedVoteRecords;
 
-    public KosiceWebImport(CrawlerProperties crawlerProperties) {
+    public KosiceWebImport(CrawlerProperties crawlerProperties,
+                           CouncilMemberRepository councilMemberRepository) {
         this.crawlerProperties = crawlerProperties;
+        this.councilMemberRepository = councilMemberRepository;
     }
 
     @Override
@@ -64,6 +69,7 @@ public class KosiceWebImport implements DataImport {
     public void loadMeetingDetails(Meeting meeting, String externalMeetingId) throws Exception {
         KosiceScraper scraper = createScraper();
         scraper.scrapeMeetingDetails(meeting);
+        ensureMemberSlugToNameLoaded(meeting.getTown(), meeting.getSeason());
         if (memberSlugToName != null && !memberSlugToName.isEmpty()) {
             ensureVotesLoaded(meeting.getSeason().getRef(), scraper);
             String meetingId = meeting.getExtId().replace("kosice-web:", "");
@@ -93,6 +99,7 @@ public class KosiceWebImport implements DataImport {
         KosiceScraper scraper = createScraper();
         List<CouncilMember> members = scraper.scrapeMembers(town, season, institution);
         if (members != null && !members.isEmpty()) {
+            currentSeasonRef = season.getRef();
             memberSlugToName = new LinkedHashMap<>();
             for (CouncilMember m : members) {
                 if (m.getExtId() != null) {
@@ -104,6 +111,38 @@ public class KosiceWebImport implements DataImport {
             return members;
         }
         return null;
+    }
+
+    private void ensureMemberSlugToNameLoaded(Town town, Season season) {
+        // Reset cache when switching seasons
+        if (currentSeasonRef != null && !currentSeasonRef.equals(season.getRef())) {
+            log.info("Season changed from {} to {} — resetting member cache", currentSeasonRef, season.getRef());
+            memberSlugToName = null;
+            cachedVoteRecords = null;
+            currentSeasonRef = season.getRef();
+        }
+
+        if (memberSlugToName != null && !memberSlugToName.isEmpty()) return;
+
+        // Populate from DB
+        Set<CouncilMember> members = councilMemberRepository
+                .getByTownAndSeasonAndInstitution(town.getRef(), season.getRef(), InstitutionType.ZASTUPITELSTVO);
+        if (members == null || members.isEmpty()) {
+            log.warn("No members in DB for {} season {} — cannot build memberSlugToName",
+                    town.getRef(), season.getRef());
+            return;
+        }
+
+        currentSeasonRef = season.getRef();
+        memberSlugToName = new LinkedHashMap<>();
+        for (CouncilMember m : members) {
+            if (m.getExtId() != null) {
+                memberSlugToName.put(m.getExtId(), m.getPolitician().getName());
+            }
+        }
+        cachedVoteRecords = null;
+        log.info("Populated {} member slug→name mappings from DB for season {}",
+                memberSlugToName.size(), season.getRef());
     }
 
     private void ensureVotesLoaded(String seasonRef, KosiceScraper scraper) {

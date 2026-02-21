@@ -54,6 +54,9 @@ public class Meeting extends NamedEntity {
     @Column(columnDefinition = "boolean default false")
     private boolean syncComplete;
 
+    @Column(columnDefinition = "integer default 0")
+    private int syncRetryCount;
+
     @Enumerated(EnumType.STRING)
     private Source dataSource;
 
@@ -168,6 +171,14 @@ public class Meeting extends NamedEntity {
         this.dataSource = dataSource;
     }
 
+    public int getSyncRetryCount() {
+        return syncRetryCount;
+    }
+
+    public void setSyncRetryCount(int syncRetryCount) {
+        this.syncRetryCount = syncRetryCount;
+    }
+
     public void addAgendaItem(AgendaItem agendaItem) {
         if (agendaItems == null) {
             agendaItems = new HashSet<>();
@@ -209,12 +220,13 @@ public class Meeting extends NamedEntity {
      * A meeting is complete if:
      * - No sync error
      * - Has agenda items (empty agenda = failed sync)
-     * - Either has no polls (informational meeting) or has polls with all votes matched
+     * - Has polls (meeting without votes is not complete)
+     * - All votes are matched to council members
      */
     public boolean isComplete() {
         if (syncError != null) return false;
         if (agendaItems == null || agendaItems.isEmpty()) return false;
-        if (!hasPolls()) return true;
+        if (!hasPolls()) return false;
         return !hasUnmatchedVotes();
     }
 
@@ -222,7 +234,8 @@ public class Meeting extends NamedEntity {
     public String getIncompleteReason() {
         if (syncError != null) return "sync error: " + syncError;
         if (agendaItems == null || agendaItems.isEmpty()) return "no agenda items";
-        if (hasPolls() && hasUnmatchedVotes()) return "unmatched votes";
+        if (!hasPolls()) return "no polls";
+        if (hasUnmatchedVotes()) return "unmatched votes";
         return null;
     }
 

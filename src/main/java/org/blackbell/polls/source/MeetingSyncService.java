@@ -117,12 +117,19 @@ public class MeetingSyncService {
             if (existing.getSyncError() != null) {
                 log.info(Constants.MarkerSync, "Retrying previously failed meeting: {} (error: {})",
                         meeting.getName(), existing.getSyncError());
-            } else if (existing.isComplete() && existing.hasPolls()) {
+            } else if (existing.getSyncRetryCount() >= 2 && !existing.hasPolls()) {
+                // Already retried twice without getting polls — stop retrying
+                existing.setSyncError("No polls available after " + existing.getSyncRetryCount() + " retries");
+                meetingRepository.save(existing);
+                log.info(Constants.MarkerSync, "Giving up on meeting without polls after {} retries: {}",
+                        existing.getSyncRetryCount(), meeting.getName());
+                return;
+            } else if (existing.isComplete()) {
                 existing.setSyncComplete(true);
                 meetingRepository.save(existing);
                 log.debug(Constants.MarkerSync, "Marked meeting as syncComplete: {}", meeting.getName());
                 return;
-            } else if (existing.isComplete() && !existing.hasPolls()) {
+            } else if (!existing.hasPolls()) {
                 log.info(Constants.MarkerSync, "Re-loading meeting without polls: {}", meeting.getName());
             } else if (existing.hasVotes() && existing.hasUnmatchedVotes()) {
                 log.info(Constants.MarkerSync, "Re-loading meeting with unmatched votes: {}", meeting.getName());
@@ -131,8 +138,10 @@ public class MeetingSyncService {
             } else {
                 log.info(Constants.MarkerSync, "Re-loading incomplete meeting (0 agenda items): {}", meeting.getName());
             }
+            int retryCount = existing.getSyncRetryCount();
             meetingRepository.delete(existing);
             meetingRepository.flush();
+            meeting.setSyncRetryCount(retryCount + 1);
         }
         try {
             loadMeeting(meeting, dataImport);

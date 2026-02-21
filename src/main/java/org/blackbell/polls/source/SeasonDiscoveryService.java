@@ -27,6 +27,7 @@ public class SeasonDiscoveryService {
     private final TownRepository townRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingSyncService meetingSyncService;
+    private final CouncilMemberSyncService councilMemberSyncService;
     private final SyncCacheManager cacheManager;
     private final TransactionTemplate txTemplate;
 
@@ -34,12 +35,14 @@ public class SeasonDiscoveryService {
                                   TownRepository townRepository,
                                   MeetingRepository meetingRepository,
                                   MeetingSyncService meetingSyncService,
+                                  CouncilMemberSyncService councilMemberSyncService,
                                   SyncCacheManager cacheManager,
                                   PlatformTransactionManager txManager) {
         this.seasonRepository = seasonRepository;
         this.townRepository = townRepository;
         this.meetingRepository = meetingRepository;
         this.meetingSyncService = meetingSyncService;
+        this.councilMemberSyncService = councilMemberSyncService;
         this.cacheManager = cacheManager;
         this.txTemplate = new TransactionTemplate(txManager);
     }
@@ -109,7 +112,10 @@ public class SeasonDiscoveryService {
         // Reset cache so the new season is visible
         cacheManager.resetSeasonsMap();
 
-        // Try to sync meetings for this season
+        // Sync members first so votes can be matched
+        councilMemberSyncService.syncCouncilMembers(managedTown, Set.of(season));
+
+        // Then sync meetings
         Map<InstitutionType, List<Institution>> institutionsMap = cacheManager.loadInstitutionsMap();
         meetingSyncService.syncSeasonMeetings(managedTown, season, institutionsMap);
 

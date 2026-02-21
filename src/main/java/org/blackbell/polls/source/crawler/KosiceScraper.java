@@ -152,11 +152,88 @@ public class KosiceScraper {
                 }
             }
 
+            // Fallback: legacy HTML for older seasons (2018-2022)
+            // These pages use numbered lists with <a> links instead of div.membership
+            if (members.isEmpty()) {
+                log.info("No div.membership sections found — trying legacy parsing for older season");
+                members = scrapeMembersLegacy(doc, town, season, institution);
+            }
+
             log.info("Scraped {} Košice council members", members.size());
         } catch (IOException e) {
             log.error("Failed to scrape Košice members: {}", e.getMessage());
         }
 
+        return members;
+    }
+
+    /**
+     * Legacy member scraping for older Košice seasons (2018-2022).
+     * Page structure: club name as bold text, followed by numbered <a> links.
+     * Profile URLs point to static.kosice.sk (not /poslanec/{slug}).
+     */
+    private List<CouncilMember> scrapeMembersLegacy(Document doc, Town town, Season season, Institution institution) {
+        List<CouncilMember> members = new ArrayList<>();
+        Set<String> seenNames = new HashSet<>();
+
+        // The content area contains club names as bold/strong text followed by member links
+        // Strategy: iterate through all elements, track current club name, collect member links
+        Elements contentElements = doc.select("div.wcms-component-text strong, div.wcms-component-text a[href]");
+        if (contentElements.isEmpty()) {
+            // Broader fallback
+            contentElements = doc.select("strong, b, a[href*=static.kosice.sk], a[href*=/poslanec/]");
+        }
+
+        String currentClub = null;
+
+        for (Element el : contentElements) {
+            if ("strong".equals(el.tagName()) || "b".equals(el.tagName())) {
+                // Potential club heading — must not be a link child or chairman label
+                String text = el.text().trim();
+                if (!text.isEmpty()
+                        && !text.startsWith("Predsed")
+                        && !text.startsWith("predsed")
+                        && text.length() > 3
+                        && el.selectFirst("a") == null) {
+                    currentClub = text;
+                    log.debug("Legacy parser: detected club '{}'", currentClub);
+                }
+            } else if ("a".equals(el.tagName())) {
+                String name = el.text().trim();
+                String href = el.attr("href");
+
+                // Skip non-member links (navigation, etc.)
+                if (name.isEmpty() || name.length() < 3) continue;
+                if (href.isEmpty()) continue;
+                // Only accept links to member profiles (static.kosice.sk or /poslanec/)
+                if (!href.contains("static.kosice.sk") && !href.contains("/poslanec/")) continue;
+
+                String simpleName = toSimpleName(name);
+                if (!seenNames.add(simpleName)) continue;
+
+                Politician politician = new Politician();
+                politician.setRef(generateUniqueKeyReference());
+                politician.setName(simpleName);
+                politician.setTitles(getTitles(name));
+
+                CouncilMember member = new CouncilMember();
+                member.setRef(generateUniqueKeyReference());
+                member.setPolitician(politician);
+                member.setSeason(season);
+                member.setTown(town);
+                member.setInstitution(institution);
+
+                if (currentClub != null && !currentClub.isEmpty()) {
+                    addClubMembership(member, currentClub, ClubFunction.MEMBER);
+                }
+
+                members.add(member);
+                log.debug("Legacy parser: member '{}' (club: {})",
+                        deAccent(simpleName), currentClub != null ? currentClub : "none");
+            }
+        }
+
+        log.info("Legacy parser found {} members", members.size());
         return members;
     }
 
@@ -405,6 +482,26 @@ public class KosiceScraper {
             int agendaCount = meeting.getAgendaItems() != null ? meeting.getAgendaItems().size() : 0;
             log.info("Loaded {} agenda items for Košice meeting '{}'", agendaCount, meeting.getName());
 
+            // Extract PDF links (especially voting PDFs for PDF fallback)
+            Elements pdfLinks = doc.select("a[href*=static.kosice.sk][href$=.pdf]");
+            for (Element link : pdfLinks) {
+                String pdfName = link.text().trim();
+                String pdfUrl = link.attr("href");
+                if (pdfName.isEmpty() || pdfUrl.isEmpty()) continue;
+                // Clean the display name (remove "PDF - 815.85 KB" suffix)
+                pdfName = pdfName.replaceAll("\\s*PDF\\s*-\\s*[\\d.,]+\\s*[KMG]B\\s*$", "").trim();
+                if (pdfName.isEmpty()) pdfName = pdfUrl.substring(pdfUrl.lastIndexOf('/') + 1);
+
+                MeetingAttachment attachment = new MeetingAttachment();
+                attachment.setName(pdfName);
+                attachment.setSource(pdfUrl);
+                attachment.setRef(generateUniqueKeyReference());
+                meeting.addAttachment(attachment);
+            }
+
+            int attachmentCount = meeting.getAttachments() != null ? meeting.getAttachments().size() : 0;
+            log.info("Loaded {} PDF attachments for Košice meeting '{}'", attachmentCount, meeting.getName());
+
         } catch (IOException e) {
             log.error("Failed to scrape Košice meeting details: {}", e.getMessage());
             meeting.setSyncError("Failed to scrape: " + e.getMessage());
@@ -473,6 +570,7 @@ public class KosiceScraper {
             poll.setRef(generateUniqueKeyReference());
             poll.setName(pollName);
             poll.setExtAgendaItemId("kosice:" + sample.meetingId() + ":" + sample.voteNumber());
+            poll.setExtPollRouteId("kosice-vote:" + sample.meetingId() + ":" + sample.voteNumber());
             poll.setVoters(votes.size());
             poll.setVotesCount(votesCount);
             poll.setVotes(votes);
