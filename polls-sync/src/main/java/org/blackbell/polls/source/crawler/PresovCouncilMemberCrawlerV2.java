@@ -144,6 +144,11 @@ public class PresovCouncilMemberCrawlerV2 {
             return null;
         }
 
+        if (!looksLikePersonName(name)) {
+            log.warn("Skipping non-person entry: '{}'", name);
+            return null;
+        }
+
         // Check if already exists
         String keyName = toSimpleNameWithoutAccents(name);
         if (existingMembersMap.containsKey(keyName)) {
@@ -454,6 +459,22 @@ public class PresovCouncilMemberCrawlerV2 {
 
             log.debug("Added party nomination: {} -> {}", deAccent(member.getPolitician().getName()), partyName);
         }
+    }
+
+    private boolean looksLikePersonName(String text) {
+        if (text == null || text.length() < 5 || text.length() > 80) return false;
+        String[] words = text.trim().split("\\s+");
+        if (words.length < 2) return false;
+        // All-uppercase text is likely an institution name, not a person
+        if (text.equals(text.toUpperCase())) return false;
+        String lower = text.toLowerCase();
+        String[] nonNameWords = {"mesto", "správa", "uznesenie", "dokument", "zmluva",
+                "rozpočet", "program", "zápisnica", "hlasovanie", "bezbariérov",
+                "výbor", "komisia", "materiál", "príloha", "zoznam", "prešov", "košice"};
+        for (String word : nonNameWords) {
+            if (lower.contains(word)) return false;
+        }
+        return true;
     }
 
     /**
