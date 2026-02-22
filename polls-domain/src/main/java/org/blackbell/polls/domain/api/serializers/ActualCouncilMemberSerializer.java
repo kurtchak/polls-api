@@ -25,8 +25,10 @@ public class ActualCouncilMemberSerializer extends StdSerializer<CouncilMember> 
     @Override
     public void serialize(CouncilMember value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonProcessingException {
-        if (value != null) {
+        if (value != null && value.getClubMember() != null && value.getClubMember().getClub() != null) {
             jgen.writeString(value.getClubMember().getClub().getName());
+        } else {
+            jgen.writeNull();
         }
     }
 }
