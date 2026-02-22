@@ -10,4 +10,8 @@ subprojects {
     group = "sk.blackbell"
     version = "0.0.1-SNAPSHOT"
     repositories { mavenCentral() }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
+    }
 }
