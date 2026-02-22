@@ -60,6 +60,10 @@ public interface CouncilMemberRepository extends JpaRepository<CouncilMember, Lo
                                         "and cm.club.season.ref = :season)")
     List<CouncilMember> getFreeCouncilMembers(@Param(value = "town") String town, @Param(value = "season") String season);
 
+    @Query("SELECT s.ref, COUNT(m) FROM CouncilMember m JOIN m.season s JOIN m.town t " +
+           "WHERE t.ref = :town GROUP BY s.ref")
+    List<Object[]> countMembersByTown(@Param("town") String town);
+
     /**
      * Fix orphan members that were saved without town_id or institution_id.
      * Uses native SQL because these columns have updatable=false in JPA mapping.

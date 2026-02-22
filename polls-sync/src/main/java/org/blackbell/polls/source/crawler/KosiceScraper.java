@@ -207,6 +207,7 @@ public class KosiceScraper {
                 if (href.isEmpty()) continue;
                 // Only accept links to member profiles (static.kosice.sk or /poslanec/)
                 if (!href.contains("static.kosice.sk") && !href.contains("/poslanec/")) continue;
+                if (!looksLikePersonName(name)) continue;
 
                 String simpleName = toSimpleName(name);
                 if (!seenNames.add(simpleName)) continue;
@@ -656,6 +657,20 @@ public class KosiceScraper {
             return ClubFunction.VICECHAIRMAN;
         }
         return ClubFunction.MEMBER;
+    }
+
+    private boolean looksLikePersonName(String text) {
+        if (text == null || text.length() < 5 || text.length() > 80) return false;
+        String[] words = text.trim().split("\\s+");
+        if (words.length < 2) return false;
+        String lower = text.toLowerCase();
+        String[] nonNameWords = {"mapa", "správa", "uznesenie", "dokument", "zmluva",
+                "rozpočet", "program", "zápisnica", "hlasovanie", "bezbariérov",
+                "výbor", "komisia", "materiál", "príloha", "zoznam"};
+        for (String word : nonNameWords) {
+            if (lower.contains(word)) return false;
+        }
+        return true;
     }
 
     private VoteChoice parseKosiceVoteChoice(String stance) {

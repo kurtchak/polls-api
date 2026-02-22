@@ -2,6 +2,7 @@ package org.blackbell.polls.service;
 
 import org.blackbell.polls.domain.model.Season;
 import org.blackbell.polls.domain.model.Town;
+import org.blackbell.polls.domain.repositories.CouncilMemberRepository;
 import org.blackbell.polls.domain.repositories.MeetingRepository;
 import org.blackbell.polls.domain.repositories.TownRepository;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,13 @@ public class SeasonService {
 
     private final TownRepository townRepository;
     private final MeetingRepository meetingRepository;
+    private final CouncilMemberRepository councilMemberRepository;
 
-    public SeasonService(TownRepository townRepository, MeetingRepository meetingRepository) {
+    public SeasonService(TownRepository townRepository, MeetingRepository meetingRepository,
+                         CouncilMemberRepository councilMemberRepository) {
         this.townRepository = townRepository;
         this.meetingRepository = meetingRepository;
+        this.councilMemberRepository = councilMemberRepository;
     }
 
     @Transactional(readOnly = true)
@@ -34,6 +38,12 @@ public class SeasonService {
             countsMap.put((String) row[0], new long[]{(long) row[1], (long) row[2]});
         }
 
+        List<Object[]> memberCounts = councilMemberRepository.countMembersByTown(city);
+        Map<String, Long> memberCountMap = new HashMap<>();
+        for (Object[] row : memberCounts) {
+            memberCountMap.put((String) row[0], (long) row[1]);
+        }
+
         return townSeasons.stream()
                 .sorted(Comparator.comparing(Season::getRef))
                 .map(s -> {
@@ -45,6 +55,7 @@ public class SeasonService {
                     map.put("meetingCount", c[0]);
                     map.put("pollCount", c[1]);
                     map.put("incompleteMeetings", incomplete);
+                    map.put("memberCount", memberCountMap.getOrDefault(s.getRef(), 0L));
                     return map;
                 }).toList();
     }
