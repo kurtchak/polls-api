@@ -7,6 +7,49 @@ REST API pre agregáciu a zobrazenie hlasovaní mestských zastupiteľstiev na S
 - **Jakarta Persistence** (migrované z javax.persistence)
 - **PostgreSQL** (produkcia), H2 (dev profil)
 - **jsoup** pre web scraping
+- **Gradle multi-module** — 4 submoduly, 1 deployovateľný fat JAR
+
+## Štruktúra projektu (multi-module)
+
+```
+polls-api/                           (root — conventions only)
+├── settings.gradle.kts              (include 4 submoduly)
+├── build.gradle.kts                 (plugins apply false, -parameters flag)
+│
+├── polls-domain/                    (entity, repos, enums, serializers)
+│   └── src/main/java/org/blackbell/polls/
+│       ├── common/                  (Constants, PollsUtils)
+│       └── domain/
+│           ├── DataImport.java      (interface pre importéry)
+│           ├── api/                 (Views, serializers)
+│           ├── model/               (entity, enums, embeddable, relate)
+│           └── repositories/        (12 JPA repos)
+│
+├── polls-sync/                      (scrapery, sync orchestrácia, DM API)
+│   └── src/main/java/org/blackbell/polls/
+│       ├── source/                  (SyncOrchestrator, importéry, scrapery)
+│       │   ├── bratislava/          (ArcGIS + web scraper)
+│       │   ├── crawler/             (Košice, Trnava, Nitra, Prešov, Poprad, BB, Trenčín)
+│       │   └── dm/                  (DM API klient, parser, PDF importer)
+│       ├── sync/                    (SyncEvent, SyncProgress, SSE broadcaster)
+│       ├── config/                  (CrawlerProperties, DmApiProperties, SyncProperties)
+│       └── controllers/             (SyncController, AdminSyncLogController, AdminSeasonController)
+│
+├── polls-bff/                       (REST API pre frontend)
+│   └── src/main/java/org/blackbell/polls/
+│       ├── controllers/             (11 controllerov — Seasons, Meetings, Members, Polls...)
+│       ├── service/                 (10 services)
+│       └── config/                  (WebConfig)
+│
+└── polls-app/                       (bootable JAR — spája všetko)
+    ├── src/main/java/.../           (Application.java, DataSeeder.java)
+    └── src/main/resources/          (application*.properties, banner.txt)
+```
+
+### Hranice modulov (vynútené kompilátorom)
+- **polls-bff** závisí len na **polls-domain** — nesmie importovať z source/sync
+- **polls-sync** závisí len na **polls-domain**
+- **polls-app** závisí na všetkých troch, obsahuje `@SpringBootApplication`
 
 ## Zdroje dát
 
@@ -20,33 +63,48 @@ REST API pre agregáciu a zobrazenie hlasovaní mestských zastupiteľstiev na S
 - **Stav:** Funguje pre staršie obdobia (2014-2018). Novšie (2022-2026) majú prázdne sekcie "Hlasovania"
 - **Chýba:** Endpoint pre zoznam poslancov
 
-### 2. presov.sk Crawler
-- `PresovCouncilMemberCrawlerV2` - nový crawler pre prepracovanú stránku (2024+)
-- URL: `https://www.presov.sk/poslanci-msz.html`
-- Parsuje: meno, foto, email, telefón, strany, kluby, komisie, volebný obvod
-- Starý `PresovCouncilMemberCrawler` je obsolete (JavaScript štruktúra už neexistuje)
+### 2. Web scrapery (polls-sync modul)
+- **Bratislava** — ArcGIS API (2014-2022) + web scraper (2022-2026)
+- **Prešov** — `PresovCouncilMemberCrawlerV2` pre presov.sk (2024+)
+- **Košice** — `KosiceScraper` pre members, meetings, votes
+- **Trnava** — `TrnavaScraper` pre members, meetings, votes
+- **Nitra, Poprad, B. Bystrica, Trenčín** — members only
 
 ## Kľúčové komponenty
 
-### Synchronizácia
-- `SyncAgent` - hlavná sync logika, beží ako @Scheduled task
+### Synchronizácia (polls-sync)
+- `SyncOrchestrator` - hlavná sync logika, beží ako @Scheduled task
+- `DataSourceResolver` - routing na správny importér podľa mesta a operácie
 - `DMImport` / `DMParser` - spracovanie DM API odpovedí
-- `PresovCouncilMemberCrawlerV2` - scraping poslancov z presov.sk
+- `SyncEventBroadcaster` - SSE streaming sync udalostí na frontend
 
 ### Sledovanie politikov ("prezliekači")
 - `Politician` entita je zdieľaná naprieč sezónami
 - `PoliticianRepository.findPartySwitchers()` - kto menil strany
 - `PoliticianRepository.findClubSwitchers()` - kto menil kluby
-- API: `GET /politicians/party-switchers`
+- API: `GET /politicians/party-switchers`, `GET /politicians/club-switchers`
 
 ## Spustenie
 
 ```bash
 # Dev profil s H2 databázou
-./gradlew bootRun --args='--spring.profiles.active=dev'
+./gradlew :polls-app:bootRun --args='--spring.profiles.active=dev'
 
-# Build
-./gradlew build
+# Build (fat JAR)
+./gradlew :polls-app:bootJar
+
+# Kompilacia po moduloch
+./gradlew :polls-domain:compileJava
+./gradlew :polls-sync:compileJava
+./gradlew :polls-bff:compileJava
+./gradlew :polls-app:compileJava
+
+# Testy
+./gradlew test
+
+# Overenie hraníc — BFF nesmie importovať z source/sync
+grep -r "org.blackbell.polls.source" polls-bff/src/ && echo "FAIL" || echo "OK"
+grep -r "org.blackbell.polls.sync" polls-bff/src/ && echo "FAIL" || echo "OK"
 ```
 
 ## Známe problémy
@@ -57,28 +115,6 @@ REST API pre agregáciu a zobrazenie hlasovaní mestských zastupiteľstiev na S
 
 2. **Poll details** - `extAgendaItemId` a `extPollRouteId` sú null pre novšie zasadnutia
    - Súvisí s bodom 1
-
-## Štruktúra projektu
-
-```
-src/main/java/org/blackbell/polls/
-├── config/          # DataSeeder, konfigurácia
-├── controllers/     # REST API endpointy
-├── domain/
-│   ├── model/       # Entity (Politician, CouncilMember, Club, Party, Vote...)
-│   └── repositories/# JPA repositories
-└── source/
-    ├── crawler/     # PresovCouncilMemberCrawlerV2
-    └── dm/          # DM API klient a parser
-```
-
-## Posledné zmeny (január 2026)
-
-- Upgrade na Java 21, Spring Boot 3.4.1, Gradle 8.12
-- Migrácia javax.persistence → jakarta.persistence
-- Nový `PresovCouncilMemberCrawlerV2` pre novú štruktúru presov.sk
-- `PoliticianRepository` + `PoliticiansController` pre sledovanie prezliekačov
-- Oprava `DMParser` - diacritika "Materiály", robustnejší parsing
 
 ## Plánované AI features
 
