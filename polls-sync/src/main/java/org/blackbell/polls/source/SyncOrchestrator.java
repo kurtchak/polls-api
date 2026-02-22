@@ -1,0 +1,210 @@
+package org.blackbell.polls.source;
+
+import org.blackbell.polls.common.Constants;
+import org.blackbell.polls.domain.model.Season;
+import org.blackbell.polls.domain.model.Town;
+import org.blackbell.polls.domain.model.enums.Source;
+import org.blackbell.polls.domain.repositories.TownRepository;
+import org.blackbell.polls.sync.SyncEventBroadcaster;
+import org.blackbell.polls.sync.SyncProgress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.Date;
+import java.util.Set;
+
+/**
+ * Orchestrates the synchronization process. Delegates to specialized services.
+ * No self-injection needed — all transactional calls happen on injected service beans
+ * or via TransactionTemplate.
+ */
+@Component
+public class SyncOrchestrator {
+    private static final Logger log = LoggerFactory.getLogger(SyncOrchestrator.class);
+
+    private final SeasonSyncService seasonSyncService;
+    private final CouncilMemberSyncService councilMemberSyncService;
+    private final MeetingSyncService meetingSyncService;
+    private final SyncCacheManager cacheManager;
+    private final SyncProgress syncProgress;
+    private final SyncEventBroadcaster eventBroadcaster;
+    private final TownRepository townRepository;
+    private final TransactionTemplate txTemplate;
+
+    public SyncOrchestrator(SeasonSyncService seasonSyncService,
+                            CouncilMemberSyncService councilMemberSyncService,
+                            MeetingSyncService meetingSyncService,
+                            SyncCacheManager cacheManager,
+                            SyncProgress syncProgress,
+                            SyncEventBroadcaster eventBroadcaster,
+                            TownRepository townRepository,
+                            PlatformTransactionManager txManager) {
+        this.seasonSyncService = seasonSyncService;
+        this.councilMemberSyncService = councilMemberSyncService;
+        this.meetingSyncService = meetingSyncService;
+        this.cacheManager = cacheManager;
+        this.syncProgress = syncProgress;
+        this.eventBroadcaster = eventBroadcaster;
+        this.townRepository = townRepository;
+        this.txTemplate = new TransactionTemplate(txManager);
+    }
+
+    @Scheduled(fixedRateString = "${sync.fixed-rate-ms}", initialDelayString = "${sync.initial-delay-ms}")
+    public synchronized void sync() {
+        syncAll();
+    }
+
+    @Async
+    public synchronized void triggerSync(String townRef) {
+        triggerSync(townRef, null);
+    }
+
+    @Async
+    public synchronized void triggerSync(String townRef, String seasonRef) {
+        if (townRef != null) {
+            cacheManager.resetTownsMap();
+            Town town = cacheManager.getTown(townRef);
+            if (town == null) {
+                log.warn(Constants.MarkerSync, "Town not found: {}", townRef);
+                return;
+            }
+            if (seasonRef != null) {
+                syncSingleTownSeason(town, seasonRef);
+            } else {
+                syncSingleTown(town);
+            }
+        } else {
+            syncAll();
+        }
+    }
+
+    public boolean isRunning() {
+        return syncProgress.getStatus().isRunning();
+    }
+
+    private synchronized void syncAll() {
+        Set<String> townsRefs = cacheManager.getTownsRefs();
+        cacheManager.loadInstitutionsMap();
+        log.info(Constants.MarkerSync, "Synchronization started");
+        syncProgress.startSync();
+        eventBroadcaster.emit("INFO", "start", "Synchronization started for " + townsRefs.size() + " towns");
+
+        if (townsRefs.isEmpty()) {
+            log.info(Constants.MarkerSync, "No town to sync");
+        }
+
+        long startMs = System.currentTimeMillis();
+        try {
+            townsRefs.forEach(townRef -> {
+                log.info("town: {}", townRef);
+                Town town = cacheManager.getTown(townRef);
+                eventBroadcaster.emit("INFO", townRef, "start", "Starting sync for " + townRef);
+                syncTown(town);
+            });
+        } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
+            syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", "complete", "Synchronization completed in " + durationSec + "s");
+            log.info(Constants.MarkerSync, "Synchronization finished");
+        }
+    }
+
+    private void syncSingleTown(Town town) {
+        cacheManager.loadInstitutionsMap();
+        log.info(Constants.MarkerSync, "Manual sync started for town: {}", town.getRef());
+        syncProgress.startSync();
+        eventBroadcaster.emit("INFO", town.getRef(), "start", "Manual sync started for " + town.getRef());
+
+        long startMs = System.currentTimeMillis();
+        try {
+            cacheManager.resetSeasonsMap();
+            syncTown(town);
+        } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
+            syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", town.getRef(), "complete", "Sync completed for " + town.getRef() + " in " + durationSec + "s");
+            log.info(Constants.MarkerSync, "Manual sync finished for town: {}", town.getRef());
+        }
+    }
+
+    private void syncSingleTownSeason(Town town, String seasonRef) {
+        cacheManager.loadInstitutionsMap();
+        log.info(Constants.MarkerSync, "Manual sync started for town: {}, season: {}", town.getRef(), seasonRef);
+        syncProgress.startSync();
+        eventBroadcaster.emit("INFO", town.getRef(), seasonRef, "start", "Manual sync started for " + town.getRef() + "/" + seasonRef);
+
+        long startMs = System.currentTimeMillis();
+        try {
+            syncProgress.startTown(town.getRef());
+            councilMemberSyncService.resetMembersMap();
+            cacheManager.resetSeasonsMap();
+            seasonSyncService.syncSeasons(town);
+
+            Town freshTown = txTemplate.execute(status -> {
+                Town t = townRepository.findByRefWithSeasons(town.getRef());
+                t.getSeasons().size();
+                return t;
+            });
+
+            Season targetSeason = freshTown.getSeasons().stream()
+                    .filter(s -> s.getRef().equals(seasonRef))
+                    .findFirst().orElse(null);
+
+            if (targetSeason == null) {
+                log.warn(Constants.MarkerSync, "Season {} not found for town {}", seasonRef, town.getRef());
+                return;
+            }
+
+            councilMemberSyncService.syncCouncilMembers(town, Set.of(targetSeason));
+            meetingSyncService.syncSeasonMeetings(town, targetSeason, cacheManager.getInstitutionsMap());
+
+            txTemplate.executeWithoutResult(status -> {
+                Town t = townRepository.findByRef(town.getRef());
+                t.setLastSyncDate(new Date());
+                townRepository.save(t);
+            });
+            log.info("Updated lastSyncDate for town: {}", town.getName());
+            log.info(Constants.MarkerSync, "Manual sync finished for town: {}, season: {}", town.getRef(), seasonRef);
+        } finally {
+            long durationSec = (System.currentTimeMillis() - startMs) / 1000;
+            syncProgress.finishSync();
+            eventBroadcaster.emit("SUCCESS", town.getRef(), seasonRef, "complete", "Sync completed for " + town.getRef() + "/" + seasonRef + " in " + durationSec + "s");
+        }
+    }
+
+    private void syncTown(Town town) {
+        syncProgress.startTown(town.getRef());
+        councilMemberSyncService.resetMembersMap();
+        seasonSyncService.syncSeasons(town);
+
+        // Reload town with linked seasons (after season sync)
+        Town freshTown = txTemplate.execute(status -> {
+            Town t = townRepository.findByRefWithSeasons(town.getRef());
+            t.getSeasons().size(); // force init
+            return t;
+        });
+
+        Set<Season> townSeasons = freshTown.getSeasons();
+        log.info(Constants.MarkerSync, "{}: syncing {} seasons: {}", town.getRef(),
+                townSeasons.size(), townSeasons.stream().map(Season::getRef).toList());
+
+        councilMemberSyncService.syncCouncilMembers(town, townSeasons);
+
+        for (Season season : townSeasons) {
+            meetingSyncService.syncSeasonMeetings(town, season, cacheManager.getInstitutionsMap());
+        }
+
+        txTemplate.executeWithoutResult(status -> {
+            Town t = townRepository.findByRef(town.getRef());
+            t.setLastSyncDate(new Date());
+            townRepository.save(t);
+        });
+        log.info("Updated lastSyncDate for town: {}", town.getName());
+        log.info(Constants.MarkerSync, "Synchronization finished for town: {}", town.getRef());
+    }
+}

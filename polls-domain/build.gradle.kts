@@ -1,0 +1,23 @@
+plugins {
+    id("io.spring.dependency-management")
+    kotlin("jvm")
+    kotlin("plugin.jpa")
+}
+java.sourceCompatibility = JavaVersion.VERSION_21
+
+dependencyManagement {
+    imports { mavenBom("org.springframework.boot:spring-boot-dependencies:3.4.1") }
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+configurations { compileOnly { extendsFrom(configurations.annotationProcessor.get()) } }
+tasks.withType<Test> { useJUnitPlatform() }
